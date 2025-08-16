@@ -36,7 +36,7 @@ export default function LoginPage() {
         <Input {...register("email")} placeholder="Email" className="mb-4" />
         <Input {...register("password")} type="password" placeholder="Password" className="mb-4" />
         {error && <p className="text-red-500 mb-2">{error}</p>}
-        <Button type="submit" disabled={loading}>
+        <Button variant="success" type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </Button>
       </form>
