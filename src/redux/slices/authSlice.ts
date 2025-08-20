@@ -75,6 +75,18 @@ export const logoutUserAll = createAsyncThunk(
   }
 );
 
+export const logoutUserOther = createAsyncThunk(
+  "auth/logoutUserOther",
+  async (_, { rejectWithValue }) => {
+    try {
+      await api.post("/auth/logout-others"); // backend clears refresh token
+    } catch (err: any) {
+      console.log("Logout error:", err);
+      return rejectWithValue(err.response?.data?.message || "Logout failed");
+    }
+  }
+);
+
 // -------------------------
 // Slice
 // -------------------------
@@ -128,6 +140,9 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(logoutUserAll.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+      .addCase(logoutUserOther.rejected, (state, action) => {
         state.error = action.payload as string;
       });
   },
