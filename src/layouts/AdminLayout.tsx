@@ -2,7 +2,6 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { logoutUser, logoutUserAll, logoutUserOther } from "@/redux/slices/authSlice";
 import type { AppDispatch } from "../redux/store"; // <- type-only import
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,

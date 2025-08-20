@@ -125,6 +125,7 @@ const authSlice = createSlice({
       // Refresh token
       .addCase(refreshAccessToken.fulfilled, (state, action) => {
         state.accessToken = action.payload.accessToken;
+        state.user = action.payload.user;
         //console.log("Access token refreshed:", action.payload.accessToken);
       })
       .addCase(refreshAccessToken.rejected, (state, action) => {
