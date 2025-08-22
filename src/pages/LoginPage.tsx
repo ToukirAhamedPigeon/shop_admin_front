@@ -21,7 +21,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, error, accessToken, refreshToken } = useSelector(
+  const { loading, error, accessToken, csrfToken } = useSelector(
     (state: RootState) => state.auth
   );
 
@@ -31,10 +31,12 @@ export default function LoginPage() {
 
   // Redirect to dashboard if already logged in
   useEffect(() => {
-    if (accessToken && refreshToken) {
+    console.log("LoginPage accessToken:", accessToken);
+    console.log("LoginPage csrfToken:", csrfToken);
+    if (accessToken) {
       navigate("/dashboard", { replace: true }); // replace so user can't go back to login
     }
-  }, [accessToken, refreshToken, navigate]);
+  }, [accessToken, navigate]);
 
   const onSubmit = async (data: LoginForm) => {
     const result = await dispatch(loginUser(data));

@@ -4,7 +4,8 @@ import AdminLayout from "../layouts/AdminLayout";
 
 export default function DashboardPage() {
   const user = useSelector((state: RootState) => state.auth.user);
-  console.log("DashboardPage user:", user);
+  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
+  const csrfToken = useSelector((state: RootState) => state.auth.csrfToken);
   return (
     <AdminLayout>
         <h2 className="text-2xl font-bold mb-4">Welcome to Dashboard</h2>
@@ -38,6 +39,26 @@ export default function DashboardPage() {
                 <td className="border px-4 py-2 font-medium">Permissions</td>
                 <td className="border px-4 py-2">
                   {user?.permissions?.join(", ")}
+                </td>
+              </tr>
+              <tr>
+                <td className="border px-4 py-2 font-medium">Access Token</td>
+                <td className="border px-4 py-2">
+                  {accessToken ? (
+                    <span className="break-all">{accessToken}</span> 
+                  ) : (
+                    <span className="text-gray-500">No Access Token</span>
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <td className="border px-4 py-2 font-medium">CSRF Token</td>
+                <td className="border px-4 py-2">
+                  {csrfToken ? (
+                    <span className="break-all">{csrfToken}</span> 
+                  ) : (
+                    <span className="text-gray-500">No CSRF Token</span>
+                  )}
                 </td>
               </tr>
             </tbody>
