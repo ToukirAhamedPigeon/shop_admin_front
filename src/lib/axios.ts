@@ -1,77 +1,63 @@
-// axios.ts
 import axios from "axios";
-import type {
-  AxiosError,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from "axios";
+import Cookies from "js-cookie";
 
-// ============================================================
-// STEP 1: Access Token & CSRF Token Getter
-// - Injected from your app (Redux, Zustand, etc.)
-// ============================================================
+// ===== TOKEN GETTERS =====
 let getAccessToken: (() => string | null) | null = null;
 let getCsrfToken: (() => string | null) | null = null;
 
-/**
- * Set the access token getter (injected from Redux/Zustand).
- */
 export const setAccessTokenGetter = (getter: () => string | null) => {
   getAccessToken = getter;
 };
 
-/**
- * Set the CSRF token getter (if you store CSRF token in Redux/Zustand).
- */
 export const setCsrfTokenGetter = (getter: () => string | null) => {
   getCsrfToken = getter;
 };
 
-// ============================================================
-// STEP 2: Create Axios Instance
-// ============================================================
+// ===== AXIOS INSTANCE =====
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL + "/api",
-  withCredentials: true, // needed for refreshToken & CSRF cookies
+  withCredentials: true, // cookies-এর জন্য গুরুত্বপূর্ণ
 });
 
-// ============================================================
-// STEP 3: Request Interceptor
-// ============================================================
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  // Attach access token
-  if (getAccessToken) {
-    const token = getAccessToken();
-    if (token) {
-      config.headers = config.headers || {};
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
+// ===== CSRF INIT FUNCTION =====
+export const initCsrf = async () => {
+  try {
+    const response = await api.get("/csrf/token");
+    const token = response.data?.csrfToken || Cookies.get("XSRF-TOKEN") || null;
 
-  // Attach CSRF token
-  if (getCsrfToken) {
-    const csrfToken = getCsrfToken();
-    if (csrfToken) {
-      config.headers = config.headers || {};
-      config.headers["X-CSRF-TOKEN"] = csrfToken;
+    if (token) {
+      setCsrfTokenGetter(() => token);
+      api.defaults.headers.common["X-CSRF-TOKEN"] = token;
     }
+  } catch (err) {
+    console.error("Failed to init CSRF token:", err);
+  }
+};
+
+// ===== REQUEST INTERCEPTOR =====
+api.interceptors.request.use((config) => {
+  config.headers = config.headers || {};
+
+  // JWT attach করা
+  const token = getAccessToken?.();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  // CSRF attach করা unsafe methods-এর জন্য
+  const csrfToken = getCsrfToken?.();
+  if (
+    csrfToken &&
+    ["post", "put", "patch", "delete"].includes((config.method || "").toLowerCase())
+  ) {
+    config.headers["X-CSRF-TOKEN"] = csrfToken;
   }
 
   return config;
 });
 
-// ============================================================
-// STEP 4: Refresh Token Handling
-// ============================================================
+// ===== REFRESH TOKEN HANDLING =====
 let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (err: any) => void;
-}> = [];
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
 
-/**
- * Process queued requests after refresh.
- */
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
@@ -80,26 +66,22 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-/**
- * Trigger global logout event.
- */
-const handleLogout = () => {
-  window.dispatchEvent(new Event("logout"));
-};
+const handleLogout = () => window.dispatchEvent(new Event("logout"));
 
-// ============================================================
-// STEP 5: Response Interceptor
-// ============================================================
 api.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  async (error: AxiosError) => {
+  (response) => response,
+  async (error) => {
     const originalRequest = error.config as any;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // 401 → refresh token try
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      document.cookie.includes("refreshToken")
+    ) {
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        // Queue request until refresh completes
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -113,19 +95,23 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint (cookie-based refresh)
+        // CSRF attach করা
+        const csrfToken = getCsrfToken?.();
+        const headers: Record<string, string> = {};
+        if (csrfToken) headers["X-CSRF-TOKEN"] = csrfToken;
+
         const response = await axios.post(
           import.meta.env.VITE_API_BASE_URL + "/api/auth/refresh",
           {},
-          { withCredentials: true }
+          { withCredentials: true, headers }
         );
 
         const newToken = response.data.accessToken;
-
-        // Notify queued requests
         processQueue(null, newToken);
 
-        // Retry original request
+        // Redux বা token getter update করা উচিত
+        if (getAccessToken) setAccessTokenGetter(() => newToken);
+
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (err) {

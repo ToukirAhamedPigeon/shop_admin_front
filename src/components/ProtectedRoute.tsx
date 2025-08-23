@@ -1,27 +1,24 @@
-import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../redux/store";
 import { Navigate } from "react-router-dom";
-import { refreshAccessToken, logout } from "../redux/slices/authSlice";
-import { useEffect, useState } from "react";
+import { refreshAccessToken, logout, fetchCsrfToken } from "../redux/slices/authSlice";
 
-interface Props {
-  children: ReactNode;
-}
-
-export default function ProtectedRoute({ children }: Props) {
+export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch<AppDispatch>();
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
-  const [loading, setLoading] = useState(true);
+  const isLoggedOut = useSelector((state: RootState) => state.auth.isLoggedOut);
 
+  const [loading, setLoading] = useState(true);
+  const [csrfFetched, setCsrfFetched] = useState(false);
+
+  // 1. Try refreshing token first
   useEffect(() => {
     const tryRefresh = async () => {
-      if (!accessToken) {
+      if (!accessToken && !isLoggedOut) {
         try {
-          // Attempt to get new access token from refresh token in HttpOnly cookie
           await dispatch(refreshAccessToken()).unwrap();
         } catch (err) {
-          // Refresh failed, auto logout
           dispatch(logout());
         }
       }
@@ -29,16 +26,29 @@ export default function ProtectedRoute({ children }: Props) {
     };
 
     tryRefresh();
-  }, [accessToken, dispatch]);
+  }, [accessToken, isLoggedOut, dispatch]);
 
-  // Show loading spinner while checking/refreshing token
+  // 2. Fetch CSRF token before redirecting (only once)
+  useEffect(() => {
+    const fetchCsrf = async () => {
+      if (!accessToken && !csrfFetched && !loading) {
+        await dispatch(fetchCsrfToken());
+        setCsrfFetched(true);
+      }
+    };
+    fetchCsrf();
+  }, [accessToken, csrfFetched, loading, dispatch]);
+
+  // 3. Handle UI states
   if (loading) return <p>Loading...</p>;
 
-  // If accessToken still not available, redirect to login
   if (!accessToken) {
-    return <Navigate to="/login" replace />;
+    // ✅ Only redirect once CSRF is fetched
+    if (csrfFetched) {
+      return <Navigate to="/login" replace />;
+    }
+    return <p>Preparing login...</p>;
   }
 
-  // Render protected children
   return <>{children}</>;
 }

@@ -2,14 +2,36 @@ import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/tool
 import api from "@/lib/axios";
 
 // =========================
+// User & API Response Types
+// =========================
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  roles?: string[];
+  [key: string]: any;
+}
+
+interface LoginResponse {
+  user: User;
+  accessToken: string;
+}
+
+interface RefreshResponse {
+  user?: User;
+  accessToken: string;
+}
+
+// =========================
 // Auth State Interface
 // =========================
 interface AuthState {
-  user: any | null;            // Stores logged-in user info
-  accessToken: string | null;  // JWT access token (short-lived, Redux only)
-  csrfToken: string | null;    // CSRF token (for form protection)
-  loading: boolean;            // Loading state for async actions
-  error: string | null;        // Error messages
+  user: User | null;
+  accessToken: string | null;
+  csrfToken: string | null;
+  loading: boolean;
+  error: string | null;
+  isLoggedOut: boolean; // ✅ Track if user has logged out
 }
 
 const initialState: AuthState = {
@@ -18,95 +40,106 @@ const initialState: AuthState = {
   csrfToken: null,
   loading: false,
   error: null,
+  isLoggedOut: true,
 };
 
 // =========================
 // Async Thunks
 // =========================
 
-// ✅ Fetch CSRF Token (on app load or before login)
-export const fetchCsrfToken = createAsyncThunk(
+// Fetch CSRF Token
+export const fetchCsrfToken = createAsyncThunk<string>(
   "auth/fetchCsrfToken",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/csrf/token");
-      return response.data.csrfToken; // { csrfToken }
-    } catch (err: any) {
+      const response = await api.get("/csrf/token", { withCredentials: true });
+      const token = response.data?.csrfToken || null;
+
+      if (token) api.defaults.headers.common["X-CSRF-TOKEN"] = token;
+
+      return token;
+    } catch {
       return rejectWithValue("Failed to fetch CSRF token");
     }
   }
 );
 
-// ✅ Login User
-export const loginUser = createAsyncThunk(
+// Login User
+export const loginUser = createAsyncThunk<LoginResponse, { identifier: string; password: string }>(
   "auth/loginUser",
-  async (
-    credentials: { identifier: string; password: string },
-    { rejectWithValue, getState }
-  ) => {
+  async (credentials, { rejectWithValue, dispatch }) => {
     try {
-      const state = getState() as { auth: AuthState };
-      const csrfToken = state.auth.csrfToken;
+      const response = await api.post("/auth/login", credentials, { withCredentials: true });
 
-      const response = await api.post("/auth/login", credentials, {
-        headers: { "X-CSRF-TOKEN": csrfToken || "" }, // Attach CSRF token
-      });
+      // Fetch fresh CSRF token after login
+      await dispatch(fetchCsrfToken());
 
-      // Backend returns: { accessToken, user }
-      return response.data;
+      return response.data as LoginResponse;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Login failed");
     }
   }
 );
 
-// ✅ Refresh Access Token (using HttpOnly Refresh cookie)
-export const refreshAccessToken = createAsyncThunk(
+// Refresh Access Token
+export const refreshAccessToken = createAsyncThunk<RefreshResponse>(
   "auth/refreshAccessToken",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch, getState }) => {
     try {
+      const state = getState() as { auth: AuthState };
+
+      if (state.auth.isLoggedOut) throw new Error("User logged out, skip refresh");
+
+      if (!state.auth.csrfToken) {
+        await dispatch(fetchCsrfToken());
+      }
+
       const response = await api.post("/auth/refresh", {}, { withCredentials: true });
-      return response.data; // { accessToken, user? }
+      return response.data as RefreshResponse;
     } catch (err: any) {
+      dispatch(logout()); // Auto logout on refresh failure
       return rejectWithValue(err.response?.data?.message || "Refresh failed");
     }
   }
 );
 
-// ✅ Logout Current Session
-export const logoutUser = createAsyncThunk(
+// Logout Current Session
+export const logoutUser = createAsyncThunk<void>(
   "auth/logoutUser",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      await api.post("/auth/logout");
-      dispatch(logout()); // clear Redux state
+      await api.post("/auth/logout", {}, { withCredentials: true });
+      dispatch(logout());
+      await dispatch(fetchCsrfToken());
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Logout failed");
     }
   }
 );
 
-// ✅ Logout From All Devices
-export const logoutUserAll = createAsyncThunk(
+// Logout All Sessions
+export const logoutUserAll = createAsyncThunk<void>(
   "auth/logoutUserAll",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      await api.post("/auth/logout-all");
-      dispatch(logout()); // clear Redux state
+      await api.post("/auth/logout-all", {}, { withCredentials: true });
+      dispatch(logout());
+      await dispatch(fetchCsrfToken());
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || "Logout failed");
+      return rejectWithValue(err.response?.data?.message || "Logout all failed");
     }
   }
 );
 
-// ✅ Logout From Other Devices (keep current session active)
-export const logoutUserOther = createAsyncThunk(
+// Logout Other Sessions
+export const logoutUserOther = createAsyncThunk<void>(
   "auth/logoutUserOther",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     try {
-      await api.post("/auth/logout-others");
+      await api.post("/auth/logout-others", {}, { withCredentials: true });
+      await dispatch(fetchCsrfToken());
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || "Logout failed");
+      return rejectWithValue(err.response?.data?.message || "Logout others failed");
     }
   }
 );
@@ -118,29 +151,30 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // Manual logout (used by thunks too)
     logout(state) {
       state.user = null;
       state.accessToken = null;
       state.csrfToken = null;
+      state.loading = false;
       state.error = null;
+      state.isLoggedOut = true;
+      delete api.defaults.headers.common["X-CSRF-TOKEN"];
     },
-
-    // Set access token (after refresh)
     setAccessToken(state, action: PayloadAction<string>) {
       state.accessToken = action.payload;
+      state.isLoggedOut = false;
     },
-
-    // Set CSRF token (can be manually updated if needed)
     setCsrfToken(state, action: PayloadAction<string>) {
       state.csrfToken = action.payload;
+      api.defaults.headers.common["X-CSRF-TOKEN"] = action.payload;
+    },
+    clearError(state) {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      // -------------------------
-      // Fetch CSRF Token
-      // -------------------------
+      // CSRF Token fetch
       .addCase(fetchCsrfToken.fulfilled, (state, action) => {
         state.csrfToken = action.payload;
       })
@@ -148,9 +182,7 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      // -------------------------
       // Login
-      // -------------------------
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -159,44 +191,34 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
+        state.isLoggedOut = false;
+        state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      // -------------------------
-      // Refresh Token
-      // -------------------------
+      // Refresh
       .addCase(refreshAccessToken.fulfilled, (state, action) => {
         state.accessToken = action.payload.accessToken;
-        if (action.payload.user) {
-          state.user = action.payload.user;
-        }
+        if (action.payload.user) state.user = action.payload.user;
+        state.isLoggedOut = false;
+        state.error = null;
       })
       .addCase(refreshAccessToken.rejected, (state, action) => {
         state.accessToken = null;
         state.user = null;
+        state.isLoggedOut = true;
         state.error = action.payload as string;
       })
 
-      // -------------------------
-      // Logout Errors
-      // -------------------------
-      .addCase(logoutUser.rejected, (state, action) => {
-        state.error = action.payload as string;
-      })
-      .addCase(logoutUserAll.rejected, (state, action) => {
-        state.error = action.payload as string;
-      })
-      .addCase(logoutUserOther.rejected, (state, action) => {
-        state.error = action.payload as string;
-      });
+      // Logout errors
+      .addCase(logoutUser.rejected, (state, action) => { state.error = action.payload as string; })
+      .addCase(logoutUserAll.rejected, (state, action) => { state.error = action.payload as string; })
+      .addCase(logoutUserOther.rejected, (state, action) => { state.error = action.payload as string; });
   },
 });
 
-// =========================
-// Exports
-// =========================
-export const { logout, setAccessToken, setCsrfToken } = authSlice.actions;
+export const { logout, setAccessToken, setCsrfToken, clearError } = authSlice.actions;
 export default authSlice.reducer;
