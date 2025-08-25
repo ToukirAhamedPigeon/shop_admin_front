@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../redux/store";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { refreshAccessToken, logout, fetchCsrfToken } from "../redux/slices/authSlice";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -11,6 +11,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   const [loading, setLoading] = useState(true);
   const [csrfFetched, setCsrfFetched] = useState(false);
+
+  const location = useLocation();
 
   // 1. Try refreshing token first
   useEffect(() => {
@@ -48,6 +50,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       return <Navigate to="/login" replace />;
     }
     return <p>Preparing login...</p>;
+  }
+  else{
+    if(location.pathname === "/login"){
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;

@@ -15,11 +15,13 @@ interface User {
 interface LoginResponse {
   user: User;
   accessToken: string;
+  refreshTokenExpiry: string;
 }
 
 interface RefreshResponse {
   user?: User;
   accessToken: string;
+  refreshTokenExpiry: string;
 }
 
 // =========================
@@ -40,7 +42,7 @@ const initialState: AuthState = {
   csrfToken: null,
   loading: false,
   error: null,
-  isLoggedOut: true,
+  isLoggedOut: false,
 };
 
 // =========================
@@ -88,12 +90,31 @@ export const refreshAccessToken = createAsyncThunk<RefreshResponse>(
     try {
       const state = getState() as { auth: AuthState };
 
-      if (state.auth.isLoggedOut) throw new Error("User logged out, skip refresh");
+      if (state.auth.isLoggedOut) {
+        throw new Error("User logged out, skip refresh");
+      }
 
+      // ✅ Check refreshTokenExpiry in localStorage
+      const expiry = localStorage.getItem("refreshTokenExpiry");
+      if (!expiry) {
+        // no expiry stored → treat as logged out
+        dispatch(logout());
+        return rejectWithValue("No refresh token expiry found");
+      }
+
+      const expiryDate = new Date(expiry);
+      if (isNaN(expiryDate.getTime()) || expiryDate <= new Date()) {
+        // expired or invalid date → logout
+        dispatch(logout());
+        return rejectWithValue("Refresh token expired");
+      }
+
+      // Ensure CSRF token exists
       if (!state.auth.csrfToken) {
         await dispatch(fetchCsrfToken());
       }
 
+      // Call backend refresh
       const response = await api.post("/auth/refresh", {}, { withCredentials: true });
       return response.data as RefreshResponse;
     } catch (err: any) {
@@ -159,6 +180,7 @@ const authSlice = createSlice({
       state.error = null;
       state.isLoggedOut = true;
       delete api.defaults.headers.common["X-CSRF-TOKEN"];
+      localStorage.removeItem("refreshTokenExpiry");
     },
     setAccessToken(state, action: PayloadAction<string>) {
       state.accessToken = action.payload;
@@ -193,6 +215,7 @@ const authSlice = createSlice({
         state.accessToken = action.payload.accessToken;
         state.isLoggedOut = false;
         state.error = null;
+        localStorage.setItem("refreshTokenExpiry", action.payload.refreshTokenExpiry);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -205,12 +228,14 @@ const authSlice = createSlice({
         if (action.payload.user) state.user = action.payload.user;
         state.isLoggedOut = false;
         state.error = null;
+        localStorage.setItem("refreshTokenExpiry", action.payload.refreshTokenExpiry);
       })
       .addCase(refreshAccessToken.rejected, (state, action) => {
         state.accessToken = null;
         state.user = null;
         state.isLoggedOut = true;
         state.error = action.payload as string;
+        localStorage.removeItem("refreshTokenExpiry");
       })
 
       // Logout errors
