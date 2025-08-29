@@ -9,9 +9,13 @@ const LanguageSwitcher: React.FC = () => {
 
   const switchLanguage = (lang: string) => {
     if (lang === currentLang) return; // avoid duplicate calls
+
+    // ✅ Update local storage and state
     localStorage.setItem("lang", lang);
     dispatch(setLanguage(lang));
-    dispatch(fetchTranslations(lang));
+
+    // ✅ Fetch translations and bypass cache
+    dispatch(fetchTranslations({ lang, forceFetch: true }));
   };
 
   return (

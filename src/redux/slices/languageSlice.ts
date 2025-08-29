@@ -14,18 +14,21 @@ const DEFAULT_LANG = "en";
 // Async Thunks
 // =========================
 export const fetchTranslations = createAsyncThunk<
-  Record<string, string>, // only inner translations
-  string,                 // parameter type (lang)
+  Record<string, string>,      // only inner translations
+  { lang: string; forceFetch?: boolean },  // now an object
   { rejectValue: string }
 >(
   "language/fetchTranslations",
-  async (lang, { rejectWithValue }) => {
+  async ({ lang, forceFetch = false }, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/translations/get?lang=${lang}`);
-      // Extract only inner translations object
+      const response = await api.get(
+        `/translations/get?lang=${lang}&forceFetch=${forceFetch}`
+      );
       return response.data.translations as Record<string, string>;
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch translations");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch translations"
+      );
     }
   }
 );

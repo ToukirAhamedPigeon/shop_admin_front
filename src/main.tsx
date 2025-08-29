@@ -26,7 +26,7 @@ const initApp = async () => {
     // ✅ 2. Initialize Language
     const savedLang = localStorage.getItem("lang") || "en";
     store.dispatch(setLanguage(savedLang));
-    await store.dispatch(fetchTranslations(savedLang)).unwrap();
+    await store.dispatch(fetchTranslations({ lang: savedLang })).unwrap();
   } catch (err) {
     // Auto logout if CSRF fetch fails
     window.dispatchEvent(new Event("logout"));
