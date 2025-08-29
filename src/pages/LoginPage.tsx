@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom"; // React Router
 import { loginUser } from "../redux/slices/authSlice";
 import type { RootState, AppDispatch } from "../redux/store";
+import { useTranslations } from "../hooks/useTranslations";
 import AuthLayout from "../layouts/AuthLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const { loading, error, accessToken } = useSelector(
     (state: RootState) => state.auth
   );
+  const { t } = useTranslations();
 
   const { register, handleSubmit } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -50,7 +52,7 @@ export default function LoginPage() {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 rounded-lg shadow-md w-96"
       >
-        <h2 className="text-xl font-bold mb-4">Login</h2>
+        <h2 className="text-xl font-bold mb-4">{t("common.login.title","Login")}</h2>
         <Input
           {...register("identifier")}
           placeholder="Email, Username or Mobile No"

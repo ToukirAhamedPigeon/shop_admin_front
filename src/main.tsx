@@ -12,13 +12,21 @@ import "./index.css";
 // 🔹 CSRF Initialization
 import { fetchCsrfToken } from "./redux/slices/authSlice";
 
+// 🔹 Language Initialization
+import { fetchTranslations, setLanguage } from "./redux/slices/languageSlice";
+
 // ============================================================
-// STEP 1: Fetch CSRF token before rendering app
-// - Ensures token is available for all API calls
+// STEP 1: Initialize CSRF + Language before rendering App
 // ============================================================
 const initApp = async () => {
   try {
+    // ✅ 1. Get CSRF
     await store.dispatch(fetchCsrfToken()).unwrap();
+
+    // ✅ 2. Initialize Language
+    const savedLang = localStorage.getItem("lang") || "en";
+    store.dispatch(setLanguage(savedLang));
+    await store.dispatch(fetchTranslations(savedLang)).unwrap();
   } catch (err) {
     // Auto logout if CSRF fetch fails
     window.dispatchEvent(new Event("logout"));

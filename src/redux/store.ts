@@ -1,12 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import dashboardReducer from "./slices/dashboardSlice";
+import languageReducer from "./slices/languageSlice";
 import { setAccessTokenGetter, setCsrfTokenGetter } from "@/lib/axios";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     dashboard: dashboardReducer,
+    language: languageReducer,
   },
 });
 
