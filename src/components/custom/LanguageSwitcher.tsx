@@ -2,13 +2,18 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/redux/store";
 import { fetchTranslations, setLanguage } from "@/redux/slices/languageSlice";
+import { Button } from "@/components/ui/button"; // shadcn/ui Button
 
 const LanguageSwitcher: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { currentLang } = useSelector((state: RootState) => state.language);
 
+  // Toggle language between English and Bangla
+  const nextLang = currentLang === "en" ? "bn" : "en";
+  const label = nextLang.toUpperCase();
+
   const switchLanguage = (lang: string) => {
-    if (lang === currentLang) return; // avoid duplicate calls
+    if (lang === currentLang) return;
 
     // ✅ Update local storage and state
     localStorage.setItem("lang", lang);
@@ -19,20 +24,13 @@ const LanguageSwitcher: React.FC = () => {
   };
 
   return (
-    <div className="flex gap-2">
-      <button
-        className={`px-3 py-1 rounded ${currentLang === "en" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-        onClick={() => switchLanguage("en")}
-      >
-        English
-      </button>
-      <button
-        className={`px-3 py-1 rounded ${currentLang === "bn" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-        onClick={() => switchLanguage("bn")}
-      >
-        বাংলা
-      </button>
-    </div>
+    <Button
+      variant="link"
+      onClick={() => switchLanguage(nextLang)}
+      className="text-sm text-white hover:text-blue-500 transition-colors cursor-pointer"
+    >
+      {label}
+    </Button>
   );
 };
 
