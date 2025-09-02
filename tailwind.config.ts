@@ -7,12 +7,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-       
-      },
+      colors: {},
     },
   },
   plugins: [],
+  darkMode: "class"
 }
 
 export default config

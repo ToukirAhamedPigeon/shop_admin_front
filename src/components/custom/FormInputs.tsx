@@ -1,55 +1,11 @@
-import React, {
-//   useEffect,
-  useState,
-//   useRef,
-//   InputHTMLAttributes,
-} from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
-// import {
-//   Path,
-//   PathValue,
-//   FieldError,
-//   UseFormRegisterReturn,
-//   UseFormSetValue,
-// } from "react-hook-form";
-// import { AnimatePresence, motion } from "framer-motion";
-// import { checkValueExists } from "@/lib/validations";
 import { cn } from "@/lib/utils";
-import { 
-    // ChevronDown, 
-    Eye, 
-    EyeOff
- } from "lucide-react";
-// import {
-//   Select,
-//   SelectTrigger,
-//   SelectValue,
-//   SelectContent,
-//   SelectItem,
-// } from "@/components/ui/select";
-// import {
-//   Popover,
-//   PopoverContent,
-//   PopoverTrigger,
-// } from "@/components/ui/popover";
-// import {
-//   Command,
-//   CommandInput,
-//   CommandItem,
-//   CommandList,
-// } from "@/components/ui/command";
-// import { useSelect } from "@/hooks/useSelect";
-// import { capitalize } from "@/lib/helpers";
-// import DatePicker from "react-datepicker";
-// import "react-datepicker/dist/react-datepicker.css";
-// import { useDropzone, DropzoneOptions } from "react-dropzone";
-// import { Button } from "@/components/ui/button";
-// import { Textarea } from "@/components/ui/textarea";
+import { Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "@/hooks/useTranslations";
-// // 
-// /* ------------------------------------------------
-//    ✅ Password Input
-// ------------------------------------------------ */
+import { useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
+
 interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   labelFallback?: string;
@@ -76,23 +32,35 @@ export const PasswordInput = ({
 }: PasswordInputProps) => {
   const [hidden, setHidden] = useState(isHidden);
   const { t } = useTranslations();
+  const theme = useSelector((state: RootState) => state.theme.current);
+
   return (
     <div className="space-y-1 w-full">
-      <label className="block text-sm font-medium text-gray-700">
-        {t(label,labelFallback)} {isRequiredStar && <span className="text-red-500">*</span>}
+      <label
+        className={cn(
+          "block text-sm font-medium",
+          theme === "dark" ? "text-gray-200" : "text-gray-700"
+        )}
+      >
+        {t(label, labelFallback)}{" "}
+        {isRequiredStar && <span className="text-red-500">*</span>}
       </label>
+
       <div className="relative">
         <Input
           type={hidden ? "password" : "text"}
-          className={cn(inputClassName, "pr-10 bg-white")}
-          placeholder={placeholder && t(placeholder,placeholderFallback)}
+          className={cn("pr-10", inputClassName)}
+          placeholder={placeholder && t(placeholder, placeholderFallback)}
           {...registerProps}
           {...rest}
         />
         <button
           type="button"
           onClick={() => setHidden(!hidden)}
-          className="absolute inset-y-0 right-2 flex items-center text-gray-500"
+          className={cn(
+            "absolute inset-y-0 right-2 flex items-center",
+            theme === "dark" ? "text-gray-400" : "text-gray-500"
+          )}
         >
           {hidden ? (
             <Eye className="h-4 w-4 cursor-pointer" />
@@ -101,6 +69,7 @@ export const PasswordInput = ({
           )}
         </button>
       </div>
+
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>
   );

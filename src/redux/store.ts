@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import dashboardReducer from "./slices/dashboardSlice";
 import languageReducer from "./slices/languageSlice";
+import themeReducer from "./slices/themeSlice";
 import { setAccessTokenGetter, setCsrfTokenGetter } from "@/lib/axios";
 
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     auth: authReducer,
     dashboard: dashboardReducer,
     language: languageReducer,
+    theme: themeReducer,
   },
 });
 
