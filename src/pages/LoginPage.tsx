@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/custom/FormInputs";
 import { motion } from "framer-motion";
 import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
 
@@ -112,21 +113,17 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="password" className="text-gray-700">
-                    {t("common.password", "Password")}
-                  </Label>
-                  <Input
+                  <PasswordInput
                     id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    {...register("password")}
-                    className="mt-1 border-gray-400 bg-white"
+                    label="password"
+                    labelFallback="Password"
+                    isHidden={true}
+                    inputClassName='bg-white'
+                    placeholder="password.placeholder"
+                    placeholderFallback="Enter your password"
+                    {...register('password')}
+                    error={errors.password?.message}
                   />
-                  {errors.password && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.password.message}
-                    </p>
-                  )}
                 </div>
 
                 {error && (
@@ -144,7 +141,7 @@ export default function LoginPage() {
                   className="w-full bg-gray-900 hover:bg-gray-700 text-white transition duration-200"
                   disabled={loading}
                 >
-                  {loading ? t("common.loggingIn", "Logging in...") : t("common.login", "Login")}
+                  {loading ? t("common.loggingIn", "Logging in...") : t("common.login.title", "Login")}
                 </Button>
               </form>
             </CardContent>
