@@ -32,7 +32,7 @@ export default function LoginPage() {
     accessToken: state.auth.accessToken,
     theme: state.theme.current,
   }))
-  console.log(theme);
+  // console.log(theme);
   const { t } = useTranslations();
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({

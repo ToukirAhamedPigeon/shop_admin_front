@@ -1,11 +1,8 @@
-'use client';
-
-import React from 'react';
 import Logo from './Logo';
 import UserDropdown from './UserDropdown';
 import SidebarMobileSheet from './SidebarMobileSheet';
 import { useAppDispatch } from '@/hooks/useRedux';
-import { toggleSidebar } from '@/store/sidebarSlice';
+import { toggleSidebar } from '@/redux/slices/sidebarSlice';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/custom/LanguageSwitcher';

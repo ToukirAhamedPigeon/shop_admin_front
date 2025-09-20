@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { useLocation } from 'react-router-dom'
 import nprogress from 'nprogress'
 import 'nprogress/nprogress.css'
 
@@ -10,7 +10,7 @@ interface RouteProgressProps {
 }
 
 export default function RouteProgress({ color = '#3b82f6' }: RouteProgressProps) {
-  const pathname = usePathname()
+  const location = useLocation()
 
   useEffect(() => {
     // Dynamically inject style for bar color
@@ -35,7 +35,7 @@ export default function RouteProgress({ color = '#3b82f6' }: RouteProgressProps)
     return () => {
       clearTimeout(timeout)
     }
-  }, [pathname, color])
+  }, [location, color]) // rerun on route change
 
   return null
 }

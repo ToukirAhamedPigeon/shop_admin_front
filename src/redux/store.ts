@@ -3,6 +3,7 @@ import authReducer from "./slices/authSlice";
 import dashboardReducer from "./slices/dashboardSlice";
 import languageReducer from "./slices/languageSlice";
 import themeReducer from "./slices/themeSlice";
+import sidebarReducer from './slices/sidebarSlice'
 import { setAccessTokenGetter, setCsrfTokenGetter } from "@/lib/axios";
 
 export const store = configureStore({
@@ -11,6 +12,7 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     language: languageReducer,
     theme: themeReducer,
+    sidebar: sidebarReducer
   },
 });
 

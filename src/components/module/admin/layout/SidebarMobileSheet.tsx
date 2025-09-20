@@ -1,5 +1,5 @@
 'use client'
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import Logo from './Logo'
