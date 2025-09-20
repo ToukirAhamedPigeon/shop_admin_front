@@ -27,29 +27,29 @@ const menuItems: MenuItem[] = [
     label: "Dashboard",
     icon: <LayoutDashboard size={22} className="mr-2" />,
     basePath: "/admin/dashboard",
-    permissions: ["read-dashboard"],
+    permissions: ["read-admin-dashboard"],
     children: [
       {
         label: "Analytics",
         basePath: "/admin/dashboard/analytics",
-        permissions: ["read-dashboard"],
+        permissions: ["read-admin-dashboard"],
         children: [
           {
             label: "Sales Report",
             basePath: "/admin/dashboard/analytics/sales",
-            permissions: ["read-dashboard"],
+            permissions: ["read-admin-dashboard"],
           },
           {
             label: "User Activity",
             basePath: "/admin/dashboard/analytics/users",
-            permissions: ["read-dashboard"],
+            permissions: ["read-admin-dashboard"],
           },
         ],
       },
       {
         label: "Settings",
         basePath: "/admin/dashboard/settings",
-        permissions: ["read-dashboard"],
+        permissions: ["read-admin-dashboard"],
       },
     ],
   },

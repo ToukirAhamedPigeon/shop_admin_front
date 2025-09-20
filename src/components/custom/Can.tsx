@@ -11,8 +11,9 @@ interface CanProps {
 export const Can = ({ allOf = [], anyOf = [], children }: CanProps) => {
   // Get user permissions from auth slice
   const permissions: string[] = useSelector(
-    (state: RootState) => state.auth.user?.Permissions || []
+    (state: RootState) => state.auth.user?.permissions || []
   );
+
 
   // Check if all required permissions (allOf) are included
   const all = allOf.every(p => permissions.includes(p));
