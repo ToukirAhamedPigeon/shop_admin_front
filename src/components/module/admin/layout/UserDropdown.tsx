@@ -29,7 +29,7 @@ export default function UserDropdown() {
       <DropdownMenuTrigger asChild className="cursor-pointer">
         <div className="flex items-center gap-2">
           <Avatar className="cursor-pointer">
-            <AvatarImage src={user.image || "/policeman.png"} alt={user.name} />
+            <AvatarImage src={user.image || "/human.png"} alt={user.name} />
             <AvatarFallback>{user.name?.charAt(0) ?? "?"}</AvatarFallback>
           </Avatar>
           <h3 className="hidden lg:block text-white">
@@ -47,7 +47,7 @@ export default function UserDropdown() {
         {/* Top Section */}
         <div className="flex flex-col items-center text-center gap-1 px-2 py-3">
           <Avatar className="w-14 h-14 mb-2">
-            <AvatarImage src={user.image || "/policeman.png"} alt={user.name} />
+            <AvatarImage src={user.image || "/human.png"} alt={user.name} />
             <AvatarFallback>{user.name?.charAt(0) ?? "?"}</AvatarFallback>
           </Avatar>
           <div className="font-medium">{user.name}</div>
@@ -62,8 +62,11 @@ export default function UserDropdown() {
         <DropdownMenuSeparator />
 
         {/* Footer - Logout */}
-        <DropdownMenuItem className="text-red-500 font-medium">
-          <LogoutButton/>
+        <DropdownMenuItem
+          className="text-red-500 font-medium"
+          onSelect={(e) => e.preventDefault()} // stop auto-close
+        >
+          <LogoutButton />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
