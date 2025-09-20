@@ -15,7 +15,7 @@ export default function Logo({ isTitle, className, titleClassName }: LogoProps) 
       </div>
       {isTitle && (
         <span className={cn("text-lg font-semibold", titleClassName)}>
-          Duty Hub
+          Shop Admin
         </span>
       )}
     </Link>

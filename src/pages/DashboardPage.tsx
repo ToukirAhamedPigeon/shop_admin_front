@@ -7,7 +7,7 @@ export default function DashboardPage() {
     <AdminLayout>
     <div className='flex flex-col gap-4'>
       <Breadcrumb
-          title="Dashboard"
+          title="common.dashboard.title"
           showTitle={true}
           items={[
           ]}

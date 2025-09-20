@@ -6,7 +6,7 @@ export default function Dashboard() {
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   const csrfToken = useSelector((state: RootState) => state.auth.csrfToken);
   return (
-    <div className="w-full p-0 mt-[-20px] bg-gradient-to-br from-white-100 via-sky-100 to-orange-100 space-y-8 rounded-3xl">
+    <div className="w-full p-0  bg-gradient-to-br from-white-100 via-sky-100 to-orange-100 space-y-8 rounded-3xl">
        <h2 className="text-2xl font-bold mb-4">Welcome to Dashboard</h2>
         <p className="text-gray-700 dark:text-gray-300">Use this space for admin statistics, charts, etc.</p>
         <div className="mt-6">

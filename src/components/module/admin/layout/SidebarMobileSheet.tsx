@@ -5,6 +5,7 @@ import { useState } from 'react'
 import Logo from './Logo'
 import Nav from './Nav'
 import LanguageSwitcher from '@/components/custom/LanguageSwitcher'
+import { ThemeToggleButton } from '@/components/custom/ThemeToggleButton'
 
 export default function SidebarMobileSheet() {
   const [open, setOpen] = useState(false)
@@ -28,8 +29,9 @@ export default function SidebarMobileSheet() {
           </SheetClose>
         </SheetHeader>
         <div className="p-4">
-          <div className='flex flex-row justify-between'>
+          <div className='flex flex-row justify-start items-center'>
             <LanguageSwitcher/>
+            <ThemeToggleButton/>
           </div>
           <Nav onLinkClick={() => setOpen(false)}/>
         </div>

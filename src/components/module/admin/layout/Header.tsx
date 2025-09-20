@@ -6,6 +6,7 @@ import { toggleSidebar } from '@/redux/slices/sidebarSlice';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/custom/LanguageSwitcher';
+import { ThemeToggleButton } from '@/components/custom/ThemeToggleButton';
 
 
 export default function Header(){
@@ -29,8 +30,9 @@ export default function Header(){
                   <ToggleSidebarButton />
                   
                 </div>
-                <div className="hidden lg:flex items-center gap-2 lg:justify-between w-60">
+                <div className="hidden lg:flex items-center gap-2 lg:justify-start w-60">
                   <LanguageSwitcher/>
+                  <ThemeToggleButton/>
                 </div>
             </div>
             <Logo isTitle={false} className="lg:hidden py-4" />

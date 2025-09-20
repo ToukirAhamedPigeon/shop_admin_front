@@ -1,13 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ========== Variants ========== */
 @custom-variant dark (&:is(.dark *));
 
+/* ========== Tailwind Theme Inline ========== */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -16,11 +19,13 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -37,81 +42,103 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ========== Light Theme ========== */
 :root {
   --radius: 0.625rem;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+
+  /* Updated Primary: rich magenta-pink (stands out, not black/white) */
+  --primary: oklch(0.6 0.25 340);
   --primary-foreground: oklch(0.985 0 0);
+
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
+
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
+
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
+
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* ========== Dark Theme ========== */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
+
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+
+  --primary: oklch(0.7 0.25 340); /* brighter magenta for dark mode */
+  --primary-foreground: oklch(0.985 0 0);
+
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
+
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
+
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
+
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ========== Base Layer ========== */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -121,184 +148,51 @@
   }
 
   .right-deep-shadow {
-    box-shadow: 8px 0 10px -5px rgba(0, 0, 0, 0.6); /* Right-side strong shadow */
+    box-shadow: 8px 0 10px -5px rgba(0, 0, 0, 0.6);
   }
   .sheet-close {
     display: none !important;
   }
 
-
+  /* Gradients */
   .main-gradient {
-    /* background: linear-gradient(to right, #ff758c, #ff7eb3); */
-    /* background: linear-gradient(to right, #a18cd1, #fbc2eb); */
-    /* background: linear-gradient(to right, #43e97b, #38f9d7); */
     background: linear-gradient(to right, #141e30, #243b55);
-    /* background: linear-gradient(to right, #f7971e, #ffd200); */
-    /* background: linear-gradient(to right, #667eea, #764ba2); */
-    /* background: linear-gradient(to right, #2ebf91, #8360c3); */
-    /* background: linear-gradient(to right, #13547a, #80d0c7); */
-    /* background: linear-gradient(to right, #ff9a9e, #fad0c4); */
-    /* background: linear-gradient(to right, #43cea2, #185a9d); */
-    /* background: linear-gradient(to right, #ff6a00, #ee0979); */
-    /* background: linear-gradient(to right, #c2e9fb, #a1c4fd); */
-    /* background: linear-gradient(to right, #3a1c71, #d76d77, #ffaf7b); */
-    /* background: linear-gradient(to right, #4e54c8, #8f94fb); */
-    /* background: linear-gradient(to right, #4e54c8, #8f94fb); */
-    /* background: linear-gradient(to right, #fcb045, #fd1d1d, #833ab4); */
-    /* background: linear-gradient(to right, #1f4037, #99f2c8); */
   }
-
   .success-gradient {
     background: linear-gradient(to right, #0f9b8e, #007965);
   }
-
-  .border-input{
-    @apply border border-gray-600 rounded-md focus:ring focus:ring-blue-300 focus:border-blue-300;
-  }
-
   .warning-gradient {
     background: linear-gradient(to right, #d97706, #b45309);
   }
-
   .main-link-gradient {
-    /* background: linear-gradient(to right, #ff758c, #ff7eb3); */
-    /* background: linear-gradient(to right, #a18cd1, #fbc2eb); */
-    /* background: linear-gradient(to right, #43e97b, #38f9d7); */
-    /* background: linear-gradient(to right, #141e30, #243b55); */
-    /* background: linear-gradient(to right, #f7971e, #ffd200); */
-    /* background: linear-gradient(to right, #667eea, #764ba2); */
-    /* background: linear-gradient(to right, #2ebf91, #8360c3); */
-    /* background: linear-gradient(to right, #13547a, #80d0c7); */
-    /* background: linear-gradient(to right, #ff9a9e, #fad0c4); */
-    /* background: linear-gradient(to right, #43cea2, #185a9d); */
-    /* background: linear-gradient(to right, #ff6a00, #ee0979); */
-    /* background: linear-gradient(to right, #c2e9fb, #a1c4fd); */
-    /* background: linear-gradient(to right, #3a1c71, #d76d77, #ffaf7b); */
-    /* background: linear-gradient(to right, #4e54c8, #8f94fb); */
-    /* background: linear-gradient(to right, #4e54c8, #8f94fb); */
-    /* background: linear-gradient(to right, #fcb045, #fd1d1d, #833ab4); */
-    /* background: linear-gradient(to right, #1f4037, #99f2c8); */
-    /* 1. Midnight Indigo */
-    /* background: linear-gradient(to right, #232526, #414345); */
-
-    /* 2. Rich Plum & Royal Blue */
-    /* background: linear-gradient(to right, #4b134f, #1d2671); */
-
-    /* 3. Forest & Emerald */
-    /* background: linear-gradient(to right, #0f2027, #203a43, #2c5364); */
-
-    /* 4. Deep Sunset Flame */
-    /* background: linear-gradient(to right, #ff416c, #ff4b2b); */
-
-    /* 5. Crimson to Jet */
-    /* background: linear-gradient(to right, #61045f, #aa076b); */
-
-    /* 6. Sapphire Steel */
-    /* background: linear-gradient(to right, #1e3c72, #2a5298); */
-
-    /* 7. Ocean Abyss */
-    /* background: linear-gradient(to right, #000046, #1cb5e0); */
-
-    /* 8. Coffee & Charcoal */
-    /* background: linear-gradient(to right, #3c1053, #ad5389); */
-
-    /* 9. Bronze Luxe */
-    /* background: linear-gradient(to right, #6441a5, #2a0845); */
-
-    /* 10. Midnight Grass */
-    /* background: linear-gradient(to right, #16222a, #3a6073); */
-    /* 1. Soft Indigo Mist */
-    /* background: linear-gradient(to right, #b2bec3, #dfe6e9); */
-
-    /* 2. Lavender Sky */
-    /* background: linear-gradient(to right, #c471ed, #f64f59); */
-
-    /* 3. Soft Forest Breeze */
-    /* background: linear-gradient(to right, #a8edea, #fed6e3); */
-
-    /* 4. Warm Coral Fade */
-    /* background: linear-gradient(to right, #ff9a8b, #ff6a88); */
-
-    /* 5. Rose & Mauve Fog */
-    /* background: linear-gradient(to right, #fbc2eb, #a6c1ee); */
-
-    /* 6. Calm Sapphire Glow */
-    /* background: linear-gradient(to right, #89f7fe, #66a6ff); */
-
-    /* 7. Light Ocean Spray */
-    /* background: linear-gradient(to right, #a1c4fd, #c2e9fb); */
-
-    /* 8. Dusty Mauve & Lilac */
-    /* background: linear-gradient(to right, #d9a7c7, #fffcdc); */
-
-    /* 9. Soft Copper Shine */
-    /* background: linear-gradient(to right, #f6d365, #fda085); */
-
-    /* 10. Fresh Meadow Haze */
-    /* background: linear-gradient(to right, #d4fc79, #96e6a1); */
-
-    /* 1. Indigo Shades */
-      /* background: linear-gradient(to left, #a0a0ff, #5c5cff); */
-      /* Tailwind: bg-gradient-to-r from-[#dcdcff] via-[#a0a0ff] to-[#5c5cff] */
-
-      /* 2. Peach Shades */
-      /* background: linear-gradient(to left, #fcbf99, #f77f00); */
-      /* Tailwind: bg-gradient-to-r from-[#ffe5d9] via-[#fcbf99] to-[#f77f00] */
-
-      /* 3. Mint Green Shades */
-      /* background: linear-gradient(to left, #a4f6c0, #56c596); */
-      /* Tailwind: bg-gradient-to-r from-[#d3f8e2] via-[#a4f6c0] to-[#56c596] */
-
-      /* 4. Lavender Shades */
-      /* background: linear-gradient(to left, #d5bfff, #a98dff); */
-      /* Tailwind: bg-gradient-to-r from-[#f3e8ff] via-[#d5bfff] to-[#a98dff] */
-
-      /* 5. Sky Blue Shades */
-      /* background: linear-gradient(to left, #39c2f8, #1795e9); */
-      background: linear-gradient(to left, #fc39b4, #b80175);
-      /* Tailwind: bg-gradient-to-r from-[#e0f7ff] via-[#90dffe] to-[#38a3eb] */
-
-      /* 6. Soft Pink Shades */
-      /* background: linear-gradient(to left, #ffb3cc, #ff7aa2); */
-      /* Tailwind: bg-gradient-to-r from-[#ffe0f0] via-[#ffb3cc] to-[#ff7aa2] */
-
-      /* 7. Golden Yellow Shades */
-      /* background: linear-gradient(to left, #ffe066, #f8c102); */
-      /* Tailwind: bg-gradient-to-r from-[#fff3c4] via-[#ffe066] to-[#f8c102] */
-
-      /* 8. Teal Shades */
-      /* background: linear-gradient(to left, #5eead4, #14b8a6); */
-      /* Tailwind: bg-gradient-to-r from-[#ccfbf1] via-[#5eead4] to-[#14b8a6] */
-
-      /* 9. Gray Neutral Shades */
-      /* background: linear-gradient(to left, #d1d5db, #6b7280); */
-      /* Tailwind: bg-gradient-to-r from-[#f3f4f6] via-[#d1d5db] to-[#6b7280] */
-
-      /* 10. Purple Shades */
-      /* background: linear-gradient(to left, #ce93d8, #8e24aa); */
-      /* Tailwind: bg-gradient-to-r from-[#f3e5f5] via-[#ce93d8] to-[#8e24aa] */
-
+    background: linear-gradient(to left, #fc39b4, #b80175);
   }
 
-  .secondary-link-gradient{
+  .secondary-link-gradient {
     @apply relative bg-cover bg-center bg-no-repeat;
-    background-image: 
+    background-image:
       linear-gradient(to top right, rgba(252, 57, 180, 0.85), rgba(184, 1, 117, 0.85)),
-      url('/full-load-bg.jpg'); /* Replace with actual image path */
+      url('/full-load-bg.jpg');
     background-blend-mode: multiply;
   }
+
   .secondary-gradient {
     @apply relative bg-cover bg-center bg-no-repeat;
-    background-image: 
-      linear-gradient(to top right, rgba(0, 0, 0, 0.7), rgba(30, 41, 59, 0.7)), /* Dark overlay */
-      url('/sidebar-bg.jpg'); /* Your background image */
-    background-blend-mode:multiply;
+    background-image:
+      linear-gradient(to top right, rgba(0, 0, 0, 0.7), rgba(30, 41, 59, 0.7)),
+      url('/sidebar-bg.jpg');
+    background-blend-mode: multiply;
   }
-  /* nprogress.css */
+
+  /* Input Border */
+  .border-input {
+    @apply border border-gray-600 rounded-md focus:ring focus:ring-blue-300 focus:border-blue-300;
+  }
+
+  /* NProgress */
   #nprogress {
     pointer-events: none;
   }
-
   #nprogress .bar {
     position: fixed;
     z-index: 9999;
@@ -308,15 +202,13 @@
     height: 4px;
   }
 
-  /* Chrome, Safari, Edge, Opera */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Firefox */
-input[type="number"] {
-  -moz-appearance: textfield;
-}
+  /* Number Input Cleanup */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 }

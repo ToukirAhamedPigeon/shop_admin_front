@@ -10,10 +10,10 @@ export function ThemeToggleButton() {
   return (
     <button
       onClick={() => dispatch(toggleTheme())}
-      className="cursor-pointer p-2 rounded-full bg-gray-200 dark:bg-gray-800 text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700 transition"
+      className="cursor-pointer p-1 rounded-full bg-white dark:bg-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition max-h-6"
       aria-label="Toggle Dark Mode"
     >
-      {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+      {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
     </button>
   )
 }
