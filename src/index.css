@@ -184,6 +184,14 @@
     background-blend-mode: multiply;
   }
 
+  .secondary-gradient-dark {
+    @apply relative bg-cover bg-center bg-no-repeat;
+    background-image:
+      linear-gradient(to top right, rgba(0, 0, 0, 0.7), rgba(30, 41, 59, 0.7)),
+      url('/sidebar-bg-dark.jpg');
+    background-blend-mode: multiply;
+  }
+
   /* Input Border */
   .border-input {
     @apply border border-gray-600 rounded-md focus:ring focus:ring-blue-300 focus:border-blue-300;

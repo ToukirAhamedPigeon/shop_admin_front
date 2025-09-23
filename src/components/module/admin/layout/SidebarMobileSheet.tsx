@@ -6,9 +6,12 @@ import Logo from './Logo'
 import Nav from './Nav'
 import LanguageSwitcher from '@/components/custom/LanguageSwitcher'
 import { ThemeToggleButton } from '@/components/custom/ThemeToggleButton'
+import { useAppSelector } from '@/hooks/useRedux'
+import { cn } from '@/lib/utils'
 
 export default function SidebarMobileSheet() {
   const [open, setOpen] = useState(false)
+  const { current: theme } = useAppSelector((state) => state.theme)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -17,7 +20,13 @@ export default function SidebarMobileSheet() {
           <Menu className="h-6 w-6" />
         </button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 secondary-gradient [&>button.sheet-close span]:hidden">
+      <SheetContent
+        side="left"
+        className={cn(
+          "p-0 [&>button.sheet-close span]:hidden",
+          theme === "dark" ? "secondary-gradient-dark" : "secondary-gradient"
+        )}
+      >
         <SheetHeader className="flex items-start justify-center main-gradient py-2 px-4">
           <SheetTitle>
             <Logo isTitle={true} className="" titleClassName="text-white" />

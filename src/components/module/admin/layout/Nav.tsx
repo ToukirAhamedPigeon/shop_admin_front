@@ -1,4 +1,3 @@
-// src/components/layout/Nav.tsx
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -6,8 +5,6 @@ import {
   ChevronUp,
   ChevronDown,
   LayoutDashboard,
-  // ChartBar,
-  // Settings,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
@@ -21,43 +18,13 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-// ==========================
-// Menu Structure (Multilevel)
-// ==========================
+// Menu Structure
 const menuItems: MenuItem[] = [
   {
     label: "common.dashboard.title",
     icon: <LayoutDashboard size={22} className="mr-2" />,
     basePath: "/dashboard",
     permissions: ["read-admin-dashboard"],
-    // children: [
-    //   {
-    //     label: "Analytics",
-    //     icon: <ChartBar size={22} className="mr-2" />,
-    //     basePath: "/admin/dashboard/analytics",
-    //     permissions: ["read-admin-dashboard"],
-    //     children: [
-    //       {
-    //         label: "Sales Report",
-    //         icon: <ChartBar size={22} className="mr-2" />,
-    //         basePath: "/admin/dashboard/analytics/sales",
-    //         permissions: ["read-admin-dashboard"],
-    //       },
-    //       {
-    //         label: "User Activity",
-    //         icon: <ChartBar size={22} className="mr-2" />,
-    //         basePath: "/admin/dashboard/analytics/users",
-    //         permissions: ["read-admin-dashboard"],
-    //       },
-    //     ],
-    //   },
-    //   {
-    //     label: "Settings",
-    //     icon: <Settings size={22} className="mr-2" />,
-    //     basePath: "/admin/dashboard/settings",
-    //     permissions: ["read-admin-dashboard"],
-    //   },
-    // ],
   },
 ];
 
@@ -76,15 +43,15 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
     location.pathname.startsWith(basePath);
   const isActiveSubmenu = (path: string) => location.pathname === path;
 
-  // ✅ Define text colors per level (only for menus/submenus)
+  // Dark/light text colors per level
   const getLevelClasses = (level: number) => {
     switch (level) {
       case 0:
-        return "text-gray-200"; // top-level menu
+        return "text-gray-200 dark:text-gray-100";
       case 1:
-        return "text-gray-300"; // submenu
+        return "text-gray-300 dark:text-gray-200";
       default:
-        return "text-gray-400"; // deeper submenu
+        return "text-gray-400 dark:text-gray-300";
     }
   };
 
@@ -97,14 +64,13 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
         return (
           <Can anyOf={permissions} key={label}>
             <div>
-              {/* ========== Parent menu with children ========== */}
               {children && children.length > 0 ? (
                 <button
                   className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all rounded cursor-pointer
                     ${
                       alwaysOpen
-                        ? "bg-primary/60 text-gray-100 font-semibold"
-                        : `${getLevelClasses(level)} hover:bg-white/10`
+                        ? "bg-primary/60 text-gray-100 dark:text-gray-50 font-semibold"
+                        : `${getLevelClasses(level)} hover:bg-white/10 dark:hover:bg-gray-700/30`
                     }`}
                   onClick={() => toggleMenu(label)}
                 >
@@ -122,15 +88,14 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
                   </span>
                 </button>
               ) : (
-                /* ========== Leaf menu (link → brighter text) ========== */
                 <Link
                   to={basePath}
                   onClick={onLinkClick}
                   className={`block px-4 py-2 text-sm rounded transition-all pl-6 border-l-2 cursor-pointer
                     ${
                       isActiveSubmenu(basePath)
-                        ? "bg-primary/60 text-gray-50 font-semibold border-primary"
-                        : "text-gray-50 hover:bg-white/10 border-transparent" // brighter text for links
+                        ? "bg-primary/60 text-gray-50 dark:text-gray-50 font-semibold border-primary"
+                        : "text-gray-50 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-gray-700/30 border-transparent"
                     }`}
                 >
                   <span className="flex items-center gap-2 cursor-pointer">
@@ -140,7 +105,6 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
                 </Link>
               )}
 
-              {/* Animate children */}
               <AnimatePresence initial={false}>
                 {isOpen && children && children.length > 0 && (
                   <motion.div
