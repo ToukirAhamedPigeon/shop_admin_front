@@ -31,7 +31,9 @@ export default function UserDropdown() {
             <AvatarImage src={user.image || "/human.png"} alt={user.name} />
             <AvatarFallback>{user.name?.charAt(0) ?? "?"}</AvatarFallback>
           </Avatar>
-          <h3 className="hidden lg:block text-white">{user.name?.split(" ")[0] ?? ""}</h3>
+          <h3 className="hidden lg:block text-white font-medium">
+            {user.name?.split(" ")[0] ?? ""}
+          </h3>
           {isOpen ? (
             <ChevronUp className="w-4 h-4 text-white" />
           ) : (
@@ -40,13 +42,17 @@ export default function UserDropdown() {
         </div>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-64 p-2 space-y-2 
-        bg-[radial-gradient(circle_at_bottom_left,_#FFFFFF,_#faf6e2)] 
-        dark:bg-[radial-gradient(circle_at_bottom_left,_#1b2a3f,_#0f1a2a)] 
-        border border-gray-200 dark:border-gray-700
-        shadow-lg dark:shadow-black/40
-        rounded-lg
-      ">
+      <DropdownMenuContent
+        className="
+          w-64 p-2 space-y-2
+          bg-[radial-gradient(circle_at_bottom_left,_#FFFFFF,_#faf6e2)]
+          dark:bg-[radial-gradient(circle_at_bottom_left,_#1b2a3f,_#0f1a2a)]
+          border border-gray-200 dark:border-gray-700
+          shadow-lg dark:shadow-black/40
+          rounded-lg
+          transition-colors duration-300
+        "
+      >
         {/* Top Section */}
         <div className="flex flex-col items-center text-center gap-1 px-2 py-3">
           <Avatar className="w-14 h-14 mb-2">
@@ -65,10 +71,7 @@ export default function UserDropdown() {
         <DropdownMenuSeparator className="border-gray-300 dark:border-gray-600" />
 
         {/* Footer - Logout */}
-        <DropdownMenuItem
-          className="text-red-500 font-medium hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-          onSelect={(e) => e.preventDefault()}
-        >
+        <DropdownMenuItem className="w-full px-0">
           <LogoutButton />
         </DropdownMenuItem>
       </DropdownMenuContent>
