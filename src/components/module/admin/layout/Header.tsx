@@ -1,7 +1,7 @@
 import Logo from './Logo';
 import UserDropdown from './UserDropdown';
 import SidebarMobileSheet from './SidebarMobileSheet';
-import { useAppDispatch } from '@/hooks/useRedux';
+import { useAppDispatch,useAppSelector } from '@/hooks/useRedux';
 import { toggleSidebar } from '@/redux/slices/sidebarSlice';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,13 +11,26 @@ import { ThemeToggleButton } from '@/components/custom/ThemeToggleButton';
 export default function Header() {
   function ToggleSidebarButton() {
     const dispatch = useAppDispatch();
+    const isVisible = useAppSelector((state) => state.sidebar.isVisible)
     const toggleCollapse = () => {
       dispatch(toggleSidebar());
     };
     return (
-      <Button variant="link" onClick={toggleCollapse}>
-        <Menu className="h-6 w-6 text-white dark:text-gray-200 transition-colors" />
-      </Button>
+      <Button
+      variant="link"
+      onClick={toggleCollapse}
+      className={`rounded-full transition-colors ${
+        !isVisible
+          ? " !p-2 !h-8 bg-white hover:bg-gray-100"
+          : "!p-2 !h-8 bg-transparent hover:bg-white/10"
+      }`}
+    >
+      <Menu
+        className={`h-5 w-5 transition-colors ${
+          !isVisible ? "text-gray-800" : "text-white dark:text-gray-200"
+        }`}
+      />
+    </Button>
     );
   }
 
