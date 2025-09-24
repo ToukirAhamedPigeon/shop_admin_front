@@ -18,7 +18,7 @@ export default function Logo({ isTitle, className, titleClassName }: LogoProps) 
       {isTitle && (
         <span
           className={cn(
-            "text-lg font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-300",
+            "text-lg font-semibold text-gray-100 transition-colors duration-300",
             titleClassName
           )}
         >

@@ -71,7 +71,7 @@ export default function UserDropdown() {
         <DropdownMenuSeparator className="border-gray-300 dark:border-gray-600" />
 
         {/* Footer - Logout */}
-        <DropdownMenuItem className="w-full px-0">
+        <DropdownMenuItem className="w-full px-0" onSelect={(e) => e.preventDefault()}>
           <LogoutButton />
         </DropdownMenuItem>
       </DropdownMenuContent>

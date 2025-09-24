@@ -29,7 +29,7 @@ export default function Header() {
 
         {/* Logo + Toggle (desktop) */}
         <div className="hidden lg:flex items-center gap-2 lg:justify-between w-60">
-          <Logo isTitle titleClassName="text-gray-800 dark:text-gray-100" />
+          <Logo isTitle titleClassName="" />
           <ToggleSidebarButton />
         </div>
 
