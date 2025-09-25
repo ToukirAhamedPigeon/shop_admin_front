@@ -14,7 +14,12 @@ import {
 } from "@/components/ui/dialog";
 import { useTranslations } from "@/hooks/useTranslations";
 
-import { logoutUser, logoutUserAll, logoutUserOther } from "@/redux/slices/authSlice";
+import {
+  logoutUser,
+  logoutUserAll,
+  logoutUserOther,
+} from "@/redux/slices/authSlice";
+import { showLoader } from "@/redux/slices/loaderSlice"; // ⬅️ import
 import type { AppDispatch } from "@/redux/store";
 
 const LogoutButton: React.FC = () => {
@@ -23,23 +28,37 @@ const LogoutButton: React.FC = () => {
   const { t } = useTranslations();
   const [open, setOpen] = useState(false);
 
-  const handleLogout = () => {
-    dispatch(logoutUser());
+  const triggerLoaderAndNavigate = (action: () => void, slogan: string) => {
+    // 1. Show loader before doing anything
+    dispatch(
+      showLoader({
+        showLogo: true,
+        showAppName: true,
+        slogan,
+      })
+    );
+
+    // 2. Run logout action
+    action();
+
+    // 3. Redirect to login
     navigate("/login", { replace: true });
+
+    // 4. Close dialog
     setOpen(false);
   };
 
-  const handleLogoutAll = () => {
-    dispatch(logoutUserAll());
-    navigate("/login", { replace: true });
-    setOpen(false);
-  };
+  const handleLogout = () =>
+    triggerLoaderAndNavigate(() => dispatch(logoutUser()), t("common.loggingOut", "Logging out..."));
 
-  const handleLogoutOther = () => {
-    dispatch(logoutUserOther());
-    alert(t("common.logoutOtherSuccess", "Logged out from other devices"));
-    setOpen(false);
-  };
+  const handleLogoutAll = () =>
+    triggerLoaderAndNavigate(() => dispatch(logoutUserAll()), t("common.loggingOutAll", "Logging out from all devices..."));
+
+  const handleLogoutOther = () =>
+    triggerLoaderAndNavigate(() => {
+      dispatch(logoutUserOther());
+      alert(t("common.logoutOtherSuccess", "Logged out from other devices"));
+    }, t("common.loggingOutOther", "Logging out from other devices..."));
 
   return (
     <>
@@ -63,25 +82,13 @@ const LogoutButton: React.FC = () => {
           </DialogHeader>
 
           <div className="flex flex-col gap-3 py-4">
-            <Button
-              variant="destructive"
-              onClick={handleLogout}
-              className="w-full"
-            >
+            <Button variant="destructive" onClick={handleLogout} className="w-full">
               {t("common.logout", "Logout")}
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleLogoutAll}
-              className="w-full"
-            >
+            <Button variant="destructive" onClick={handleLogoutAll} className="w-full">
               {t("common.logoutAll", "Logout from All Devices")}
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleLogoutOther}
-              className="w-full"
-            >
+            <Button variant="destructive" onClick={handleLogoutOther} className="w-full">
               {t("common.logoutOther", "Logout from Other Devices")}
             </Button>
           </div>

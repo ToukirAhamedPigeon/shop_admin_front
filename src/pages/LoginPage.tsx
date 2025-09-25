@@ -15,6 +15,7 @@ import { PasswordInput } from "@/components/custom/FormInputs";
 import { motion } from "framer-motion";
 import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
 import { ThemeToggleButton } from "@/components/custom/ThemeToggleButton";
+import { showLoader } from "@/redux/slices/loaderSlice";
 
 // Schema
 const loginSchema = z.object({
@@ -48,6 +49,13 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     const result = await dispatch(loginUser(data));
     if (result.meta.requestStatus === "fulfilled") {
+      dispatch(
+        showLoader({
+          showLogo: true,
+          showAppName: true,
+          slogan: "Welcome back! Preparing your dashboard...",
+        })
+      );
       navigate("/dashboard");
     }
   };

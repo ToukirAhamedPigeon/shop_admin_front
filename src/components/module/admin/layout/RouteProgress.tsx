@@ -7,21 +7,23 @@ import 'nprogress/nprogress.css'
 import { useAppSelector } from '@/hooks/useRedux'
 
 interface RouteProgressProps {
-  color?: string // Tailwind or HEX color for light mode
-  darkColor?: string // HEX or Tailwind color for dark mode
+  color?: string
+  darkColor?: string
+  delay?: number // optional delay for smoother effect
 }
 
 export default function RouteProgress({
-  color = '#3b82f6',      // default light blue
-  darkColor = '#60a5fa',  // default slightly brighter for dark
+  color = '#3b82f6',     // default for light mode
+  darkColor = '#ffffff', // white for dark mode
+  delay = 200,
 }: RouteProgressProps) {
   const location = useLocation()
   const { current: theme } = useAppSelector((state) => state.theme)
 
   useEffect(() => {
-    // Dynamically inject style for bar color
     const styleTagId = 'nprogress-custom-style'
     let styleTag = document.getElementById(styleTagId) as HTMLStyleElement | null
+
     if (!styleTag) {
       styleTag = document.createElement('style')
       styleTag.id = styleTagId
@@ -36,17 +38,23 @@ export default function RouteProgress({
       #nprogress .peg {
         box-shadow: 0 0 10px ${barColor}, 0 0 5px ${barColor} !important;
       }
+      #nprogress .spinner-icon {
+        border-top-color: ${barColor} !important;
+        border-left-color: ${barColor} !important;
+      }
     `
 
+    // Start progress on route change
     nprogress.start()
+
     const timeout = setTimeout(() => {
       nprogress.done()
-    }, 300)
+    }, delay)
 
     return () => {
       clearTimeout(timeout)
     }
-  }, [location, color, darkColor, theme])
+  }, [location, theme, color, darkColor, delay])
 
   return null
 }

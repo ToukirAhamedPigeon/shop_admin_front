@@ -22,7 +22,7 @@ export default function Header() {
       className={`rounded-full transition-colors ${
         !isVisible
           ? " !p-2 !h-8 bg-white hover:bg-gray-100"
-          : "!p-2 !h-8 bg-transparent hover:bg-white/10"
+          : " !p-2 !h-8 bg-transparent hover:bg-white/10"
       }`}
     >
       <Menu
