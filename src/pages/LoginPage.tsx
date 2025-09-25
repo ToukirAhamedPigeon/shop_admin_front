@@ -73,7 +73,7 @@ export default function LoginPage() {
     >
       {/* Language Switcher & Dark Toggle Top Right */}
       <motion.div
-        className="absolute top-4 right-4 z-20 flex items-center gap-3"
+        className="absolute top-4 right-10 z-20 flex items-center gap-3"
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1, duration: 0.6 }}
