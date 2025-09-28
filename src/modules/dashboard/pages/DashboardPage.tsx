@@ -1,6 +1,6 @@
-import AdminLayout from "../layouts/AdminLayout";
+import AdminLayout from "@/layouts/AdminLayout";
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb'
-import Dashboard from '@/components/module/admin/Dashboard';
+import Dashboard from './../components/Dashboard';
 
 export default function DashboardPage() {
   return (

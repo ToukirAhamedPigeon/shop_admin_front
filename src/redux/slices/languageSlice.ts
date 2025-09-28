@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
-import api from "@/lib/axios";
+import { fetchTranslationsApi} from "@/modules/settings/languages/api";
+import type { TranslationMap, FetchTranslationsPayload } from "@/modules/settings/languages/types";
 
 interface TranslationState {
   currentLang: string;
-  translations: Record<string, string>;
+  translations: TranslationMap;
   loading: boolean;
   error: string | null;
 }
@@ -14,21 +15,18 @@ const DEFAULT_LANG = "en";
 // Async Thunks
 // =========================
 export const fetchTranslations = createAsyncThunk<
-  Record<string, string>,      // only inner translations
-  { lang: string; forceFetch?: boolean },  // now an object
+  TranslationMap,
+  FetchTranslationsPayload,
   { rejectValue: string }
 >(
   "language/fetchTranslations",
   async ({ lang, forceFetch = false }, { rejectWithValue }) => {
     try {
-      const response = await api.get(
-        `/translations/get?lang=${lang}&forceFetch=${forceFetch}`
-      );
-      return response.data.translations as Record<string, string>;
+      const translations = await fetchTranslationsApi({ lang, forceFetch });
+      if (!translations) return rejectWithValue("No translations found");
+      return translations;
     } catch (err: any) {
-      return rejectWithValue(
-        err.response?.data?.message || "Failed to fetch translations"
-      );
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch translations");
     }
   }
 );

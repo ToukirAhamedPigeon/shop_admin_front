@@ -1,3 +1,5 @@
+import { fetchCsrfTokenApi } from "@/modules/auth/api";
+import { RefreshApi } from "@/routes/api";
 import axios from "axios";
 import Cookies from "js-cookie";
 
@@ -22,8 +24,8 @@ const api = axios.create({
 // ===== CSRF INIT FUNCTION =====
 export const initCsrf = async () => {
   try {
-    const response = await api.get("/csrf/token");
-    const token = response.data?.csrfToken || Cookies.get("XSRF-TOKEN") || null;
+    const response = await fetchCsrfTokenApi();
+    const token = response.csrfToken || Cookies.get("XSRF-TOKEN") || null;
 
     if (token) {
       setCsrfTokenGetter(() => token);
@@ -101,7 +103,7 @@ api.interceptors.response.use(
         if (csrfToken) headers["X-CSRF-TOKEN"] = csrfToken;
 
         const response = await axios.post(
-          import.meta.env.VITE_API_BASE_URL + "/api/auth/refresh",
+          import.meta.env.VITE_API_BASE_URL + "/api"+RefreshApi.url,
           {},
           { withCredentials: true, headers }
         );

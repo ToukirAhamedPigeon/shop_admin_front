@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import LogoutButton from "@/components/custom/LogoutButton";
+import LogoutButton from "@/modules/auth/components/LogoutButton";
 import { useState } from "react";
 import { useAppSelector } from "@/hooks/useRedux";
 import { capitalize } from "@/lib/helpers";

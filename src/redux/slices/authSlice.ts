@@ -1,28 +1,11 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import api from "@/lib/axios";
+import type {User, LoginResponse, RefreshResponse} from "@/modules/auth/types"
+import {fetchCsrfTokenApi, loginApi, refreshApi, logoutApi, logoutAllApi, logoutOthersApi} from "@/modules/auth/api"
 
 // =========================
 // User & API Response Types
 // =========================
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  roles?: string[];
-  [key: string]: any;
-}
-
-interface LoginResponse {
-  user: User;
-  accessToken: string;
-  refreshTokenExpiry: string;
-}
-
-interface RefreshResponse {
-  user?: User;
-  accessToken: string;
-  refreshTokenExpiry: string;
-}
 
 // =========================
 // Auth State Interface
@@ -54,11 +37,14 @@ export const fetchCsrfToken = createAsyncThunk<string>(
   "auth/fetchCsrfToken",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/csrf/token", { withCredentials: true });
-      const token = response.data?.csrfToken || null;
+      const response = await fetchCsrfTokenApi();
+      const token = response?.csrfToken || null;
+      
+      if (!token) {
+        return rejectWithValue("Failed to fetch CSRF token");
+      }
 
       if (token) api.defaults.headers.common["X-CSRF-TOKEN"] = token;
-
       return token;
     } catch {
       return rejectWithValue("Failed to fetch CSRF token");
@@ -71,12 +57,9 @@ export const loginUser = createAsyncThunk<LoginResponse, { identifier: string; p
   "auth/loginUser",
   async (credentials, { rejectWithValue, dispatch }) => {
     try {
-      const response = await api.post("/auth/login", credentials, { withCredentials: true });
-
-      // Fetch fresh CSRF token after login
+      const response = await loginApi(credentials);
       await dispatch(fetchCsrfToken());
-
-      return response.data as LoginResponse;
+      return response;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Login failed");
     }
@@ -89,36 +72,28 @@ export const refreshAccessToken = createAsyncThunk<RefreshResponse>(
   async (_, { rejectWithValue, dispatch, getState }) => {
     try {
       const state = getState() as { auth: AuthState };
+      if (state.auth.isLoggedOut) throw new Error("User logged out, skip refresh");
 
-      if (state.auth.isLoggedOut) {
-        throw new Error("User logged out, skip refresh");
-      }
-
-      // ✅ Check refreshTokenExpiry in localStorage
       const expiry = localStorage.getItem("refreshTokenExpiry");
       if (!expiry) {
-        // no expiry stored → treat as logged out
         dispatch(logout());
         return rejectWithValue("No refresh token expiry found");
       }
 
       const expiryDate = new Date(expiry);
       if (isNaN(expiryDate.getTime()) || expiryDate <= new Date()) {
-        // expired or invalid date → logout
         dispatch(logout());
         return rejectWithValue("Refresh token expired");
       }
 
-      // Ensure CSRF token exists
       if (!state.auth.csrfToken) {
         await dispatch(fetchCsrfToken());
       }
 
-      // Call backend refresh
-      const response = await api.post("/auth/refresh", {}, { withCredentials: true });
-      return response.data as RefreshResponse;
+      const response = await refreshApi();
+      return response;
     } catch (err: any) {
-      dispatch(logout()); // Auto logout on refresh failure
+      dispatch(logout());
       return rejectWithValue(err.response?.data?.message || "Refresh failed");
     }
   }
@@ -129,7 +104,7 @@ export const logoutUser = createAsyncThunk<void>(
   "auth/logoutUser",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      await api.post("/auth/logout", {}, { withCredentials: true });
+      await logoutApi();
       dispatch(logout());
       await dispatch(fetchCsrfToken());
     } catch (err: any) {
@@ -143,7 +118,7 @@ export const logoutUserAll = createAsyncThunk<void>(
   "auth/logoutUserAll",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      await api.post("/auth/logout-all", {}, { withCredentials: true });
+      await logoutAllApi();
       dispatch(logout());
       await dispatch(fetchCsrfToken());
     } catch (err: any) {
@@ -157,7 +132,7 @@ export const logoutUserOther = createAsyncThunk<void>(
   "auth/logoutUserOther",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      await api.post("/auth/logout-others", {}, { withCredentials: true });
+      await logoutOthersApi();
       await dispatch(fetchCsrfToken());
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Logout others failed");
