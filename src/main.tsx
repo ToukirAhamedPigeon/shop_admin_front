@@ -15,6 +15,8 @@ import { fetchCsrfToken } from "./redux/slices/authSlice";
 // 🔹 Language Initialization
 import { fetchTranslations, setLanguage } from "./redux/slices/languageSlice";
 
+  // const AUTH_TYPE = import.meta.env.VITE_AUTH_TYPE || "jwt";
+
 // ============================================================
 // STEP 1: Initialize CSRF + Language before rendering App
 // ============================================================
@@ -22,6 +24,9 @@ const initApp = async () => {
   try {
     // ✅ 1. Get CSRF
     await store.dispatch(fetchCsrfToken()).unwrap();
+    // if (AUTH_TYPE === "sanctum") {
+    //       await store.dispatch(checkAuth()).unwrap();
+    // }
 
     // ✅ 2. Initialize Language
     const savedLang = localStorage.getItem("lang") || "en";

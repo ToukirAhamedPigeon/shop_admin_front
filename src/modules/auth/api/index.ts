@@ -1,4 +1,6 @@
 // apis/auth.ts
+import axios from "axios";
+import Cookies from "js-cookie";
 import api from "@/lib/axios";
 import {
   FetchCsrfTokenApi,
@@ -11,11 +13,9 @@ import {
 import type {LoginResponse, RefreshResponse} from "./../types"
 
 // Types for API responses
-
-
 export const fetchCsrfTokenApi = async (): Promise<{ csrfToken: string }> => {
-  const response = await api.get(FetchCsrfTokenApi.url, { withCredentials: true });
-  return response.data;
+    const response = await api.get(FetchCsrfTokenApi.url, { withCredentials: true });
+    return response.data; // { csrfToken: string }
 };
 
 export const loginApi = async (credentials: { identifier: string; password: string }): Promise<LoginResponse> => {

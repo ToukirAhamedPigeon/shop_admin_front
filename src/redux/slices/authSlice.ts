@@ -3,6 +3,7 @@ import api from "@/lib/axios";
 import type {User, LoginResponse, RefreshResponse} from "@/modules/auth/types"
 import {fetchCsrfTokenApi, loginApi, refreshApi, logoutApi, logoutAllApi, logoutOthersApi} from "@/modules/auth/api"
 
+
 // =========================
 // User & API Response Types
 // =========================
@@ -43,8 +44,8 @@ export const fetchCsrfToken = createAsyncThunk<string>(
       if (!token) {
         return rejectWithValue("Failed to fetch CSRF token");
       }
-
-      if (token) api.defaults.headers.common["X-CSRF-TOKEN"] = token;
+    // ✅ Choose correct header key based on auth type
+      api.defaults.headers.common["X-CSRF-TOKEN"] = token;
       return token;
     } catch {
       return rejectWithValue("Failed to fetch CSRF token");
@@ -57,6 +58,7 @@ export const loginUser = createAsyncThunk<LoginResponse, { identifier: string; p
   "auth/loginUser",
   async (credentials, { rejectWithValue, dispatch }) => {
     try {
+      // ✅ Add Sanctum CSRF token if using Sanctum
       const response = await loginApi(credentials);
       await dispatch(fetchCsrfToken());
       return response;
@@ -178,7 +180,6 @@ const authSlice = createSlice({
       .addCase(fetchCsrfToken.rejected, (state, action) => {
         state.error = action.payload as string;
       })
-
       // Login
       .addCase(loginUser.pending, (state) => {
         state.loading = true;

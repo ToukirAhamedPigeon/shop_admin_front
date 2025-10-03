@@ -1,7 +1,8 @@
-import { fetchCsrfTokenApi } from "@/modules/auth/api";
 import { RefreshApi } from "@/routes/api";
 import axios from "axios";
-import Cookies from "js-cookie";
+
+// ===== ENV CONFIG =====
+// ⬆️ set in .env → VITE_AUTH_TYPE=sanctum or jwt
 
 // ===== TOKEN GETTERS =====
 let getAccessToken: (() => string | null) | null = null;
@@ -18,45 +19,25 @@ export const setCsrfTokenGetter = (getter: () => string | null) => {
 // ===== AXIOS INSTANCE =====
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL + "/api",
-  withCredentials: true, // cookies-এর জন্য গুরুত্বপূর্ণ
+  withCredentials: true, // for cookies (Sanctum & refresh token JWT)
 });
 
-// ===== CSRF INIT FUNCTION =====
-export const initCsrf = async () => {
-  try {
-    const response = await fetchCsrfTokenApi();
-    const token = response.csrfToken || Cookies.get("XSRF-TOKEN") || null;
+// ===== CSRF INIT FUNCTION (Sanctum only) =====
 
-    if (token) {
-      setCsrfTokenGetter(() => token);
-      api.defaults.headers.common["X-CSRF-TOKEN"] = token;
-    }
-  } catch (err) {
-    console.error("Failed to init CSRF token:", err);
-  }
-};
 
 // ===== REQUEST INTERCEPTOR =====
 api.interceptors.request.use((config) => {
   config.headers = config.headers || {};
 
-  // JWT attach করা
-  const token = getAccessToken?.();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  // === JWT mode → attach Authorization header ===
+    const token = getAccessToken?.();
+    if (token) config.headers.Authorization = `Bearer ${token}`;
 
-  // CSRF attach করা unsafe methods-এর জন্য
-  const csrfToken = getCsrfToken?.();
-  if (
-    csrfToken &&
-    ["post", "put", "patch", "delete"].includes((config.method || "").toLowerCase())
-  ) {
-    config.headers["X-CSRF-TOKEN"] = csrfToken;
-  }
 
   return config;
 });
 
-// ===== REFRESH TOKEN HANDLING =====
+// ===== REFRESH TOKEN HANDLING (JWT only) =====
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
 
@@ -75,9 +56,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config as any;
 
-    // 401 → refresh token try
-    if (
-      error.response?.status === 401 &&
+    // Only handle refresh for JWT
+    if (error.response?.status === 401 &&
       !originalRequest._retry &&
       document.cookie.includes("refreshToken")
     ) {
@@ -97,13 +77,12 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // CSRF attach করা
         const csrfToken = getCsrfToken?.();
         const headers: Record<string, string> = {};
         if (csrfToken) headers["X-CSRF-TOKEN"] = csrfToken;
 
         const response = await axios.post(
-          import.meta.env.VITE_API_BASE_URL + "/api"+RefreshApi.url,
+          import.meta.env.VITE_API_BASE_URL + "/api" + RefreshApi.url,
           {},
           { withCredentials: true, headers }
         );
@@ -111,7 +90,6 @@ api.interceptors.response.use(
         const newToken = response.data.accessToken;
         processQueue(null, newToken);
 
-        // Redux বা token getter update করা উচিত
         if (getAccessToken) setAccessTokenGetter(() => newToken);
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;

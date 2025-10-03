@@ -7,54 +7,39 @@ import { refreshAccessToken, logout, fetchCsrfToken } from "../redux/slices/auth
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch<AppDispatch>();
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
+  const user = useSelector((state: RootState) => state.auth.user);
   const isLoggedOut = useSelector((state: RootState) => state.auth.isLoggedOut);
 
   const [loading, setLoading] = useState(true);
-  const [csrfFetched, setCsrfFetched] = useState(false);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   const location = useLocation();
 
-  // 1. Try refreshing token first
   useEffect(() => {
-    const tryRefresh = async () => {
-      if (!accessToken && !isLoggedOut) {
-        try {
-          await dispatch(refreshAccessToken()).unwrap();
-        } catch (err) {
-          dispatch(logout());
-        }
-      }
-      setLoading(false);
-    };
+    if (hasCheckedAuth) return; // ✅ prevent re-running
 
-    tryRefresh();
-  }, [accessToken, isLoggedOut, dispatch]);
-
-  // 2. Fetch CSRF token before redirecting (only once)
-  useEffect(() => {
-    const fetchCsrf = async () => {
-      if (!accessToken && !csrfFetched && !loading) {
-        await dispatch(fetchCsrfToken());
-        setCsrfFetched(true);
+    const initAuth = async () => {
+      try {
+          if (!accessToken && !isLoggedOut) {
+            await dispatch(refreshAccessToken()).unwrap();
+          }
+      } catch {
+        dispatch(logout());
+      } finally {
+        setLoading(false);
+        setHasCheckedAuth(true); // ✅ mark as checked
       }
     };
-    fetchCsrf();
-  }, [accessToken, csrfFetched, loading, dispatch]);
 
-  // 3. Handle UI states
+    initAuth();
+  }, [hasCheckedAuth, accessToken, isLoggedOut, dispatch, user]);
+
   if (loading) return <p>Loading...</p>;
 
-  if (!accessToken) {
-    // ✅ Only redirect once CSRF is fetched
-    if (csrfFetched) {
-      return <Navigate to="/login" replace />;
-    }
-    return <p>Preparing login...</p>;
-  }
-  else{
-    if(location.pathname === "/login"){
-      return <Navigate to="/dashboard" replace />;
-    }
+  if (!accessToken) return <Navigate to="/login" replace />;
+
+  if (location.pathname === "/login" && (accessToken || user)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
