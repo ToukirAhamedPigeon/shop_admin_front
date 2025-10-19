@@ -24,7 +24,7 @@ export default function UserDropdown() {
   if (!user) return null;
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
       <DropdownMenuTrigger asChild className="cursor-pointer">
         <div className="flex items-center gap-2">
           <Avatar className="cursor-pointer">
@@ -44,12 +44,12 @@ export default function UserDropdown() {
 
       <DropdownMenuContent
         className="
-          w-64 p-2 space-y-2
+          w-64 p-2 space-y-2 max-h-80
           bg-[radial-gradient(circle_at_bottom_left,_#FFFFFF,_#faf6e2)]
           dark:bg-[radial-gradient(circle_at_bottom_left,_#1b2a3f,_#0f1a2a)]
           border border-gray-200 dark:border-gray-700
-          shadow-lg dark:shadow-black/40
-          rounded-lg
+          shadow-md dark:shadow-black/40
+          rounded-md
           transition-colors duration-300
         "
       >

@@ -57,7 +57,7 @@ export default function Header() {
       <Logo isTitle={false} className="lg:hidden py-4 text-gray-800 dark:text-gray-100" />
 
       {/* User Dropdown */}
-      <div className="flex items-center gap-2 h-full px-4 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm text-gray-800 dark:text-gray-200 transition-colors duration-300 rounded-l-xl">
+      <div className="flex items-center gap-2 h-full px-4 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm text-gray-800 dark:text-gray-200 transition-colors duration-300">
         <UserDropdown />
       </div>
     </nav>

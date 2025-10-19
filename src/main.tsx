@@ -14,6 +14,7 @@ import { fetchCsrfToken } from "./redux/slices/authSlice";
 
 // 🔹 Language Initialization
 import { fetchTranslations, setLanguage } from "./redux/slices/languageSlice";
+import LoaderContainer from "@/components/custom/LoaderContainer";
 
   // const AUTH_TYPE = import.meta.env.VITE_AUTH_TYPE || "jwt";
 
@@ -45,6 +46,7 @@ initApp().finally(() => {
   ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
       <Provider store={store}>
+        <LoaderContainer />
         <App />
       </Provider>
     </React.StrictMode>
