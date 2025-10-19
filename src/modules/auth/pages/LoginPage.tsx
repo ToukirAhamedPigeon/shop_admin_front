@@ -47,16 +47,10 @@ export default function LoginPage() {
   }, [accessToken, navigate]);
 
   const onSubmit = async (data: LoginForm) => {
+    dispatch(showLoader({message: "Logging in...",}));
     try{
       const result = await dispatch(loginUser(data));
         if (result.meta.requestStatus === "fulfilled") {
-          dispatch(
-            showLoader({
-              showLogo: true,
-              showAppName: true,
-              slogan: "Welcome back! Preparing your dashboard...",
-            })
-          );
           navigate("/dashboard");
           dispatch(hideLoader());
         }

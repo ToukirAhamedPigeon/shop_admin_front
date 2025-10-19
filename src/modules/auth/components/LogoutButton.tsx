@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +17,7 @@ import {
   logoutUserAll,
   logoutUserOther,
 } from "@/redux/slices/authSlice";
-import { showLoader } from "@/redux/slices/loaderSlice"; // ⬅️ import
+import { showLoader, hideLoader } from "@/redux/slices/loaderSlice"; // ⬅️ import
 import type { AppDispatch } from "@/redux/store";
 
 const LogoutButton: React.FC = () => {
@@ -29,23 +27,27 @@ const LogoutButton: React.FC = () => {
   const [open, setOpen] = useState(false);
 
   const triggerLoaderAndNavigate = (action: () => void, slogan: string) => {
+    setOpen(false);
     // 1. Show loader before doing anything
-    dispatch(
-      showLoader({
-        showLogo: true,
-        showAppName: true,
-        slogan,
-      })
-    );
+    dispatch(showLoader({message: slogan}));
+
 
     // 2. Run logout action
-    action();
+    try {
+      // setTimeout(() => {
+        action();
+      // }, 2000);
+      // 5. Hide loader after successful logout
+     // dispatch(hideLoader());
+    } catch (error) {
+      // 6. Hide loader if logout fails
+      dispatch(hideLoader());
+      console.error("Logout error:", error);
+      // Handle error (e.g., show an error message)
+    }
 
-    // 3. Redirect to login
-    navigate("/login", { replace: true });
 
     // 4. Close dialog
-    setOpen(false);
   };
 
   const handleLogout = () =>

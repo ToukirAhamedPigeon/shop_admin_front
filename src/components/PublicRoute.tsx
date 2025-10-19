@@ -19,11 +19,7 @@ export default function PublicRoute({ children }: { children: React.ReactNode })
 
     const initAuth = async () => { 
       // Show global loader 
-      dispatch(showLoader({ 
-        showLogo: true, 
-        showAppName: true, 
-        slogan: "Application is being ready...", 
-      })); 
+      dispatch(showLoader({  message: "Application is being ready...", })); 
 
       try { 
         // 1. Always fetch CSRF token first for Sanctum
@@ -42,7 +38,13 @@ export default function PublicRoute({ children }: { children: React.ReactNode })
     }; 
 
     initAuth(); 
-  }, [hasCheckedAuth, dispatch, accessToken, isLoggedOut, user]); 
+  }, [
+    hasCheckedAuth, 
+    accessToken, 
+    dispatch,
+    isLoggedOut, 
+    user
+  ]); 
 
   // Redirect already authenticated users away from public pages
   if (accessToken) {

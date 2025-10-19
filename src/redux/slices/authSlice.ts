@@ -4,6 +4,7 @@ import type {User, LoginResponse, RefreshResponse} from "@/modules/auth/types"
 import {fetchCsrfTokenApi, loginApi, refreshApi, logoutApi, logoutAllApi, logoutOthersApi} from "@/modules/auth/api"
 
 
+
 // =========================
 // User & API Response Types
 // =========================
@@ -150,6 +151,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
+     // console.log("Logoutting user");
       state.user = null;
       state.accessToken = null;
       state.csrfToken = null;

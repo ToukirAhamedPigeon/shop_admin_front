@@ -1,7 +1,7 @@
 'use client'
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { hideLoader } from "@/redux/slices/loaderSlice";
+// import { useEffect } from "react";
+// import { useDispatch } from "react-redux";
+// import { hideLoader } from "@/redux/slices/loaderSlice";
 import Sidebar from '@/components/module/admin/layout/Sidebar'
 
 import Footer from '@/components/custom/Footer'
@@ -11,11 +11,11 @@ import Main from '@/components/module/admin/layout/Main'
 import RouteProgress from '@/components/module/admin/layout/RouteProgress'
 
 export default function AdminNavbarLayout({ children }: { children: React.ReactNode }) {
-  const dispatch = useDispatch();
-    useEffect(() => {
-    // hide loader once layout is ready
-    dispatch(hideLoader());
-  }, [dispatch]);
+  // const dispatch = useDispatch();
+    // useEffect(() => {
+    // // hide loader once layout is ready
+    //   dispatch(hideLoader());
+    // }, [dispatch]);
   return (
     <>
       <RouteProgress color="#FC39B4" />
