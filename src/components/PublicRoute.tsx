@@ -19,7 +19,7 @@ export default function PublicRoute({ children }: { children: React.ReactNode })
 
     const initAuth = async () => { 
       // Show global loader 
-      dispatch(showLoader({  message: "Application is being ready...", })); 
+      dispatch(showLoader({  message: "Application is being ready...", spinnerColor: "#ffffff", messageColor: "#ffffff" })); 
 
       try { 
         // 1. Always fetch CSRF token first for Sanctum

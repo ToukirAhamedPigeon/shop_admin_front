@@ -42,17 +42,17 @@ const loaderSlice = createSlice({
 
       state.visible = true;
       state.message = message || "";
-      state.spinnerColor = spinnerColor || "#000000";
+      state.spinnerColor = spinnerColor || "#0e7cb3";
       state.darkSpinnerColor = darkSpinnerColor || "#ffffff";
-      state.messageColor = messageColor || "#000000";
+      state.messageColor = messageColor || "#0e7cb3";
       state.darkMessageColor = darkMessageColor || "#ffffff";
     },
     hideLoader: (state) => {
       state.visible = false;
       state.message = "";
-      state.spinnerColor = "#000000";
+      state.spinnerColor = "#0e7cb3";
       state.darkSpinnerColor = "#ffffff";
-      state.messageColor = "#000000";
+      state.messageColor = "#0e7cb3";
       state.darkMessageColor = "#ffffff";
     },
   },
