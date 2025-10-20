@@ -34,7 +34,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     initAuth();
   }, [hasCheckedAuth, accessToken, isLoggedOut, dispatch, user]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p></p>;
 
   if (!accessToken) return <Navigate to="/login" replace />;
 

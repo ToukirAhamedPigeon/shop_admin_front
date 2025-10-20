@@ -32,16 +32,17 @@ const LogoutButton: React.FC = () => {
     dispatch(showLoader({message: slogan}));
 
 
+
     // 2. Run logout action
     try {
       // setTimeout(() => {
         action();
-      // }, 2000);
+      // }, 20000000);
       // 5. Hide loader after successful logout
      // dispatch(hideLoader());
     } catch (error) {
       // 6. Hide loader if logout fails
-      dispatch(hideLoader());
+       //dispatch(hideLoader());
       console.error("Logout error:", error);
       // Handle error (e.g., show an error message)
     }

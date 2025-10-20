@@ -1,4 +1,3 @@
-// store/slices/loaderSlice.ts
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
@@ -6,20 +5,26 @@ interface LoaderState {
   visible: boolean;
   message: string;
   spinnerColor: string;
+  darkSpinnerColor: string;
   messageColor: string;
+  darkMessageColor: string;
 }
 
 interface ShowLoaderPayload {
   message?: string;
   spinnerColor?: string;
+  darkSpinnerColor?: string;
   messageColor?: string;
+  darkMessageColor?: string;
 }
 
 const initialState: LoaderState = {
   visible: false,
   message: "",
   spinnerColor: "#000000",
+  darkSpinnerColor: "#ffffff",
   messageColor: "#000000",
+  darkMessageColor: "#ffffff",
 };
 
 const loaderSlice = createSlice({
@@ -27,19 +32,28 @@ const loaderSlice = createSlice({
   initialState,
   reducers: {
     showLoader: (state, action: PayloadAction<ShowLoaderPayload | undefined>) => {
-      // console.log("Show loader");
-      const { message, spinnerColor, messageColor } = action.payload || {};
+      const {
+        message,
+        spinnerColor,
+        darkSpinnerColor,
+        messageColor,
+        darkMessageColor,
+      } = action.payload || {};
+
       state.visible = true;
       state.message = message || "";
       state.spinnerColor = spinnerColor || "#000000";
+      state.darkSpinnerColor = darkSpinnerColor || "#ffffff";
       state.messageColor = messageColor || "#000000";
+      state.darkMessageColor = darkMessageColor || "#ffffff";
     },
     hideLoader: (state) => {
-      // console.log("Hide loader");
       state.visible = false;
       state.message = "";
       state.spinnerColor = "#000000";
+      state.darkSpinnerColor = "#ffffff";
       state.messageColor = "#000000";
+      state.darkMessageColor = "#ffffff";
     },
   },
 });
