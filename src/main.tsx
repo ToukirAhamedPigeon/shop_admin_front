@@ -15,6 +15,7 @@ import { fetchCsrfToken } from "./redux/slices/authSlice";
 // 🔹 Language Initialization
 import { fetchTranslations, setLanguage } from "./redux/slices/languageSlice";
 import GlobalLoader from "@/components/custom/GlobalLoader";
+import ToastContainer from "./components/custom/ToastContainer";
   // const AUTH_TYPE = import.meta.env.VITE_AUTH_TYPE || "jwt";
 
 // ============================================================
@@ -47,6 +48,7 @@ initApp().finally(() => {
       <Provider store={store}>
         <GlobalLoader />
         <App />
+        <ToastContainer />
       </Provider>
     </React.StrictMode>
   );

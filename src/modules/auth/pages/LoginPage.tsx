@@ -16,6 +16,9 @@ import { motion } from "framer-motion";
 import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
 import { ThemeToggleButton } from "@/components/custom/ThemeToggleButton";
 import { showLoader,hideLoader } from "@/redux/slices/loaderSlice";
+import { showToast } from "@/redux/slices/toastSlice";
+
+
 
 // Schema
 const loginSchema = z.object({
@@ -50,13 +53,30 @@ export default function LoginPage() {
     dispatch(showLoader({message: "Logging in...",}));
     try{
       const result = await dispatch(loginUser(data));
+      console.log(result);
         if (result.meta.requestStatus === "fulfilled") {
           navigate("/dashboard");
           dispatch(hideLoader());
+          dispatch(showToast({
+            type: "success",
+            message: "Login successful"
+          }));
+        }
+        else{
+          dispatch(showToast({
+            type: "danger",
+            message: "Invalid Credentials",
+            duration: 10000,
+          }));
         }
     } catch (error) {
       console.log(error);
       dispatch(hideLoader());
+      dispatch(showToast({
+        type: "danger",
+        message: "Invalid Credentials",
+        duration: 10000,
+      }));
     }
     finally{
       dispatch(hideLoader());
@@ -148,7 +168,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              {error && (
+              {/* {error && (
                 <motion.p
                   className="text-red-600 text-center"
                   initial={{ opacity: 0 }}
@@ -156,7 +176,7 @@ export default function LoginPage() {
                 >
                   {error}
                 </motion.p>
-              )}
+              )} */}
 
               <Button
                 type="submit"

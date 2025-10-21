@@ -5,6 +5,7 @@ import languageReducer from "./slices/languageSlice";
 import themeReducer from "./slices/themeSlice";
 import sidebarReducer from './slices/sidebarSlice'
 import loaderReducer from "./slices/loaderSlice";
+import toastReducer from "./slices/toastSlice";
 import { setAccessTokenGetter, setCsrfTokenGetter } from "@/lib/axios";
 
 export const store = configureStore({
@@ -15,6 +16,7 @@ export const store = configureStore({
     theme: themeReducer,
     sidebar: sidebarReducer,
     loader: loaderReducer,
+    toast: toastReducer,
   },
 });
 
