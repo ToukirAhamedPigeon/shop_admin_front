@@ -1,6 +1,4 @@
 // apis/auth.ts
-import axios from "axios";
-import Cookies from "js-cookie";
 import api from "@/lib/axios";
 import {
   FetchCsrfTokenApi,

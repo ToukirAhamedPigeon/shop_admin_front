@@ -13,6 +13,9 @@
 // [5] AUTH > LOGOUT > Logout All Sessions : POST /auth/logout-all
 // [6] AUTH > LOGOUT > Logout Other Sessions : POST /auth/logout-others
 // [7] SETTINGS > LANGUAGES > Fetch Translations : GET /translations/get
+// [8] AUTH > PASSWORD RESET > Request Password Reset : POST /auth/forgot-password
+// [9] AUTH > PASSWORD RESET > Validate Reset Token : GET /auth/reset-password/validate/:token
+
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -99,7 +102,45 @@ export const LogoutOthersApi: ApiDefinition = {
   description: "Logout all sessions except current",
   permissions: [],
 };
+export const ForgotPasswordApi: ApiDefinition = {
+  url: "/auth/forgot-password",
+  method: "POST",
+  description: "Request password reset link via email",
+  permissions: [],
+  payload: [
+    { name: "email", type: "string", required: true, description: "Registered user email" },
+  ],
+  response: [
+    { name: "message", type: "string", description: "Success message" },
+  ],
+};
 
+export const ResetPasswordApi: ApiDefinition = {
+  url: "/auth/reset-password",
+  method: "POST",
+  description: "Reset password using token from email",
+  permissions: [],
+  payload: [
+    { name: "token", type: "string", required: true, description: "Password reset token from email" },
+    { name: "password", type: "string", required: true, description: "New password" },
+  ],
+  response: [
+    { name: "message", type: "string", description: "Success message" },
+  ],
+};
+
+export const ValidateResetTokenApi: ApiDefinition = {
+  url: "/auth/reset-password/validate/:token",
+  method: "GET",
+  description: "Validate password reset token",
+  permissions: [],
+  payload: [
+    { name: "token", type: "string", required: true, description: "Password reset token from email" },
+  ],
+  response: [
+    { name: "message", type: "string", description: "Success message" },
+  ],
+};
 // AUTH 
 
 // Settings

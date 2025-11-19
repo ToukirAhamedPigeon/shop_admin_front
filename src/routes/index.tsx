@@ -1,6 +1,9 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "@/modules/auth/pages/LoginPage";
+import ForgotPasswordPage from "@/modules/auth/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/modules/auth/pages/ResetPasswordPage";
+
 import DashboardPage from "@/modules/dashboard/pages/DashboardPage";
 
 import PublicRoute from "@/components/PublicRoute";
@@ -16,6 +19,22 @@ export default function AppRoutes() {
         element={
           <PublicRoute>
             <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPasswordPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <PublicRoute>
+            <ResetPasswordPage />
           </PublicRoute>
         }
       />

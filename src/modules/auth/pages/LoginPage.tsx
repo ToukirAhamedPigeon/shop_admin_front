@@ -53,7 +53,7 @@ export default function LoginPage() {
     dispatch(showLoader({message: "Logging in...",}));
     try{
       const result = await dispatch(loginUser(data));
-      console.log(result);
+      // console.log(result);
         if (result.meta.requestStatus === "fulfilled") {
           navigate("/dashboard");
           dispatch(hideLoader());
@@ -177,6 +177,17 @@ export default function LoginPage() {
                   {error}
                 </motion.p>
               )} */}
+
+              {/* Forgot Password Link */}
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  {t("common.forgotPassword", "Forgot Password?")}
+                </button>
+              </div>
 
               <Button
                 type="submit"
