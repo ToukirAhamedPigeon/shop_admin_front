@@ -103,7 +103,7 @@ export const LogoutOthersApi: ApiDefinition = {
   permissions: [],
 };
 export const ForgotPasswordApi: ApiDefinition = {
-  url: "/auth/forgot-password",
+  url: "/auth/password-reset/request",
   method: "POST",
   description: "Request password reset link via email",
   permissions: [],

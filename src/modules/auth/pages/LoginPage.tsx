@@ -30,9 +30,8 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-    const { loading, error, accessToken, theme } = useSelector((state: RootState) => ({
+  const { loading, accessToken, theme } = useSelector((state: RootState) => ({
     loading: state.auth.loading,
-    error: state.auth.error,
     accessToken: state.auth.accessToken,
     theme: state.theme.current,
   }))

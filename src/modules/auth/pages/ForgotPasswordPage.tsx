@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,19 +11,23 @@ import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
 import { ThemeToggleButton } from "@/components/custom/ThemeToggleButton";
+import type { RootState } from "@/redux/store";
 import { showToast } from "@/redux/slices/toastSlice";
 import api from "@/lib/axios";
 import { ForgotPasswordApi } from "@/routes/api";
 import { useTranslations } from "@/hooks/useTranslations";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email")
+  email: z.email({ message: "Invalid email" })
 });
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { theme } = useSelector((state: RootState) => ({
+    theme: state.theme.current,
+  }));
   const { t } = useTranslations();
   const { register, handleSubmit, formState: { errors } } = useForm<ForgotPasswordForm>({
     resolver: zodResolver(forgotPasswordSchema)
@@ -43,7 +47,10 @@ export default function ForgotPasswordPage() {
       className="fixed inset-0 flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat transition-colors duration-500
                  bg-white dark:bg-gray-900"
       style={{
-        backgroundImage: "url('/login-bg.jpg')",
+        backgroundImage:
+          theme === "light"
+            ? "url('/login-bg.jpg')"
+            : "url('/login-bg-dark.jpg')",
       }}
     >
       {/* Language & Theme */}

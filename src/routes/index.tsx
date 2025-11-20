@@ -31,7 +31,7 @@ export default function AppRoutes() {
         }
       />
       <Route
-        path="/reset-password"
+        path="/reset-password/:token"
         element={
           <PublicRoute>
             <ResetPasswordPage />

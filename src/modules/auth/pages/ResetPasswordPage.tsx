@@ -2,12 +2,11 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
 import { useNavigate, useParams } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/custom/FormInputs";
 import { motion } from "framer-motion";
 import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
@@ -25,6 +24,9 @@ type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 export default function ResetPasswordPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { theme } = useSelector((state: RootState) => ({
+    theme: state.theme.current,
+  }));
   const { token } = useParams<{ token: string }>();
   const { t } = useTranslations();
 
@@ -46,10 +48,13 @@ export default function ResetPasswordPage() {
     <div
       className="fixed inset-0 flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat transition-colors duration-500
                  bg-white dark:bg-gray-900"
-      style={{
-        backgroundImage: "url('/login-bg.jpg')",
-      }}
-    >
+        style={{
+          backgroundImage:
+            theme === "light"
+              ? "url('/login-bg.jpg')"
+              : "url('/login-bg-dark.jpg')",
+        }}
+      >
       {/* Language & Theme */}
       <motion.div
         className="absolute top-4 right-10 z-20 flex items-center gap-3"
