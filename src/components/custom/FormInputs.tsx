@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "@/hooks/useTranslations";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
+import { useNavigate } from "react-router-dom";
 
 interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -16,6 +17,7 @@ interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement>
   isRequiredStar?: boolean;
   placeholder?: string;
   placeholderFallback?: string;
+  showForgotPasswordLink?: boolean;
 }
 
 export const PasswordInput = ({
@@ -28,14 +30,17 @@ export const PasswordInput = ({
   isRequiredStar,
   placeholder,
   placeholderFallback,
+  showForgotPasswordLink = false,
   ...rest
 }: PasswordInputProps) => {
   const [hidden, setHidden] = useState(isHidden);
   const { t } = useTranslations();
+  const navigate = useNavigate();
   const theme = useSelector((state: RootState) => state.theme.current);
 
   return (
     <div className="space-y-1 w-full">
+      <div className="flex justify-between items-center">
       <label
         className={cn(
           "block text-sm font-medium",
@@ -45,6 +50,16 @@ export const PasswordInput = ({
         {t(label, labelFallback)}{" "}
         {isRequiredStar && <span className="text-red-500">*</span>}
       </label>
+      {showForgotPasswordLink && (
+        <button
+          type="button"
+          onClick={() => navigate("/forgot-password")}
+          className="text-sm text-blue-600 hover:underline dark:text-blue-400 cursor-pointer"
+        >
+          {t("common.forgotPassword", "Forgot Password?")}
+        </button>
+      )}
+      </div>
 
       <div className="relative">
         <Input

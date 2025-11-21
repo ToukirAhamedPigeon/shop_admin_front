@@ -164,6 +164,7 @@ export default function LoginPage() {
                   placeholderFallback="Enter your password"
                   {...register('password')}
                   error={errors.password?.message}
+                  showForgotPasswordLink={true}
                 />
               </div>
 
@@ -176,17 +177,6 @@ export default function LoginPage() {
                   {error}
                 </motion.p>
               )} */}
-
-              {/* Forgot Password Link */}
-              <div className="text-right">
-                <button
-                  type="button"
-                  onClick={() => navigate("/forgot-password")}
-                  className="text-sm text-blue-600 hover:underline dark:text-blue-400"
-                >
-                  {t("common.forgotPassword", "Forgot Password?")}
-                </button>
-              </div>
 
               <Button
                 type="submit"

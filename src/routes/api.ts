@@ -116,7 +116,7 @@ export const ForgotPasswordApi: ApiDefinition = {
 };
 
 export const ResetPasswordApi: ApiDefinition = {
-  url: "/auth/reset-password",
+  url: "/auth/password-reset/reset",
   method: "POST",
   description: "Reset password using token from email",
   permissions: [],
