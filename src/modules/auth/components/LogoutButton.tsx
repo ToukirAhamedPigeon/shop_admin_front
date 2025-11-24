@@ -19,14 +19,14 @@ import {
 } from "@/redux/slices/authSlice";
 import { showLoader, hideLoader } from "@/redux/slices/loaderSlice"; // ⬅️ import
 import type { AppDispatch } from "@/redux/store";
+import { showToast } from "@/redux/slices/toastSlice";
 
 const LogoutButton: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
   const { t } = useTranslations();
   const [open, setOpen] = useState(false);
 
-  const triggerLoaderAndNavigate = (action: () => void, slogan: string) => {
+  const triggerLoaderAndNavigate = (action: () => void, slogan: string, type="") => {
     setOpen(false);
     // 1. Show loader before doing anything
     dispatch(showLoader({message: slogan}));
@@ -39,10 +39,20 @@ const LogoutButton: React.FC = () => {
         action();
       // }, 20000000);
       // 5. Hide loader after successful logout
-     // dispatch(hideLoader());
+      dispatch(hideLoader());
+      dispatch(showToast({
+          type: "success",
+          message: "Logout successful on other devices."
+        }));
     } catch (error) {
       // 6. Hide loader if logout fails
-       //dispatch(hideLoader());
+      if (type === "other") {
+        dispatch(hideLoader());
+        dispatch(showToast({
+            type: "success",
+            message: "Logout successful on other devices."
+          }));
+      }
       console.error("Logout error:", error);
       // Handle error (e.g., show an error message)
     }
@@ -61,7 +71,7 @@ const LogoutButton: React.FC = () => {
     triggerLoaderAndNavigate(() => {
       dispatch(logoutUserOther());
       alert(t("common.logoutOtherSuccess", "Logged out from other devices"));
-    }, t("common.loggingOutOther", "Logging out from other devices..."));
+    }, t("common.loggingOutOther", "Logging out from other devices..."), "other");
 
   return (
     <>
