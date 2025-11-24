@@ -40,10 +40,12 @@ const LogoutButton: React.FC = () => {
       // }, 20000000);
       // 5. Hide loader after successful logout
       dispatch(hideLoader());
-      dispatch(showToast({
-          type: "success",
-          message: "Logout successful on other devices."
-        }));
+      if (type === "other") {
+        dispatch(showToast({
+            type: "success",
+            message: "Logout successful on other devices."
+          }));
+      }
     } catch (error) {
       // 6. Hide loader if logout fails
       if (type === "other") {
