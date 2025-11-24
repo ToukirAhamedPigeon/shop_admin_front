@@ -5,6 +5,9 @@ import {
   ChevronUp,
   ChevronDown,
   LayoutDashboard,
+  Settings,
+  History,
+  SlidersHorizontal 
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
@@ -12,6 +15,7 @@ import { useTranslations } from "@/hooks/useTranslations";
 
 interface MenuItem {
   label: string;
+  defaultLabel: string;
   icon?: ReactNode;
   basePath: string;
   permissions: string[];
@@ -22,9 +26,42 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   {
     label: "common.dashboard.title",
+    defaultLabel: "Dashboard",
     icon: <LayoutDashboard size={22} className="mr-2" />,
     basePath: "/dashboard",
     permissions: ["read-admin-dashboard"],
+  },
+  {
+    label: "common.settings.title",
+    defaultLabel: "Settings",
+    icon: <Settings size={22} className="mr-2" />,
+    basePath: "/settings",
+    permissions: [
+      // "read-admin-settings"
+      "read-admin-dashboard"
+    ],
+    children: [
+      {
+        label: "common.app_settings.title",
+        defaultLabel: "App Settings",
+        icon: <SlidersHorizontal size={18} className="mr-2" />,
+        basePath: "/settings/app-settings",
+        permissions: [
+          // "read-admin-user-logs"
+          "read-admin-dashboard"
+        ],
+      },
+      {
+        label: "common.user_logs.title",
+        defaultLabel: "User Logs",
+        icon: <History size={18} className="mr-2" />,
+        basePath: "/settings/user-logs",
+        permissions: [
+          // "read-admin-user-logs"
+          "read-admin-dashboard"
+        ],
+      },
+    ],
   },
 ];
 
@@ -44,39 +81,37 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
   const isActiveSubmenu = (path: string) => location.pathname === path;
 
   // Dark/light text colors per level
-  const getLevelClasses = (level: number) => {
-    switch (level) {
-      case 0:
-        return "text-gray-200 dark:text-gray-100";
-      case 1:
-        return "text-gray-300 dark:text-gray-200";
-      default:
-        return "text-gray-400 dark:text-gray-300";
+  const getLevelClasses = (level: number, isActive: boolean) => {
+    if (level === 0) {
+      return isActive
+        ? "bg-primary/60 text-gray-100 dark:text-gray-50 font-semibold"
+        : "text-gray-200 dark:text-gray-100 hover:bg-white/10 dark:hover:bg-gray-700/30";
     }
+
+    // Level >= 1 (submenu)
+    return isActive
+      ? "text-primary font-semibold bg-white/40 dark:bg-black/20"
+      : "text-gray-300 dark:text-gray-200 hover:bg-white/40 dark:hover:bg-black/20";
   };
 
   const renderMenu = (items: MenuItem[], level = 0) => (
     <div className={level > 0 ? "ml-4" : ""}>
-      {items.map(({ label, icon, basePath, children, permissions }) => {
+      {items.map(({ label, defaultLabel, icon, basePath, children, permissions }) => {
         const alwaysOpen = isActiveMenu(basePath);
         const isOpen = openMenus.includes(label) || alwaysOpen;
 
         return (
           <Can anyOf={permissions} key={label}>
-            <div>
+            <div  className="space-y-1">
               {children && children.length > 0 ? (
                 <button
-                  className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all rounded cursor-pointer
-                    ${
-                      alwaysOpen
-                        ? "bg-primary/60 text-gray-100 dark:text-gray-50 font-semibold"
-                        : `${getLevelClasses(level)} hover:bg-white/10 dark:hover:bg-gray-700/30`
-                    }`}
-                  onClick={() => toggleMenu(label)}
-                >
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all rounded cursor-pointer
+                      ${getLevelClasses(level, alwaysOpen)}`}
+                    onClick={() => toggleMenu(label)}
+                  >
                   <span>
                     <div className="flex flex-row text-sm items-center cursor-pointer">
-                      {icon} {t(label)}
+                      {icon} {t(label,defaultLabel)}
                     </div>
                   </span>
                   <span className="cursor-pointer">
@@ -89,18 +124,18 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
                 </button>
               ) : (
                 <Link
-                  to={basePath}
-                  onClick={onLinkClick}
-                  className={`block px-4 py-2 text-sm rounded transition-all pl-6 border-l-2 cursor-pointer
-                    ${
-                      isActiveSubmenu(basePath)
-                        ? "bg-primary/60 text-gray-50 dark:text-gray-50 font-semibold border-primary"
-                        : "text-gray-50 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-gray-700/30 border-transparent"
-                    }`}
-                >
+                    to={basePath}
+                    onClick={onLinkClick}
+                    className={`block px-4 py-2 text-sm rounded transition-all pl-6 border-l-2 cursor-pointer
+                      ${
+                        isActiveSubmenu(basePath)
+                          ? "text-primary font-semibold bg-white/70 dark:bg-black/20 border-primary"
+                          : "text-gray-50 dark:text-gray-200 hover:bg-white/20 dark:hover:bg-black/20 border-transparent"
+                      }`}
+                  >
                   <span className="flex items-center gap-2 cursor-pointer">
                     {icon}
-                    {t(label)}
+                    {t(label,defaultLabel)}
                   </span>
                 </Link>
               )}

@@ -5,12 +5,14 @@ import { useTranslations } from "@/hooks/useTranslations";
 
 export type Crumb = {
   label: string;
+  defaultLabel?: string;
   href?: string; // if undefined, it's the current page
 };
 
 export type BreadcrumbProps = {
   items: Crumb[];
   title?: string;
+  defaultTitle?: string;
   showTitle?: boolean;
   className?: string;
 };
@@ -18,6 +20,7 @@ export type BreadcrumbProps = {
 export default function Breadcrumb({
   items,
   title = "",
+  defaultTitle = "",
   showTitle = true,
   className = "",
 }: BreadcrumbProps) {
@@ -33,7 +36,7 @@ export default function Breadcrumb({
       {/* Title */}
       {showTitle && (
         <h1 className="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100">
-          {t(title, title)}
+          {t(title, defaultTitle)}
         </h1>
       )}
 
@@ -59,11 +62,11 @@ export default function Breadcrumb({
                   to={item.href}
                   className="hover:underline text-gray-800/90 dark:text-gray-200/90 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  {t(item.label, item.label)}
+                  {t(item.label, item.defaultLabel)}
                 </Link>
               ) : (
                 <span className="text-gray-800 dark:text-gray-100 font-semibold">
-                  {t(item.label, item.label)}
+                  {t(item.label, item.defaultLabel)}
                 </span>
               )}
             </div>

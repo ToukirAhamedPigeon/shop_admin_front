@@ -8,6 +8,7 @@ export default function DashboardPage() {
     <div className='flex flex-col gap-4'>
       <Breadcrumb
           title="common.dashboard.title"
+          defaultTitle="Dashboard"
           showTitle={true}
           items={[
           ]}

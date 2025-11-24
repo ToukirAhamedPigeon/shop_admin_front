@@ -5,6 +5,7 @@ import ForgotPasswordPage from "@/modules/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/modules/auth/pages/ResetPasswordPage";
 
 import DashboardPage from "@/modules/dashboard/pages/DashboardPage";
+import UserLogsPage from "@/modules/settings/user-logs/pages/UserLogsPage";
 
 import PublicRoute from "@/components/PublicRoute";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -44,6 +45,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/user-logs"
+        element={
+          <ProtectedRoute>
+            <UserLogsPage />
           </ProtectedRoute>
         }
       />
