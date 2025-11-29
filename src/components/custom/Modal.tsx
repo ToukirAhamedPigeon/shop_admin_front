@@ -1,8 +1,7 @@
-import React, { useRef } from 'react';
-import { motion } from 'framer-motion';
-import { X, Printer } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useTranslations } from '@/hooks/useTranslations';
+// Modal.tsx (Wrapper with full width & height)
+import React from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import ModalCore from "./ModalCore";
 
 type ModalProps = {
   isOpen: boolean;
@@ -11,126 +10,53 @@ type ModalProps = {
   children: React.ReactNode;
   titleClassName?: string;
   bgColor?: string;
-  showPrintButton?: boolean; // Optional prop for print button
+  showPrintButton?: boolean;
+  widthPercent?: number;
 };
 
-const Modal: React.FC<ModalProps> = ({
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+export default function Modal({
   isOpen,
   onClose,
   title,
   children,
   titleClassName,
-  bgColor = 'white',
-  showPrintButton = true,
-}) => {
-  const { t } = useTranslations();
-  const printRef = useRef<HTMLDivElement>(null);
-
-  if (!isOpen) return null;
-
-  const handlePrint = () => {
-    const printContents = printRef.current?.innerHTML;
-    if (!printContents) return;
-
-    const newWindow = window.open('', '', 'width=800,height=600');
-    if (newWindow) {
-      newWindow.document.write(`
-        <html>
-          <head>
-            <title>${t(title)}</title>
-            <style>
-              body {
-                font-family: sans-serif;
-                padding: 20px;
-              }
-              img {
-                max-width: 100%;
-                height: auto;
-                margin-bottom: 20px;
-              }
-              h2 {
-                font-size: 1.5rem;
-                margin-bottom: 1rem;
-              }
-            </style>
-          </head>
-          <body>
-            <h2>${t(title)}</h2>
-            ${printContents}
-            <script>
-              window.onload = function() {
-                window.print();
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      newWindow.document.close();
-    }
-  };
-
+  bgColor,
+  showPrintButton,
+  widthPercent,
+}: ModalProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="fixed inset-0 pt-[50px] flex items-start justify-center bg-black/50 z-50"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.9 }}
-        transition={{ duration: 0.3 }}
-        className={cn(
-          'relative rounded-md border border-gray-300 shadow-2xl w-full max-w-3xl max-h-[calc(100vh-100px)] bg-white overflow-hidden',
-          bgColor === 'transparent'
-            ? 'bg-transparent'
-            : 'bg-gradient-to-t from-[#fdfbfb] via-white to-[#ebedee]'
-        )}
-        onClick={(e) => e.stopPropagation()}
-        style={{ display: 'flex', flexDirection: 'column' }}
-      >
-        {/* Sticky Header */}
-        <div
-          className={cn(
-            'sticky top-0 z-10 bg-white border-b border-gray-300 flex items-center justify-between px-6 py-4',
-            titleClassName
-          )}
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          variants={backdropVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          transition={{ duration: 0.25 }}
+          className="fixed inset-0 w-full h-full flex items-center justify-center bg-black/50 z-50"
+          onClick={onClose} // close on backdrop click
         >
-          <h2 className="text-xl font-semibold text-gray-800">{t(title)}</h2>
-          <div className="flex items-center gap-2">
-            {showPrintButton && (
-              <button
-                onClick={handlePrint}
-                className="text-gray-500 hover:text-gray-700 transition cursor-pointer"
-                aria-label="Print modal"
-              >
-                <Printer size={20} />
-              </button>
-            )}
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 transition"
-              aria-label="Close modal"
+          {/* Full-screen container ensures modal centering */}
+          <div className="w-full h-full flex items-center justify-center px-4">
+            <ModalCore
+              title={title}
+              onClose={onClose}
+              titleClassName={titleClassName}
+              bgColor={bgColor}
+              showPrintButton={showPrintButton}
+              widthPercent={widthPercent} // now works
             >
-              <X className="cursor-pointer" size={24} />
-            </button>
+              {children}
+            </ModalCore>
           </div>
-        </div>
-
-        {/* Modal Body - Scrollable */}
-        <div
-          className="px-6 py-4 overflow-y-auto"
-          style={{ flexGrow: 1, maxHeight: 'calc(100vh - 150px)' }}
-          ref={printRef}
-        >
-          {children}
-        </div>
-      </motion.div>
-    </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
-};
-
-export default Modal;
+}

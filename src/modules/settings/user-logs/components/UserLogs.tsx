@@ -270,7 +270,7 @@ export default function LogListTable() {
       </div>
 
       {showDetail && (
-        <Modal isOpen={isModalOpen} onClose={closeModal} title="Log Details">
+        <Modal isOpen={isModalOpen} onClose={closeModal} title="Log Details" widthPercent={80}>
           {detailLoading || !selectedItem ? (
             <TableLoader loading />
           ) : (
