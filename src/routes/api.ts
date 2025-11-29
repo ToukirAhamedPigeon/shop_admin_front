@@ -15,6 +15,7 @@
 // [7] SETTINGS > LANGUAGES > Fetch Translations : GET /translations/get
 // [8] AUTH > PASSWORD RESET > Request Password Reset : POST /auth/forgot-password
 // [9] AUTH > PASSWORD RESET > Validate Reset Token : GET /auth/reset-password/validate/:token
+// [10] SETTINGS > User Table Column Settings : GET /user-table-combination
 
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -159,5 +160,30 @@ export const FetchTranslationsApi = {
   ],
 };
 // // Languages
+// // User Table Column Settings
+export const UserTableColumnSettingsApi = {
+  url: "/user-table-combination",
+  method: "GET" as const,
+  description: "Fetch user table column settings",
+  payload: [
+    { name: "tableId", type: "string", required: true },
+  ],
+  response: [
+    { name: "showColumnCombinations", type: "array" },
+  ],
+};
 
+export const UserTableColumnSettingsUpdateApi = {
+  url: "/user-table-combination",
+  method: "PUT" as const,
+  description: "Update user table column settings",
+  payload: [
+    { name: "tableId", type: "string", required: true },
+    { name: "showColumnCombinations", type: "array", required: true },
+  ],
+  response: [
+    { name: "showColumnCombinations", type: "array" },
+  ],
+};
+// // User Table Column Settings
 // Settings

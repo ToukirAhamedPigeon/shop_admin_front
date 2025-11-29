@@ -19,13 +19,13 @@ export type ToastAnimation =
   | "fade-in"
 
 export interface Toast {
-  id: string
-  type: ToastType
+  id?: string
+  type?: ToastType
   message: string
-  showClose: boolean
-  position: ToastPosition
-  animation: ToastAnimation
-  duration: number
+  showClose?: boolean
+  position?: ToastPosition
+  animation?: ToastAnimation
+  duration?: number
 }
 
 interface ToastState {

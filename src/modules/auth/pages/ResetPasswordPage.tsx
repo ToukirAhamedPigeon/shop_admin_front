@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,12 @@ import { PasswordInput } from "@/components/custom/FormInputs";
 import { motion } from "framer-motion";
 import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
 import { ThemeToggleButton } from "@/components/custom/ThemeToggleButton";
-import { showToast } from "@/redux/slices/toastSlice";
 import api from "@/lib/axios";
 import { ResetPasswordApi } from "@/routes/api";
 import { useTranslations } from "@/hooks/useTranslations";
 import FullPageLoader from "@/components/custom/FullPageLoader";
 import SuccessMessage from "@/components/custom/SuccessMessage";
+import { dispatchShowToast } from "@/lib/dispatch";
 
 // ---------------- ZOD SCHEMA ----------------
 const resetPasswordSchema = z
@@ -32,7 +32,6 @@ const resetPasswordSchema = z
 type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { theme } = useSelector((state: RootState) => ({
     theme: state.theme.current,
@@ -61,16 +60,14 @@ export default function ResetPasswordPage() {
       });
 
       setSuccess(true);
-      dispatch(showToast({ type: "success", message: "Password reset successfully." }));
+      dispatchShowToast({ type: "success", message: "Password reset successfully." });
 
       setTimeout(() => navigate("/login"), 5000);
     } catch (err: any) {
-      dispatch(
-        showToast({
+      dispatchShowToast({
           type: "danger",
           message: err.response?.data?.message || "Failed to reset password",
-        })
-      );
+        });
     } finally {
       setLoading(false);
     }

@@ -21,6 +21,11 @@ interface AuthState {
   isLoggedOut: boolean; // ✅ Track if user has logged out
 }
 
+export interface LoginUserPayload {
+  identifier: string;
+  password: string;
+}
+
 const initialState: AuthState = {
   user: null,
   accessToken: null,
@@ -55,7 +60,7 @@ export const fetchCsrfToken = createAsyncThunk<string>(
 );
 
 // Login User
-export const loginUser = createAsyncThunk<LoginResponse, { identifier: string; password: string }>(
+export const loginUser = createAsyncThunk<LoginResponse, LoginUserPayload>(
   "auth/loginUser",
   async (credentials, { rejectWithValue, dispatch }) => {
     try {

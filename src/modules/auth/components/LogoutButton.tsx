@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,25 +9,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useTranslations } from "@/hooks/useTranslations";
-
-import {
-  logoutUser,
-  logoutUserAll,
-  logoutUserOther,
-} from "@/redux/slices/authSlice";
-import { showLoader, hideLoader } from "@/redux/slices/loaderSlice"; // ⬅️ import
-import type { AppDispatch } from "@/redux/store";
-import { showToast } from "@/redux/slices/toastSlice";
+import { dispatchHideLoader, dispatchLogoutUser, dispatchLogoutUserAll, dispatchLogoutUserOther, dispatchShowLoader, dispatchShowToast } from "@/lib/dispatch";
 
 const LogoutButton: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const { t } = useTranslations();
   const [open, setOpen] = useState(false);
 
   const triggerLoaderAndNavigate = (action: () => void, slogan: string, type="") => {
     setOpen(false);
     // 1. Show loader before doing anything
-    dispatch(showLoader({message: slogan}));
+    dispatchShowLoader({message: slogan});
 
 
 
@@ -39,21 +28,21 @@ const LogoutButton: React.FC = () => {
         action();
       // }, 20000000);
       // 5. Hide loader after successful logout
-      dispatch(hideLoader());
+      dispatchHideLoader();
       if (type === "other") {
-        dispatch(showToast({
+        dispatchShowToast({
             type: "success",
             message: "Logout successful on other devices."
-          }));
+          });
       }
     } catch (error) {
       // 6. Hide loader if logout fails
       if (type === "other") {
-        dispatch(hideLoader());
-        dispatch(showToast({
+        dispatchHideLoader();
+        dispatchShowToast({
             type: "success",
             message: "Logout successful on other devices."
-          }));
+          });
       }
       console.error("Logout error:", error);
       // Handle error (e.g., show an error message)
@@ -64,14 +53,14 @@ const LogoutButton: React.FC = () => {
   };
 
   const handleLogout = () =>
-    triggerLoaderAndNavigate(() => dispatch(logoutUser()), t("common.loggingOut", "Logging out..."));
+    triggerLoaderAndNavigate(() => dispatchLogoutUser(), t("common.loggingOut", "Logging out..."));
 
   const handleLogoutAll = () =>
-    triggerLoaderAndNavigate(() => dispatch(logoutUserAll()), t("common.loggingOutAll", "Logging out from all devices..."));
+    triggerLoaderAndNavigate(() => dispatchLogoutUserAll(), t("common.loggingOutAll", "Logging out from all devices..."));
 
   const handleLogoutOther = () =>
     triggerLoaderAndNavigate(() => {
-      dispatch(logoutUserOther());
+      dispatchLogoutUserOther();
       alert(t("common.logoutOtherSuccess", "Logged out from other devices"));
     }, t("common.loggingOutOther", "Logging out from other devices..."), "other");
 

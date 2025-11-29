@@ -126,7 +126,7 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
                 <Link
                     to={basePath}
                     onClick={onLinkClick}
-                    className={`block px-4 py-2 text-sm rounded transition-all pl-6 border-l-2 cursor-pointer
+                    className={`block px-4 py-2 text-sm rounded transition-all border-l-2 cursor-pointer
                       ${
                         isActiveSubmenu(basePath)
                           ? "text-primary font-semibold bg-white/70 dark:bg-black/20 border-primary"

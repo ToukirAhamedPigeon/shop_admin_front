@@ -2,10 +2,9 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "@/redux/slices/authSlice";
-import type { RootState, AppDispatch } from "@/redux/store";
+import type { RootState } from "@/redux/store";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,7 @@ import { PasswordInput } from "@/components/custom/FormInputs";
 import { motion } from "framer-motion";
 import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
 import { ThemeToggleButton } from "@/components/custom/ThemeToggleButton";
-import { showLoader,hideLoader } from "@/redux/slices/loaderSlice";
-import { showToast } from "@/redux/slices/toastSlice";
+import { dispatchLoginUser, dispatchShowLoader, dispatchHideLoader, dispatchShowToast } from "@/lib/dispatch";
 
 
 
@@ -28,7 +26,6 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { loading, accessToken, theme } = useSelector((state: RootState) => ({
     loading: state.auth.loading,
@@ -49,36 +46,36 @@ export default function LoginPage() {
   }, [accessToken, navigate]);
 
   const onSubmit = async (data: LoginForm) => {
-    dispatch(showLoader({message: "Logging in...",}));
+    dispatchShowLoader({message: "Logging in...",});
     try{
-      const result = await dispatch(loginUser(data));
+      const result = await dispatchLoginUser(data);
       // console.log(result);
         if (result.meta.requestStatus === "fulfilled") {
           navigate("/dashboard");
-          dispatch(hideLoader());
-          dispatch(showToast({
+          dispatchHideLoader();
+          dispatchShowToast({
             type: "success",
             message: "Login successful"
-          }));
+          });
         }
         else{
-          dispatch(showToast({
+          dispatchShowToast({
             type: "danger",
             message: "Invalid Credentials",
             duration: 10000,
-          }));
+          });
         }
     } catch (error) {
       console.log(error);
-      dispatch(hideLoader());
-      dispatch(showToast({
+      dispatchHideLoader();
+      dispatchShowToast({
         type: "danger",
         message: "Invalid Credentials",
         duration: 10000,
-      }));
+      });
     }
     finally{
-      dispatch(hideLoader());
+      dispatchHideLoader();
     }
   };
 

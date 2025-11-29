@@ -10,7 +10,7 @@ interface LoaderState {
   darkMessageColor: string;
 }
 
-interface ShowLoaderPayload {
+export interface ShowLoaderPayload {
   message?: string;
   spinnerColor?: string;
   darkSpinnerColor?: string;

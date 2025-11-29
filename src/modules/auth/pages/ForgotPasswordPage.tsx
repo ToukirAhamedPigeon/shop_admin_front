@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,12 @@ import { motion } from "framer-motion";
 import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
 import { ThemeToggleButton } from "@/components/custom/ThemeToggleButton";
 import type { RootState } from "@/redux/store";
-import { showToast } from "@/redux/slices/toastSlice";
 import api from "@/lib/axios";
 import { ForgotPasswordApi } from "@/routes/api";
 import { useTranslations } from "@/hooks/useTranslations";
 import SuccessMessage from "@/components/custom/SuccessMessage";
 import FullPageLoader from "@/components/custom/FullPageLoader";
+import { dispatchShowToast } from "@/lib/dispatch";
 
 const forgotPasswordSchema = z.object({
   email: z.email({ message: "Invalid email" })
@@ -25,7 +25,6 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +45,7 @@ export default function ForgotPasswordPage() {
       await api.post(ForgotPasswordApi.url, data);
       setSuccess(true);
     } catch (err: any) {
-      dispatch(showToast({ type: "danger", message: err.response?.data?.message || "Error" }));
+      dispatchShowToast({ type: "danger", message: err.response?.data?.message || "Error" });
     } finally {
       setIsLoading(false);
     }
