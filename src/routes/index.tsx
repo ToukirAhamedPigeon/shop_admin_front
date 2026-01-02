@@ -10,11 +10,14 @@ import UserLogsPage from "@/modules/settings/user-logs/pages/UserLogsPage";
 import PublicRoute from "@/components/PublicRoute";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "@/layouts/AdminLayout";
+import Unauthorized from "@/pages/Unauthorized";
+import NotFound from "@/pages/NotFound";
 
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
 
       <Route
         path="/login"
@@ -64,7 +67,9 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<NotFound />} />
       </Route>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

@@ -48,20 +48,20 @@ const getAllColumns = ({
   fetchDetail: (itemOrId: IUserLog | string) => void
   showDetail?: boolean
 }): ColumnDef<IUserLog>[] => [
-  { header: 'SL', id: 'sl', cell: ({ row }) => <IndexCell rowIndex={row.index} pageIndex={pageIndex} pageSize={pageSize} />, meta: { customClassName: 'text-center' } },
-  { header: 'Action', id: 'action', cell: ({ row }) => <RowActions row={row.original} onDetail={() => fetchDetail(row.original)} showDetail={showDetail} /> },
-  { header: 'Detail', id: 'detail', accessorKey: 'detail' },
-  { header: 'Collection Name', id: 'modelName', accessorKey: 'modelName' },
-  { header: 'Action Type', id: 'actionType', accessorKey: 'actionType' },
-  { header: 'Object ID', id: 'modelId', accessorKey: 'modelId' },
-  { header: 'Created By', id: 'createdByName', accessorKey: 'createdByName' },
-  { header: 'Created At', accessorKey: 'createdAt', id: 'createdAt', cell: ({ getValue }) => getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss'), meta: { customClassName: 'text-center min-w-[150px] whitespace-nowrap' } },
-  { header: 'IP Address', id: 'ipAddress', accessorKey: 'ipAddress' },
-  { header: 'Browser', id: 'browser', accessorKey: 'browser' },
-  { header: 'Device', id: 'device', accessorKey: 'device' },
-  { header: 'OS', id: 'operatingSystem', accessorKey: 'operatingSystem' },
-  { header: 'User Agent', id: 'userAgent', accessorKey: 'userAgent' },
-  { header: 'Changes', id: 'changes', accessorKey: 'changes', cell: ({ getValue }) => <pre className="whitespace-pre-wrap">{JSON.stringify(parseChanges(getValue() as string), null, 2)}</pre> },
+  { header: 'SL', id: 'sl', cell: ({ row }) => <IndexCell rowIndex={row.index} pageIndex={pageIndex} pageSize={pageSize} />, meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'Action', id: 'action', cell: ({ row }) => <RowActions row={row.original} onDetail={() => fetchDetail(row.original)} showDetail={showDetail} />, meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'Detail', id: 'detail', accessorKey: 'detail', meta: { customClassName: 'text-center min-w-[200px] ', tdClassName: 'text-center min-w-[200px] ' } },
+  { header: 'Collection Name', id: 'modelName', accessorKey: 'modelName', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'Action Type', id: 'actionType', accessorKey: 'actionType', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'Object ID', id: 'modelId', accessorKey: 'modelId', meta: { customClassName: 'text-center min-w-[150px] ', tdClassName: 'text-center min-w-[150px] ' } },
+  { header: 'Created By', id: 'createdByName', accessorKey: 'createdByName', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'Created At', accessorKey: 'createdAt', id: 'createdAt', cell: ({ getValue }) => getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss'), meta: { customClassName: 'text-center w-[200px]', tdClassName: 'text-center w-[200px]' } },
+  { header: 'IP Address', id: 'ipAddress', accessorKey: 'ipAddress', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'Browser', id: 'browser', accessorKey: 'browser', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'Device', id: 'device', accessorKey: 'device', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'OS', id: 'operatingSystem', accessorKey: 'operatingSystem', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'User Agent', id: 'userAgent', accessorKey: 'userAgent', meta: { customClassName: 'text-center min-w-[300px] ', tdClassName: 'text-center min-w-[300px] ' } },
+  { header: 'Changes', id: 'changes', accessorKey: 'changes', cell: ({ getValue }) => <pre className="whitespace-pre-wrap">{JSON.stringify(parseChanges(getValue() as string), null, 2)}</pre>, meta: { customClassName: 'text-center min-w-[300px] ', tdClassName: 'text-center min-w-[300px] ' } },
 ]
 
 // Initial filter state
@@ -249,7 +249,7 @@ export default function LogListTable() {
                 {table.getRowModel().rows.map(row => (
                   <tr key={row.id} className="border-b dark:border-gray-700">
                     {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="p-2 border dark:border-gray-700">
+                      <td key={cell.id} className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''} dark:border-gray-700`}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}

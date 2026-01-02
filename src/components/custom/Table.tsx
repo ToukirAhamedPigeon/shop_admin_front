@@ -57,7 +57,7 @@ export function RecordInfo({ pageIndex, pageSize, totalCount }: RecordInfoProps)
   const { t } = useTranslations();
   return (
     <span className="text-gray-700 dark:text-gray-200">
-      {t('Showing')} {(pageIndex && pageSize) ? `${pageIndex * pageSize + 1} ${t('to')} ${Math.min((pageIndex + 1) * pageSize, totalCount)}` : ''} {t('Total')} {totalCount}
+      {t('Showing')} {(typeof pageIndex === 'number' && typeof pageSize === 'number' && typeof totalCount === 'number') ? `${pageIndex * pageSize + 1} ${t('to')} ${Math.min((pageIndex + 1) * pageSize, totalCount)}` : ''} ({t('Total')} {totalCount})
     </span>
   )
 }
