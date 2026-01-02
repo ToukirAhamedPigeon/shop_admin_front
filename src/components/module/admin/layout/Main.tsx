@@ -1,5 +1,3 @@
-'use client';
-
 import { useAppSelector } from '@/hooks/useRedux';
 import React from 'react';
 

@@ -15,10 +15,18 @@ interface RowActionsProps<T> {
   showDelete?: boolean
 }
 
-export function RowActions<T>({ row, onDetail, onEdit, onDelete, showDetail=true, showEdit=true, showDelete=true }: RowActionsProps<T>) {
+export function RowActions<T>({
+  row,
+  onDetail,
+  onEdit,
+  onDelete,
+  showDetail = true,
+  showEdit = true,
+  showDelete = true
+}: RowActionsProps<T>) {
   const { t } = useTranslations();
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 dark:text-gray-200">
       {showDetail && onDetail && (
         <Button size="sm" variant="info" onClick={() => onDetail(row)}>
           <FaEye /> <span className="hidden md:block">{t('Detail')}</span>
@@ -48,7 +56,7 @@ interface RecordInfoProps {
 export function RecordInfo({ pageIndex, pageSize, totalCount }: RecordInfoProps) {
   const { t } = useTranslations();
   return (
-    <span>
+    <span className="text-gray-700 dark:text-gray-200">
       {t('Showing')} {(pageIndex && pageSize) ? `${pageIndex * pageSize + 1} ${t('to')} ${Math.min((pageIndex + 1) * pageSize, totalCount)}` : ''} {t('Total')} {totalCount}
     </span>
   )
@@ -62,11 +70,10 @@ interface IndexCellProps {
 }
 
 export function IndexCell({ rowIndex, pageIndex, pageSize }: IndexCellProps) {
-  return <>{rowIndex + 1 + pageIndex * pageSize}</>
+  return <span className="text-gray-800 dark:text-gray-200">{rowIndex + 1 + pageIndex * pageSize}</span>
 }
 
 /** --- TableHeaderActions Component --- **/
-
 interface TableHeaderActionsProps {
   searchValue: string
   onSearchChange: (value: string) => void
@@ -95,23 +102,23 @@ export function TableHeaderActions({
   onFilter,
   isFilterActive = false,
   addButtonLabel = 'Add New',
-  showSearch= true,
-  showAddButton= true,
-  showFilterButton= true,
-  showPrintButton= true,
-  showExportButton= true,
-  showColumnSettingsButton= true,
+  showSearch = true,
+  showAddButton = true,
+  showFilterButton = true,
+  showPrintButton = true,
+  showExportButton = true,
+  showColumnSettingsButton = true,
 }: TableHeaderActionsProps) {
   const { t } = useTranslations();
   return (
-    <div className="flex justify-between items-center mb-4">
-      {showSearch && 
+    <div className="flex justify-between items-center mb-4 dark:text-gray-200">
+      {showSearch &&
         <Input
           aria-label="Search"
-          placeholder={t("Search")+"..."}
+          placeholder={t("Search") + "..."}
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-[120px] md:w-1/3"
+          className="w-[120px] md:w-1/3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
         />
       }
       <div className="flex gap-2 relative">
@@ -126,15 +133,14 @@ export function TableHeaderActions({
           <Button
             onClick={onFilter}
             aria-label="Open filter modal"
-            className="relative bg-blue-900 hover:bg-blue-800"
+            className="relative bg-blue-900 hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700"
           >
             <FaFilter />
             <span className="hidden lg:block ml-1">{t('Filter')}</span>
 
-            {/* Indicator dot */}
             {isFilterActive && (
               <span
-                className="absolute top-1 right-1 w-1 h-1 rounded-full bg-red-500"
+                className="absolute top-1 right-1 w-1 h-1 rounded-full bg-red-500 dark:bg-red-400"
                 aria-hidden="true"
               />
             )}
@@ -142,27 +148,33 @@ export function TableHeaderActions({
         )}
 
         {showColumnSettingsButton && onColumnSettings && (
-          <Button onClick={onColumnSettings} aria-label="Open column settings">
+          <Button
+            onClick={onColumnSettings}
+            aria-label="Open column settings"
+            className=""
+          >
             <FaSlidersH />
             <span className="hidden lg:block ml-1">{t('Columns')}</span>
           </Button>
         )}
+
         {showPrintButton && onPrint && (
           <Button
             variant="info"
             onClick={onPrint}
-            className=""
             aria-label="Print table"
+            className="bg-sky-800 hover:bg-sky-700 dark:bg-sky-800 dark:hover:bg-sky-700"
           >
             <FaPrint />
             <span className="hidden lg:block ml-1">{t('Print')}</span>
           </Button>
         )}
+
         {showExportButton && onExport && (
           <Button
             variant="success"
             onClick={onExport}
-            className="bg-green-800"
+            className="bg-green-800 dark:bg-green-700 dark:hover:bg-green-600"
             aria-label="Export table to Excel"
           >
             <FaFileExcel />
@@ -200,41 +212,51 @@ export function TablePaginationFooter({
   const totalPage = Math.ceil(totalCount / pageSize)
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-center mt-4 text-sm gap-2">
-      {showRecordInfo && <RecordInfo pageIndex={pageIndex} pageSize={pageSize} totalCount={totalCount} />}
+    <div className="flex flex-col md:flex-row justify-between items-center mt-4 text-sm gap-2 dark:text-gray-200">
+      {showRecordInfo && (
+        <RecordInfo pageIndex={pageIndex} pageSize={pageSize} totalCount={totalCount} />
+      )}
 
       <div className="flex items-center gap-2">
-        {showRowsPerPage && (<>
-        <label htmlFor="pageSize" className="hidden md:block">
-          {t('Rows per page')}:
-        </label>
-        <select
-          id="pageSize"
-          value={pageSize}
-          onChange={(e) => setPageSize(Number(e.target.value))}
-          className="border rounded px-2 py-1 cursor-pointer"
-        >
-          {[10, 50, 100, 500, 1000, 5000].map((size) => (
-            <option key={size} value={size} className="dark:bg-gray-800 cursor-pointer">
-              {size}
-            </option>
-          ))}
-        </select>
-        </>)}
+        {showRowsPerPage && (
+          <>
+            <label htmlFor="pageSize" className="hidden md:block dark:text-gray-300">
+              {t('Rows per page')}:
+            </label>
+            <select
+              id="pageSize"
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className="border rounded px-2 py-1 cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+            >
+              {[10, 50, 100, 500, 1000, 5000].map((size) => (
+                <option key={size} value={size} className="dark:bg-gray-800">
+                  {size}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
 
         {showPagination && (
           <>
-          <Button size="sm" onClick={() => setPageIndex(Math.max(pageIndex - 1, 0))} disabled={pageIndex === 0}>
-            {t('Previous')}
-          </Button>
+            <Button
+              size="sm"
+              onClick={() => setPageIndex(Math.max(pageIndex - 1, 0))}
+              disabled={pageIndex === 0}
+              className="dark:bg-gray-800 dark:hover:bg-gray-700"
+            >
+              {t('Previous')}
+            </Button>
 
-          <Button
-            size="sm"
-            onClick={() => setPageIndex(Math.min(pageIndex + 1, totalPage - 1))}
-            disabled={(pageIndex + 1) * pageSize >= totalCount}
-          >
-            {t('Next')}
-          </Button>
+            <Button
+              size="sm"
+              onClick={() => setPageIndex(Math.min(pageIndex + 1, totalPage - 1))}
+              disabled={(pageIndex + 1) * pageSize >= totalCount}
+              className="dark:bg-gray-800 dark:hover:bg-gray-700"
+            >
+              {t('Next')}
+            </Button>
           </>
         )}
       </div>
@@ -245,10 +267,8 @@ export function TablePaginationFooter({
 /** --- TableLoader Component --- **/
 export function TableLoader({ loading }: { loading: boolean }) {
   return loading ? (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60">
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 dark:bg-black/60">
       <Loader type="bars" size={48} />
     </div>
   ) : null;
 }
-
-

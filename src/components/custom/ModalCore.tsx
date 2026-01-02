@@ -68,10 +68,10 @@ const ModalCore: React.FC<ModalCoreProps> = ({
       exit="exit"
       transition={{ duration: 0.25 }}
       className={cn(
-        "relative rounded-md border border-gray-300 shadow-2xl overflow-hidden",
+        "relative rounded-md border border-gray-300 dark:border-gray-700 shadow-2xl overflow-hidden",
         bgColor === "transparent"
-          ? "bg-transparent"
-          : "bg-gradient-to-t from-[#fdfbfb] via-white to-[#ebedee]"
+          ? "bg-transparent dark:bg-transparent"
+          : "bg-gradient-to-t from-[#fdfbfb] via-white to-[#ebedee] dark:bg-[#1b2a3f]"
       )}
       style={{
         display: "flex",
@@ -84,17 +84,17 @@ const ModalCore: React.FC<ModalCoreProps> = ({
       {/* Header */}
       <div
         className={cn(
-          "sticky top-0 z-10 bg-white border-b border-gray-300 flex items-center justify-between px-6 py-4",
+          "sticky top-0 z-10 bg-white border-b border-gray-300 dark:border-gray-700 dark:bg-[#1b2a3f] flex items-center justify-between px-6 py-4",
           titleClassName
         )}
       >
-        <h2 className="text-xl font-semibold text-gray-800">{t(title)}</h2>
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-white dark:bg-[#1b2a3f]">{t(title)}</h2>
 
         <div className="flex items-center gap-2">
           {showPrintButton && (
             <button
               onClick={handlePrint}
-              className="text-gray-500 hover:text-blue-700 transition cursor-pointer"
+              className="text-gray-500 hover:text-blue-700 dark:text-white dark:hover:text-blue-300 transition cursor-pointer"
             >
               <Printer size={20} />
             </button>
@@ -111,7 +111,7 @@ const ModalCore: React.FC<ModalCoreProps> = ({
 
       {/* Body */}
       <div
-        className="px-6 py-4 overflow-y-auto"
+        className="px-6 py-4 overflow-y-auto dark:bg-[#1b2a3f]"
         style={{ flexGrow: 1, maxHeight: "calc(100vh - 150px)" }}
         ref={printRef}
       >

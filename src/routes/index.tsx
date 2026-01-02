@@ -9,6 +9,7 @@ import UserLogsPage from "@/modules/settings/user-logs/pages/UserLogsPage";
 
 import PublicRoute from "@/components/PublicRoute";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminLayout from "@/layouts/AdminLayout";
 
 export default function AppRoutes() {
   return (
@@ -39,23 +40,31 @@ export default function AppRoutes() {
           </PublicRoute>
         }
       />
-
-      <Route
-        path="/dashboard"
+    <Route
+        path="/"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <AdminLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/settings/user-logs"
-        element={
-          <ProtectedRoute>
-            <UserLogsPage />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/user-logs"
+          element={
+            <ProtectedRoute>
+              <UserLogsPage />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
     </Routes>
   );
 }

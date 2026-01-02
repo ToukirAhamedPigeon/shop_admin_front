@@ -49,7 +49,7 @@ export default function LogDetail({ log }: { log: LogDetailProps['log'] }) {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 px-4 md:px-6 py-6 max-w-7xl mx-auto">
+    <div className="flex flex-col md:flex-row gap-6 px-4 md:px-6 py-6 max-w-7xl mx-auto dark:bg-gray-800">
       <div className="flex-1">
         <Table>
           <TableBody>
@@ -70,7 +70,7 @@ function ChangeTable({ changes }: { changes: { label: string; value: string }[] 
   return (
     <div className="space-y-2">
       {changes.map(({ label, value }, idx) => (
-        <div key={idx} className="bg-gray-50 p-2 rounded">
+        <div key={idx} className="bg-gray-50 p-2 rounded dark:bg-gray-700">
           <span className="font-medium">{label}:</span>
           <pre className="whitespace-pre-wrap break-words mt-1">{value}</pre>
         </div>

@@ -39,7 +39,7 @@ export default function Modal({
           animate="visible"
           exit="exit"
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 w-full h-full flex items-center justify-center bg-black/50 z-50"
+          className="fixed inset-0 w-full h-full flex items-center justify-center bg-black/50 z-50 dark:bg-black/70"
           onClick={onClose} // close on backdrop click
         >
           {/* Full-screen container ensures modal centering */}

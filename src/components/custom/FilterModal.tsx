@@ -74,15 +74,15 @@ export function FilterModal<T>({
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent
-        className="min-w-[95%] max-h-[80%] sm:min-w-[60%] shadow-[0_0_10px_rgba(0,0,0,0.25)] sm:shadow-[-10px_0_20px_-10px_rgba(0,0,0,0.25)] bg-gradient-to-br from-white via-gray-100 to-white"
+        className="min-w-[95%] max-h-[80%] sm:min-w-[60%] shadow-[0_0_10px_rgba(0,0,0,0.25)] sm:shadow-[-10px_0_20px_-10px_rgba(0,0,0,0.25)] bg-gradient-to-br from-white via-gray-100 to-white dark:bg-[#1b2a3f] dark:from-[#1b2a3f] dark:via-[#2a405a] dark:to-[#385470]"
       >
         <DialogHeader>
           <DialogTitle>{t(title)}</DialogTitle>
         </DialogHeader>
 
-        <div className="py-4 px-2 h-[400px] overflow-y-auto">{renderForm(filterValues, setFilterValues)}</div>
+        <div className="py-4 px-2 overflow-y-auto dark:text-white">{renderForm(filterValues, setFilterValues)}</div>
 
-        <DialogFooter className="flex flex-row justify-center sm:justify-end gap-2">
+        <DialogFooter className="flex flex-row justify-center sm:justify-end gap-2 dark:text-white">
           <Button variant="outline" onClick={handleReset}>
             {t('Reset')}
           </Button>

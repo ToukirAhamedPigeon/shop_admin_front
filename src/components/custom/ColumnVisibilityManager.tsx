@@ -83,10 +83,10 @@ export function ColumnVisibilityManager<T>({
       setSelectedHidden([])
       setSearch('')
 
-      dispatchShowToast({
-        type: 'success',
-        message: t('Column settings refreshed from database'),
-      })
+      // dispatchShowToast({
+      //   type: 'success',
+      //   message: t('Column settings refreshed from database'),
+      // })
     } catch (err) {
       console.warn('Failed to refresh column settings from DB:', err)
       dispatchShowToast({
@@ -243,11 +243,11 @@ export function ColumnVisibilityManager<T>({
           {/* Visible Columns */}
           <div>
             <h3 className="font-bold mb-2">{t('Display')}</h3>
-            <ScrollArea className="border border-gray-600 rounded h-120 space-y-1">
+            <ScrollArea className="border border-gray-600 dark:border-gray-700 rounded h-120 space-y-1">
               {visible.map(col => {
                 const colId = getColumnId(col)
                 return (
-                  <div key={colId} className="border-b border-gray-300">
+                  <div key={colId} className="border-b border-gray-300 dark:border-gray-700">
                     <div
                       onDoubleClick={() => moveToHidden([colId])}
                       onClick={e => handleSelect(colId, selectedVisible, setSelectedVisible, e)}
@@ -278,15 +278,15 @@ export function ColumnVisibilityManager<T>({
           {/* Hidden Columns */}
           <div>
             <h3 className="font-bold mb-2">{t('Do Not Display')}</h3>
-            <ScrollArea className="border border-gray-600 rounded h-120 space-y-1">
+            <ScrollArea className="border border-gray-600 dark:border-gray-700 rounded h-120 space-y-1">
               {filteredHidden.map(col => {
                 const colId = getColumnId(col)
                 return (
-                  <div key={colId} className="border-b border-gray-300">
+                  <div key={colId} className="border-b border-gray-300 dark:border-gray-700">
                     <div
                       onDoubleClick={() => moveToVisible([colId])}
                       onClick={e => handleSelect(colId, selectedHidden, setSelectedHidden, e)}
-                      className={`w-full py-1 px-2 cursor-pointer ${selectedHidden.includes(colId) ? 'bg-blue-200' : ''}`}
+                      className={`w-full py-1 px-2 cursor-pointer ${selectedHidden.includes(colId) ? 'bg-blue-200 dark:bg-blue-600' : ''}`}
                     >
                       {t(String(col.header))}
                     </div>

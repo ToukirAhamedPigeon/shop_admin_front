@@ -1,11 +1,9 @@
-import AdminLayout from "@/layouts/AdminLayout";
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb'
 import UserLogs from './../components/UserLogs';
 
 export default function UserLogsPage() {
   return (
-    <AdminLayout>
-    <div className='flex flex-col gap-4'>
+      <div className='flex flex-col gap-4'>
       <Breadcrumb
           title="common.user_logs.title"
           defaultTitle="User Logs"
@@ -26,6 +24,5 @@ export default function UserLogsPage() {
         />
         <UserLogs />
       </div>
-    </AdminLayout>
   );
 }

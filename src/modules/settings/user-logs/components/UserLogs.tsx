@@ -212,7 +212,7 @@ export default function LogListTable() {
           isFilterActive={isFilterActive}
         />
 
-        <div className="relative rounded-sm shadow overflow-hidden bg-white" id="printable-user-table">
+        <div className="relative rounded-sm shadow overflow-hidden bg-white dark:bg-gray-800" id="printable-user-table">
           <div className="max-h-[600px] min-h-[200px] overflow-y-auto">
             {loading && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-opacity-70 mt-20">
@@ -220,7 +220,7 @@ export default function LogListTable() {
               </div>
             )}
             <table className="table-auto w-full text-left border border-collapse">
-              <thead className="sticky -top-1 z-10 bg-gray-200">
+              <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
                 {table.getHeaderGroups().map(headerGroup => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map(header => (
@@ -247,9 +247,9 @@ export default function LogListTable() {
               </thead>
               <tbody>
                 {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="border-b">
+                  <tr key={row.id} className="border-b dark:border-gray-700">
                     {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="p-2 border">
+                      <td key={cell.id} className="p-2 border dark:border-gray-700">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}

@@ -14,6 +14,7 @@ import type {  Path, PathValue, FieldError, UseFormSetValue} from "react-hook-fo
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 
+
 interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   labelFallback?: string;
@@ -218,23 +219,23 @@ export function CustomSelect<T extends Record<string, any>>({
 
   return (
     <div className="space-y-1 w-full">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-white">
         {t(label, label)}{" "}
         {isRequired && <span className="text-red-500">*</span>}
       </label>
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <div className="relative w-full bg-white">
+          <div className="relative w-full bg-white dark:bg-[#2a405a]">
             <Input
               readOnly
               ref={inputRef}
-              className="text-left cursor-pointer hover:bg-slate-100 pr-10 border border-gray-500"
+              className="text-left cursor-pointer hover:bg-slate-100 dark:text-white pr-10 border border-gray-500 dark:border-[#4a607a]"
               value={displayValue}
               placeholder={t(placeholder, placeholder )}
               onClick={() => setOpen(true)}
             />
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 pointer-events-none" />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-white w-4 h-4 pointer-events-none" />
           </div>
         </PopoverTrigger>
 
@@ -260,9 +261,9 @@ export function CustomSelect<T extends Record<string, any>>({
                   <CommandItem
                     key={opt.value || i}
                     onSelect={() => handleChange(opt.value)}
-                    className={`cursor-pointer hover:bg-blue-100 !rounded-none ${
+                    className={`cursor-pointer hover:bg-blue-100 dark:hover:bg-[#4a607a] !rounded-none ${
                       isSelected(opt.value)
-                        ? "!bg-blue-400 hover:!bg-blue-400 !text-white"
+                        ? "!bg-blue-400 hover:!bg-blue-400 dark:!bg-[#4a607a] dark:hover:!bg-[#4a607a] !text-white dark:text-white"
                         : ""
                     }`}
                   >
@@ -308,7 +309,7 @@ export const PasswordInput = ({
       <label
         className={cn(
           "block text-sm font-medium",
-          theme === "dark" ? "text-gray-200" : "text-gray-700"
+          theme === "dark" ? "text-gray-200 dark:text-white" : "text-gray-700 dark:text-white"
         )}
       >
         {t(label, labelFallback)}{" "}
@@ -378,12 +379,12 @@ const DateTimeInput = React.forwardRef<React.ComponentRef<typeof DatePicker>, Da
 
     const handleReset = (e: React.MouseEvent) => {
       e.stopPropagation(); // prevent popover toggle if any
-      setValue(name, null);
+      setValue(name, '');
     };
 
     return (
       <div className="w-full space-y-1">
-        <label htmlFor={id} className="text-sm font-medium text-gray-700">
+        <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-white">
           {t(label, label)} {isRequired && <span className="text-red-500">*</span>}
         </label>
         <div className="relative">
@@ -392,41 +393,48 @@ const DateTimeInput = React.forwardRef<React.ComponentRef<typeof DatePicker>, Da
             selected={value}
             onChange={(date) => setValue(name, date)}
             showTimeSelect={showTime}
-            onKeyDown={(e) => {
-              if (!allowTyping) e.preventDefault();
-            }}
             showMonthDropdown
             showYearDropdown
             dropdownMode="select"
             yearDropdownItemNumber={200}
-            timeFormat={showTime ? 'HH:mm' : undefined}
+            timeFormat={showTime ? "HH:mm" : undefined}
             timeIntervals={showTime ? 15 : undefined}
-            dateFormat={showTime ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd'}
-            placeholderText={placeholder || (showTime ? 'Select date & time' : 'Select date')}
+            dateFormat={showTime ? "yyyy-MM-dd HH:mm" : "yyyy-MM-dd"}
+            placeholderText={placeholder || (showTime ? "Select date & time" : "Select date")}
             ref={ref}
             readOnly={readOnly}
-            className={cn(
-              'w-full border border-gray-400 rounded-lg h-[38px] px-3 py-2 bg-white focus:bg-slate-100',
-              error && 'border-red-500',
-              className
+            disabled={disabled}
+            popperProps={{
+                strategy: "fixed",
+              }}
+             popperContainer={({ children }) => (
+              <div style={{ zIndex: 999999 }}>{children}</div>
             )}
             wrapperClassName="w-full"
-            disabled={disabled}
-            popperClassName="!z-[9999] !overflow-visible"
+            portalId="datepicker-portal"
+            popperPlacement="bottom-start"
+            showPopperArrow
+            popperClassName="z-[9999] overflow-hidden"
+            className={cn(
+              "w-full border border-gray-400 rounded-lg h-[38px] px-3 py-2",
+              error && "border-red-500",
+              className
+            )}
           />
+
           {showResetButton && value && !disabled && !readOnly && (
             <button
               type="button"
               onClick={handleReset}
               aria-label="Clear date"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-white dark:hover:text-red-700"
               tabIndex={-1} // exclude from tab order, optional
             >
-              <span className="text-xs text-gray-800 hover:text-red-700 cursor-pointer hover:font-bold">&#10005;</span> {/* or use an SVG icon for 'X' */}
+              <span className="text-xs text-gray-800 hover:text-red-700 cursor-pointer hover:font-bold dark:text-white dark:hover:text-red-700">&#10005;</span> {/* or use an SVG icon for 'X' */}
             </button>
           )}
         </div>
-        {error && <p className="text-sm text-red-500">{error.message}</p>}
+        {error && <p className="text-sm text-red-500 dark:text-red-400">{error.message}</p>}
       </div>
     );
   }
