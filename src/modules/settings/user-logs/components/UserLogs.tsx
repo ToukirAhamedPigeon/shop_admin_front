@@ -35,6 +35,7 @@ import type { LogFilters } from './LogFilterForm'
 import { parseChanges } from '@/lib/helpers'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/redux/store'
+import { ExpandableText } from '@/components/custom/ExpandableText'
 
 // Column definitions
 const getAllColumns = ({
@@ -61,7 +62,36 @@ const getAllColumns = ({
   { header: 'Device', id: 'device', accessorKey: 'device', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
   { header: 'OS', id: 'operatingSystem', accessorKey: 'operatingSystem', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
   { header: 'User Agent', id: 'userAgent', accessorKey: 'userAgent', meta: { customClassName: 'text-center min-w-[300px] ', tdClassName: 'text-center min-w-[300px] ' } },
-  { header: 'Changes', id: 'changes', accessorKey: 'changes', cell: ({ getValue }) => <pre className="whitespace-pre-wrap">{JSON.stringify(parseChanges(getValue() as string), null, 2)}</pre>, meta: { customClassName: 'text-center min-w-[300px] ', tdClassName: 'text-center min-w-[300px] ' } },
+  {
+  header: "Changes",
+  id: "changes",
+  accessorKey: "changes",
+  cell: ({ getValue }) => {
+    const raw = getValue();
+
+    if (!raw) {
+      return <span className="text-gray-400">-</span>;
+    }
+
+    const parsed = JSON.stringify(
+      parseChanges(raw as string),
+      null,
+      2
+    );
+
+    return (
+      <ExpandableText
+        text={parsed}
+        wordLimit={10}
+        className="max-w-[300px]"
+      />
+    );
+  },
+  meta: {
+    customClassName: "text-left min-w-[300px]",
+    tdClassName: "align-top",
+  },
+}
 ]
 
 // Initial filter state
@@ -105,7 +135,7 @@ export default function LogListTable() {
         },
         { withCredentials: true }
       )
-      return { data: res.data.logs, total: res.data.totalCount }
+      return { data: res.data.logs, total: res.data.totalCount, grandTotalCount: res.data.grandTotalCount }
     },
     [filters] // only changes when filters change
   )
@@ -113,6 +143,7 @@ export default function LogListTable() {
   const {
     data,
     totalCount,
+    grandTotalCount,
     loading,
     globalFilter,
     setGlobalFilter,
@@ -264,6 +295,7 @@ export default function LogListTable() {
           pageIndex={pageIndex}
           pageSize={pageSize}
           totalCount={totalCount}
+          grandTotalCount={grandTotalCount}
           setPageIndex={setPageIndex}
           setPageSize={setPageSize}
         />

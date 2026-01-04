@@ -53,10 +53,10 @@ export default function LoginPage() {
         if (result.meta.requestStatus === "fulfilled") {
           navigate("/dashboard");
           dispatchHideLoader();
-          dispatchShowToast({
-            type: "success",
-            message: "Login successful"
-          });
+          // dispatchShowToast({
+          //   type: "success",
+          //   message: "Login successful"
+          // });
         }
         else{
           dispatchShowToast({

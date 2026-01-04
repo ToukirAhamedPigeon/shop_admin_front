@@ -12,7 +12,7 @@ export function useTable<T>({
     limit: number
     sortBy: string
     sortOrder: string
-  }) => Promise<{ data: T[]; total: number }>
+  }) => Promise<{ data: T[]; total: number; grandTotalCount: number }>
   initialColumns?: ColumnDef<T, any>[]
   defaultSort?: string
 }) {
@@ -21,6 +21,7 @@ export function useTable<T>({
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
+  const [grandTotalCount, setGrandTotalCount] = useState(0)
   const [globalFilter, setGlobalFilter] = useState('')
   const [sorting, setSorting] = useState<SortingState>([])
 
@@ -39,6 +40,7 @@ export function useTable<T>({
       })
       setData(res.data)
       setTotalCount(res.total)
+      setGrandTotalCount(res.grandTotalCount)
     } finally {
       setLoading(false)
     }
@@ -48,6 +50,7 @@ export function useTable<T>({
     data,
     loading,
     totalCount,
+    grandTotalCount,
     pageIndex,
     pageSize,
     globalFilter,

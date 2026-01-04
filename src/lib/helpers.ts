@@ -1,5 +1,7 @@
 import * as XLSX from 'xlsx'
 import { formatDateTime } from './formatDate'
+import { useSelector } from 'react-redux'
+import type { RootState } from '@/redux/store'
 
 export const exportExcel = ({data, fileName, sheetName}: {data: any, fileName: string, sheetName: string}) => {
     const ws = XLSX.utils.json_to_sheet(data)
@@ -82,3 +84,9 @@ export function parseChanges(changes?: string): Record<string, any> | undefined 
     return { raw: changes }; // fallback
   }
 }
+
+export const formatNumber = (num: number, lang?: string) => {
+    if (lang !== "bn") return num.toString()
+    const bn = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"]
+    return num.toString().replace(/\d/g, d => bn[Number(d)])
+  }

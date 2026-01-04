@@ -249,9 +249,13 @@ export function ColumnVisibilityManager<T>({
                 return (
                   <div key={colId} className="border-b border-gray-300 dark:border-gray-700">
                     <div
-                      onDoubleClick={() => moveToHidden([colId])}
+                      onDoubleClick={() => {
+                        moveToHidden([colId])
+                        setSelectedVisible([])
+                        setSelectedHidden([])
+                      }}
                       onClick={e => handleSelect(colId, selectedVisible, setSelectedVisible, e)}
-                      className={`w-full py-1 px-2 cursor-pointer ${selectedVisible.includes(colId) ? 'bg-blue-200' : ''}`}
+                      className={`w-full py-1 px-2 cursor-pointer ${selectedVisible.includes(colId) ? 'bg-blue-200 dark:bg-blue-600' : ''}`}
                     >
                       {t(String(col.header))}
                     </div>
@@ -284,7 +288,11 @@ export function ColumnVisibilityManager<T>({
                 return (
                   <div key={colId} className="border-b border-gray-300 dark:border-gray-700">
                     <div
-                      onDoubleClick={() => moveToVisible([colId])}
+                      onDoubleClick={() => {
+                        moveToVisible([colId])
+                        setSelectedVisible([])
+                        setSelectedHidden([])
+                      }}
                       onClick={e => handleSelect(colId, selectedHidden, setSelectedHidden, e)}
                       className={`w-full py-1 px-2 cursor-pointer ${selectedHidden.includes(colId) ? 'bg-blue-200 dark:bg-blue-600' : ''}`}
                     >
