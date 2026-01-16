@@ -276,17 +276,26 @@ export default function LogListTable() {
                   </tr>
                 ))}
               </thead>
-              <tbody>
+              <motion.tbody
+                key={pageIndex} // 🔥 forces animation on page change
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
                 {table.getRowModel().rows.map(row => (
                   <tr key={row.id} className="border-b dark:border-gray-700">
                     {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''} dark:border-gray-700`}>
+                      <td
+                        key={cell.id}
+                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
                   </tr>
                 ))}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         </div>
@@ -296,6 +305,7 @@ export default function LogListTable() {
           pageSize={pageSize}
           totalCount={totalCount}
           grandTotalCount={grandTotalCount}
+          setPendingPage={setPageIndex}
           setPageIndex={setPageIndex}
           setPageSize={setPageSize}
         />

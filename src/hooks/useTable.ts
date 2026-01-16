@@ -24,6 +24,8 @@ export function useTable<T>({
   const [grandTotalCount, setGrandTotalCount] = useState(0)
   const [globalFilter, setGlobalFilter] = useState('')
   const [sorting, setSorting] = useState<SortingState>([])
+  const [pendingPage, setPendingPage] = useState<number | null>(null)
+
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -41,6 +43,10 @@ export function useTable<T>({
       setData(res.data)
       setTotalCount(res.total)
       setGrandTotalCount(res.grandTotalCount)
+      if (pendingPage !== null) {
+        setPageIndex(pendingPage)
+        setPendingPage(null)
+      }
     } finally {
       setLoading(false)
     }
@@ -51,6 +57,7 @@ export function useTable<T>({
     loading,
     totalCount,
     grandTotalCount,
+    setPendingPage,
     pageIndex,
     pageSize,
     globalFilter,

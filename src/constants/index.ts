@@ -9,7 +9,7 @@
   ]
   
   export const actionOptions = [
-    { label: 'Create', value: 'create' },
-    { label: 'Update', value: 'update' },
-    { label: 'Delete', value: 'delete' },
+    { label: 'Create', value: 'Create' },
+    { label: 'Update', value: 'Update' },
+    { label: 'Delete', value: 'Delete' },
   ]

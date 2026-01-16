@@ -96,7 +96,7 @@ export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormPr
           setValue={setValue}
           model="Log"
           value={watch('collectionName')}
-          multiple
+          multiple={true}
         />
 
         <CustomSelect<LogFilters>
@@ -110,7 +110,7 @@ export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormPr
           setValue={setValue}
           model="Log"
           value={watch('actionType')}
-          multiple
+          multiple={true}
         />
       </div>
 

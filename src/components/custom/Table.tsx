@@ -61,16 +61,13 @@ interface RecordInfoProps {
 export function RecordInfo({ pageIndex, pageSize, totalCount, grandTotalCount }: RecordInfoProps) {
   const { t } = useTranslations();
   return (
-    // <span className="text-gray-700 dark:text-gray-200">
-    //   {t('Showing')} {(typeof pageIndex === 'number' && typeof pageSize === 'number' && typeof totalCount === 'number') ? `${pageIndex * pageSize + 1} ${t('to')} ${Math.min((pageIndex + 1) * pageSize, totalCount)}` : ''} ({t('Filtered Total')} {totalCount}). {(grandTotalCount && typeof totalCount === 'number')? `(${t('Total')} ${grandTotalCount})` : ''}
-    // </span>
     <span className="text-sm text-gray-700 dark:text-gray-200">
       {typeof pageIndex === 'number' &&
       typeof pageSize === 'number' &&
       typeof totalCount === 'number' && (
         <>
           {t('Showing')}{' '}
-          <strong>{pageIndex * pageSize + 1}</strong>{' '}
+          <strong>{totalCount > 0 ? (pageIndex * pageSize + 1) : 0}</strong>{' '}
           {t('to')}{' '}
           <strong>{Math.min((pageIndex + 1) * pageSize, totalCount)}</strong>{' '}
           {t('of')}{' '}
@@ -213,86 +210,6 @@ export function TableHeaderActions({
   )
 }
 
-/** --- TablePaginationFooter Component --- **/
-// interface TablePaginationFooterProps {
-//   pageIndex: number
-//   pageSize: number
-//   totalCount: number
-//   grandTotalCount?: number
-//   setPageIndex: (value: number) => void
-//   setPageSize: (value: number) => void
-//   showRecordInfo?: boolean
-//   showPagination?: boolean
-//   showRowsPerPage?: boolean
-// }
-
-// export function TablePaginationFooter({
-//   pageIndex,
-//   pageSize,
-//   totalCount,
-//   grandTotalCount,
-//   setPageIndex,
-//   setPageSize,
-//   showRecordInfo = true,
-//   showPagination = true,
-//   showRowsPerPage = true,
-// }: TablePaginationFooterProps) {
-//   const { t } = useTranslations();
-//   const totalPage = Math.ceil(totalCount / pageSize)
-
-//   return (
-//     <div className="flex flex-col md:flex-row justify-between items-center mt-4 text-sm gap-2 dark:text-gray-200">
-//       {showRecordInfo && (
-//         <RecordInfo pageIndex={pageIndex} pageSize={pageSize} totalCount={totalCount} grandTotalCount={grandTotalCount} />
-//       )}
-
-//       <div className="flex items-center gap-2">
-//         {showRowsPerPage && (
-//           <>
-//             <label htmlFor="pageSize" className="hidden md:block dark:text-gray-300">
-//               {t('Rows per page')}:
-//             </label>
-//             <select
-//               id="pageSize"
-//               value={pageSize}
-//               onChange={(e) => setPageSize(Number(e.target.value))}
-//               className="border rounded px-2 py-1 cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
-//             >
-//               {[10, 50, 100, 500, 1000, 5000].map((size) => (
-//                 <option key={size} value={size} className="dark:bg-gray-800">
-//                   {size}
-//                 </option>
-//               ))}
-//             </select>
-//           </>
-//         )}
-
-//         {showPagination && (
-//           <>
-//             <Button
-//               size="sm"
-//               onClick={() => setPageIndex(Math.max(pageIndex - 1, 0))}
-//               disabled={pageIndex === 0}
-//               className="dark:bg-gray-800 dark:hover:bg-gray-700"
-//             >
-//               {t('Previous')}
-//             </Button>
-
-//             <Button
-//               size="sm"
-//               onClick={() => setPageIndex(Math.min(pageIndex + 1, totalPage - 1))}
-//               disabled={(pageIndex + 1) * pageSize >= totalCount}
-//               className="dark:bg-gray-800 dark:hover:bg-gray-700"
-//             >
-//               {t('Next')}
-//             </Button>
-//           </>
-//         )}
-//       </div>
-//     </div>
-//   )
-// }
-
 
 interface TablePaginationFooterProps {
   pageIndex: number
@@ -300,6 +217,7 @@ interface TablePaginationFooterProps {
   totalCount: number
   grandTotalCount?: number
   setPageIndex: (value: number) => void
+  setPendingPage: (value: number) => void
   setPageSize: (value: number) => void
   showRecordInfo?: boolean
   showPagination?: boolean
@@ -312,6 +230,7 @@ export function TablePaginationFooter({
   totalCount,
   grandTotalCount,
   setPageIndex,
+  setPendingPage,
   setPageSize,
   showRecordInfo = true,
   showPagination = true,
@@ -373,16 +292,16 @@ export function TablePaginationFooter({
     const handler = (e: KeyboardEvent) => {
       if (!showPagination) return
       if (e.key === "ArrowLeft" && pageIndex > 0) {
-        setPageIndex(pageIndex - 1)
+        setPendingPage(pageIndex - 1)
       }
       if (e.key === "ArrowRight" && pageIndex < totalPage - 1) {
-        setPageIndex(pageIndex + 1)
+        setPendingPage(pageIndex + 1)
       }
     }
 
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [pageIndex, totalPage, setPageIndex, showPagination])
+  }, [pageIndex, totalPage, setPendingPage, showPagination])
 
   /* ------------------ Render ------------------ */
 
@@ -393,7 +312,7 @@ export function TablePaginationFooter({
       {showRecordInfo && (
         <span className="text-gray-700 dark:text-gray-200">
           {t("Showing")}{" "}
-          {formatNumber(pageIndex * pageSize + 1, currentLang)} {t("to")}{" "}
+          {totalCount > 0 ? formatNumber(pageIndex * pageSize + 1, currentLang) : 0} {t("to")}{" "}
           {formatNumber(Math.min((pageIndex + 1) * pageSize, totalCount), currentLang)}{" "}
           {t("of")} {formatNumber(totalCount, currentLang)} {t("filtered results")}
           {typeof grandTotalCount === "number" && (
@@ -429,7 +348,7 @@ export function TablePaginationFooter({
           <>
             <Button
               size="sm"
-              onClick={() => setPageIndex(Math.max(pageIndex - 1, 0))}
+              onClick={() => setPendingPage(Math.max(pageIndex - 1, 0))}
               disabled={pageIndex === 0}
               className="dark:bg-gray-800 dark:hover:bg-gray-700"
             >
@@ -445,7 +364,7 @@ export function TablePaginationFooter({
                   <Button
                     key={p}
                     size="sm"
-                    onClick={() => setPageIndex(p)}
+                    onClick={() => setPendingPage(p)}
                     className={`min-w-[36px] transition-all duration-200 ${
                       p === pageIndex
                         ? "bg-blue-600 text-white hover:bg-blue-600"
@@ -460,7 +379,7 @@ export function TablePaginationFooter({
 
             <Button
               size="sm"
-              onClick={() => setPageIndex(Math.min(pageIndex + 1, totalPage - 1))}
+              onClick={() => setPendingPage(Math.min(pageIndex + 1, totalPage - 1))}
               disabled={(pageIndex + 1) * pageSize >= totalCount}
               className="dark:bg-gray-800 dark:hover:bg-gray-700"
             >
@@ -478,7 +397,7 @@ export function TablePaginationFooter({
                 if (e.key === "Enter") {
                   const value = Number((e.target as HTMLInputElement).value)
                   if (value >= 1 && value <= totalPage) {
-                    setPageIndex(value - 1)
+                    setPendingPage(value - 1)
                   }
                 }
               }}
