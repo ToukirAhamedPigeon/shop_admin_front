@@ -154,6 +154,7 @@
   background-color: #9ca3af; /* gray-400 */
   border-radius: 6px;
   border: 2px solid #e5e7eb;
+  cursor:pointer;
 }
 
 ::-webkit-scrollbar-thumb:hover {
