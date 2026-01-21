@@ -7,6 +7,7 @@ import Loader from "@/components/custom/Loader";
 import { formatNumber } from "@/lib/helpers";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
+import { Can } from "./Can";
 
 /** --- RowActions Component --- **/
 interface RowActionsProps<T> {
@@ -17,6 +18,10 @@ interface RowActionsProps<T> {
   showDetail?: boolean
   showEdit?: boolean
   showDelete?: boolean
+
+  detailPermissions?: string[]
+  editPermissions?: string[]
+  deletePermissions?: string[]
 }
 
 export function RowActions<T>({
@@ -26,28 +31,42 @@ export function RowActions<T>({
   onDelete,
   showDetail = true,
   showEdit = true,
-  showDelete = true
+  showDelete = true,
+   detailPermissions = [],
+  editPermissions = [],
+  deletePermissions = [],
 }: RowActionsProps<T>) {
   const { t } = useTranslations();
   return (
-    <div className="flex gap-2 dark:text-gray-200">
+    <div className="flex gap-2 dark:text-gray-200 justify-center">
       {showDetail && onDetail && (
-        <Button size="sm" variant="info" onClick={() => onDetail(row)}>
-          <FaEye /> <span className="hidden md:block">{t('Detail')}</span>
-        </Button>
+        <Can anyOf={detailPermissions}>
+          <Button size="sm" variant="info" onClick={() => onDetail(row)}>
+            <FaEye />
+            <span className="hidden md:block">{t("Detail")}</span>
+          </Button>
+        </Can>
       )}
+
       {showEdit && onEdit && (
-        <Button size="sm" variant="warning" onClick={() => onEdit(row)}>
-          <FaEdit /> <span className="hidden md:block">{t('Edit')}</span>
-        </Button>
+        <Can anyOf={editPermissions}>
+          <Button size="sm" variant="warning" onClick={() => onEdit(row)}>
+            <FaEdit />
+            <span className="hidden md:block">{t("Edit")}</span>
+          </Button>
+        </Can>
       )}
+
       {showDelete && onDelete && (
-        <Button size="sm" variant="destructive" onClick={() => onDelete(row)}>
-          <FaTrash /> <span className="hidden md:block">{t('Delete')}</span>
-        </Button>
+        <Can anyOf={deletePermissions}>
+          <Button size="sm" variant="destructive" onClick={() => onDelete(row)}>
+            <FaTrash />
+            <span className="hidden md:block">{t("Delete")}</span>
+          </Button>
+        </Can>
       )}
     </div>
-  )
+  );
 }
 
 /** --- RecordInfo Component --- **/

@@ -261,7 +261,7 @@ export function CustomSelect<T extends Record<string, any>>({
                   <CommandItem
                     key={opt.value || i}
                     onSelect={() => handleChange(opt.value)}
-                    className={`cursor-pointer hover:bg-blue-100 dark:hover:bg-[#4a607a] !rounded-none ${
+                    className={`cursor-pointer hover:bg-blue-100 dark:hover:bg-[#4a607a80] !rounded-none ${
                       isSelected(opt.value)
                         ? "!bg-blue-400 hover:!bg-blue-400 dark:!bg-[#4a607a] dark:hover:!bg-[#4a607a] !text-white dark:text-white"
                         : ""

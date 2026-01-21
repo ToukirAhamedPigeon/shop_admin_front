@@ -2,9 +2,9 @@
 import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import DateTimeInput, { CustomSelect } from '@/components/custom/FormInputs';
-import { actionOptions, collectionOptions } from '@/constants';
 import { can } from '@/lib/authCheck';
 import { useAppSelector } from '@/hooks/useRedux';
+import { useTranslations } from '@/hooks/useTranslations';
 
 const LOCAL_STORAGE_KEY = 'logFilters';
 
@@ -26,6 +26,7 @@ export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormPr
   const hasReadAllPermission = can(['read-all-logs']);
   const initialized = useRef(false);
   const user = useAppSelector((state) => state.auth.user);
+  const { t } = useTranslations();
 
   const { watch, reset, setValue, formState: { errors } } = useForm<LogFilters>({
     defaultValues: {
@@ -89,28 +90,40 @@ export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormPr
           id="collectionName"
           label="Collection Name"
           name="collectionName"
-          placeholder="Select Collection"
-          isRequired={false}
-          options={collectionOptions}
-          error={errors.collectionName?.[0]}
+          apiUrl="/UserLog/collections"
+          optionValueKey="value"
+          optionLabelKeys={["label"]}
+          multiple
           setValue={setValue}
           model="Log"
-          value={watch('collectionName')}
-          multiple={true}
+          value={watch("collectionName")}
+          placeholder={t('Select Collection(s)')}
         />
-
         <CustomSelect<LogFilters>
           id="actionType"
           label="Action Type"
           name="actionType"
-          placeholder="Select Action"
-          isRequired={false}
-          options={actionOptions}
-          error={errors.actionType?.[0]}
+          apiUrl="/UserLog/action-types"
+          optionValueKey="value"
+          optionLabelKeys={["label"]}
+          multiple
           setValue={setValue}
           model="Log"
-          value={watch('actionType')}
-          multiple={true}
+          value={watch("actionType")}
+          placeholder={t('Select Action(s)')}
+        />
+        <CustomSelect<LogFilters>
+          id="createdBy"
+          label="Created By"
+          name="createdBy"
+          apiUrl="/UserLog/creators"
+          optionValueKey="value"
+          optionLabelKeys={["label"]}
+          multiple
+          setValue={setValue}
+          model="Log"
+          value={watch("createdBy")}
+          placeholder={t('Select User(s)')}
         />
       </div>
 

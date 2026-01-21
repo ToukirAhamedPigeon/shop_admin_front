@@ -1,3 +1,4 @@
+//src/lib/authCheck.ts
 import { store } from "@/redux/store";
 import { selectPermissions } from "@/redux/selectors/permissionSelector";
 

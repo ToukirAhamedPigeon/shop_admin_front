@@ -1,5 +1,6 @@
 import { RefreshApi } from "@/routes/api";
 import axios from "axios";
+// import { dispatchShowToast } from "./dispatch";
 
 // ===== ENV CONFIG =====
 // ⬆️ set in .env → VITE_AUTH_TYPE=sanctum or jwt
@@ -102,7 +103,18 @@ api.interceptors.response.use(
         isRefreshing = false;
       }
     }
-
+    if (error.response?.status === 403) {
+      console.log(error.response?.data?.message ||
+        error.response?.data?.error ||
+        "You do not have permission to perform this action");
+      //   dispatchShowToast({
+      //     type: "danger",
+      //     message:
+      //       error.response?.data?.message ||
+      //       error.response?.data?.error ||
+      //       "You do not have permission to perform this action",
+      // });
+    }
     return Promise.reject(error);
   }
 );

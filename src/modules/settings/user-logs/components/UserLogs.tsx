@@ -50,7 +50,15 @@ const getAllColumns = ({
   showDetail?: boolean
 }): ColumnDef<IUserLog>[] => [
   { header: 'SL', id: 'sl', cell: ({ row }) => <IndexCell rowIndex={row.index} pageIndex={pageIndex} pageSize={pageSize} />, meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'Action', id: 'action', cell: ({ row }) => <RowActions row={row.original} onDetail={() => fetchDetail(row.original)} showDetail={showDetail} />, meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
+  { header: 'Action', id: 'action', cell: ({ row }) => <RowActions
+    row={row.original}
+    onDetail={() => fetchDetail(row.original)}
+    showDetail={showDetail}
+    // detailPermissions={["read-user"]}
+    // editPermissions={["update-user"]}
+    // deletePermissions={["delete-user"]}
+      />,
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
   { header: 'Detail', id: 'detail', accessorKey: 'detail', meta: { customClassName: 'text-center min-w-[200px] ', tdClassName: 'text-center min-w-[200px] ' } },
   { header: 'Collection Name', id: 'modelName', accessorKey: 'modelName', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
   { header: 'Action Type', id: 'actionType', accessorKey: 'actionType', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
@@ -83,7 +91,7 @@ const getAllColumns = ({
       <ExpandableText
         text={parsed}
         wordLimit={10}
-        className="max-w-[300px]"
+        className="max-w-[300px] whitespace-pre-wrap break-all"
       />
     );
   },
@@ -99,7 +107,7 @@ const initialFilters: LogFilters = {
   collectionName: [],
   actionType: [],
   createdBy: [],
-  createdAtFrom: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+  createdAtFrom: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
   createdAtTo: new Date(),
 }
 
