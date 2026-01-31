@@ -213,14 +213,33 @@ export function ColumnVisibilityManager<T>({
   }
 
 
-  const reset = () => {
+  const reset = async () => {
+    // 1️⃣ Reset UI immediately
     setVisible(initialColumns)
     setSelectedVisible([])
     setSelectedHidden([])
     setSearch('')
 
     dispatch(clearTableColumnSettings(REDUX_KEY))
+
+    // 2️⃣ Reset DB
+    try {
+      await updateTableColumnSettings(tableId, user?.id ?? '', initialColumns.map(getColumnId))
+
+      dispatchShowToast({
+        type: 'success',
+        message: `Column settings reset to default`,
+      })
+    } catch (err) {
+      console.warn('Reset error:', err)
+
+      dispatchShowToast({
+        type: 'danger',
+        message: `Failed to reset column settings`,
+      })
+    }
   }
+
 
   const filteredHidden = hidden.filter(col =>
     (String(col.header) || '').toLowerCase().includes(search.toLowerCase())
