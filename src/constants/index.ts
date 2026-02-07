@@ -2,14 +2,13 @@
     { label: 'User', value: 'User' },
   ]
 
-  export const collectionOptions = [
-    { label: 'User', value: 'User' },
-    { label: 'Role', value: 'Role' },
-    { label: 'Permission', value: 'Permission' },
-  ]
-  
-  export const actionOptions = [
-    { label: 'Create', value: 'Create' },
-    { label: 'Update', value: 'Update' },
-    { label: 'Delete', value: 'Delete' },
-  ]
+  export const BOOLEAN_OPTIONS = [
+  { value: 'true', label: 'Yes' },
+  { value: 'false', label: 'No' },
+];
+
+export const GENDER_OPTIONS = [
+  { value: 'female', label: 'Female' },
+  { value: 'male', label: 'Male' },
+  { value: 'others', label: 'Others' },
+];

@@ -11,6 +11,23 @@ export const exportExcel = ({data, fileName, sheetName}: {data: any, fileName: s
   }
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+export const labelFormatter = (input: string): string => {
+  if (!input) return input;
+
+  // 1️⃣ Replace underscores and hyphens with space
+  let text = input.replace(/[_-]/g, ' ');
+
+  // 2️⃣ Add space before camelCase capitals
+  text = text.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+
+  // 3️⃣ Split words, capitalize, preserve full uppercase acronyms
+  const words = text.split(' ').map(word => {
+    if (word === word.toUpperCase()) return word; // keep acronyms
+    return capitalize(word);
+  });
+
+  return words.join(' ');
+};
 export const twoDigitRandomNumber = Math.floor(Math.random() * 90) + 10;
 
  export function omitFields<T extends Record<string, any>>(obj: T, fields: string[]): Partial<T> {

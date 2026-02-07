@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { useNavigate } from "react-router-dom";
 import { useSelect } from "@/hooks/useSelect";
-import { capitalize } from "@/lib/helpers";
+import { capitalize, labelFormatter } from "@/lib/helpers";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import type {  Path, PathValue, FieldError, UseFormSetValue} from "react-hook-form";
@@ -197,8 +197,8 @@ export function CustomSelect<T extends Record<string, any>>({
     allOptions.find((opt) => opt.value === val)?.label || '';
 
   const displayValue = multiple
-    ? (normalizedValue as string[]).map((val) => capitalize(getLabel(val))).join(", ")
-    : capitalize(getLabel(normalizedValue as string));
+    ? (normalizedValue as string[]).map((val) => labelFormatter(getLabel(val))).join(", ")
+    : labelFormatter(getLabel(normalizedValue as string));
 
   const isSelected = (val: string) =>
     multiple
@@ -267,7 +267,7 @@ export function CustomSelect<T extends Record<string, any>>({
                         : ""
                     }`}
                   >
-                    {capitalize(opt.label)}
+                    {labelFormatter(opt.label)}
                   </CommandItem>
                 ))}
               {!loading && allOptions.length === 0 && (

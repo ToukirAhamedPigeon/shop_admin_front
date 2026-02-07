@@ -4,16 +4,21 @@ import DateTimeInput, { CustomSelect } from '@/components/custom/FormInputs';
 import { can } from '@/lib/authCheck';
 import { useAppSelector } from '@/hooks/useRedux';
 import { useTranslations } from '@/hooks/useTranslations';
+import { BOOLEAN_OPTIONS, GENDER_OPTIONS } from '@/constants';
 
 const LOCAL_STORAGE_KEY = 'userFilters';
 
 export interface UserFilters {
   roleIds?: string[];
   permissionIds?: string[];
-  status?: string[];
+  isActive?: string;
+  isDeleted?: string;
   createdBy?: string[];
-  createdAtFrom?: Date | null;
-  createdAtTo?: Date | null;
+  updatedBy?: string[];
+  gender?: string[];
+  dateType?: string[];
+  from?: Date | null;
+  to?: Date | null;
 }
 
 interface UserFilterFormProps {
@@ -39,8 +44,8 @@ export function UserFilterForm({
   } = useForm<UserFilters>({
     defaultValues: {
       ...filterValues,
-      createdAtFrom: filterValues.createdAtFrom ?? null,
-      createdAtTo: filterValues.createdAtTo ?? null,
+      from: filterValues.from ?? null,
+      to: filterValues.to ?? null,
       createdBy: hasReadAllPermission
         ? filterValues.createdBy
         : [user?.id ?? ''],
@@ -62,11 +67,11 @@ export function UserFilterForm({
         const merged: UserFilters = {
           ...filterValues,
           ...parsed,
-          createdAtFrom: parsed.createdAtFrom
-            ? new Date(parsed.createdAtFrom)
+          from: parsed.from
+            ? new Date(parsed.from)
             : null,
-          createdAtTo: parsed.createdAtTo
-            ? new Date(parsed.createdAtTo)
+          to: parsed.to
+            ? new Date(parsed.to)
             : null,
           createdBy: hasReadAllPermission
             ? parsed.createdBy
@@ -90,8 +95,12 @@ export function UserFilterForm({
         ...values,
         roleIds: values.roleIds?.filter((v): v is string => typeof v === 'string'),
         permissionIds: values.permissionIds?.filter((v): v is string => typeof v === 'string'),
-        status: values.status?.filter((v): v is string => typeof v === 'string'),
+        isActive: typeof values.isActive === 'string' ? values.isActive : values.isActive?.[0] ?? 'true',
+        isDeleted: typeof values.isDeleted === 'string' ? values.isDeleted : values.isDeleted?.[0] ?? 'false',
+        gender: values.gender?.filter((v): v is string => typeof v === 'string'),
+        dateType: values.dateType?.filter((v): v is string => typeof v === 'string'),
         createdBy: values.createdBy?.filter((v): v is string => typeof v === 'string'),
+        updatedBy: values.updatedBy?.filter((v): v is string => typeof v === 'string'),
       };
 
       setFilterValues((prev) => {
@@ -113,7 +122,7 @@ export function UserFilterForm({
           id="roleIds"
           label="Roles"
           name="roleIds"
-          apiUrl="/roles/options"
+          apiUrl="/Options/roles"
           optionValueKey="value"
           optionLabelKeys={['label']}
           multiple
@@ -127,7 +136,7 @@ export function UserFilterForm({
           id="permissionIds"
           label="Permissions"
           name="permissionIds"
-          apiUrl="/permissions/options"
+          apiUrl="/Options/permissions"
           optionValueKey="value"
           optionLabelKeys={['label']}
           multiple
@@ -139,26 +148,55 @@ export function UserFilterForm({
       </div>
       <div className="flex flex-col md:flex-row gap-4">
         <CustomSelect<UserFilters>
-          id="status"
-          label="Status"
-          name="status"
-          apiUrl="/users/status-options"
+          id="isActive"
+          label="Is Active?"
+          name="isActive"
+          options={BOOLEAN_OPTIONS}
           optionValueKey="value"
           optionLabelKeys={['label']}
-          multiple
+          multiple={false} // single-select
           setValue={setValue}
           model="User"
-          value={watch('status')}
-          placeholder={t('Select Status')}
+          value={watch('isActive') || 'true'} // default Yes
+          placeholder={t('Is Active?')}
+        />
+
+        <CustomSelect<UserFilters>
+          id="isDeleted"
+          label="Is Deleted?"
+          name="isDeleted"
+          options={BOOLEAN_OPTIONS}
+          optionValueKey="value"
+          optionLabelKeys={['label']}
+          multiple={false} // single-select
+          setValue={setValue}
+          model="User"
+          value={watch('isDeleted') || 'false'} // default No
+          placeholder={t('Is Deleted?')}
+        />
+
+        <CustomSelect<UserFilters>
+          id="gender"
+          label="Gender"
+          name="gender"
+          options={GENDER_OPTIONS}
+          optionValueKey="value"
+          optionLabelKeys={['label']}
+          multiple // single-select
+          setValue={setValue}
+          model="User"
+          value={watch('gender')} // default Male
+          placeholder={t('Gender')}
         />
       </div>
 
       {hasReadAllPermission && (
+      <div className="flex flex-col md:flex-row gap-4">
         <CustomSelect<UserFilters>
           id="createdBy"
           label="Created By"
           name="createdBy"
-          apiUrl="/users/creators"
+          apiUrl="/Options/userCreators"
           optionValueKey="value"
           optionLabelKeys={['label']}
           multiple
@@ -168,18 +206,46 @@ export function UserFilterForm({
           placeholder={t('Select User(s)')}
           error={errors.createdBy?.[0]}
         />
+        <CustomSelect<UserFilters>
+          id="updatedBy"
+          label="Last Updated By"
+          name="updatedBy"
+          apiUrl="/Options/userUpdaters"
+          optionValueKey="value"
+          optionLabelKeys={['label']}
+          multiple
+          setValue={setValue}
+          model="User"
+          value={watch('updatedBy')}
+          placeholder={t('Select User(s)')}
+          error={errors.updatedBy?.[0]}
+        />
+        </div>
       )}
 
       <div className="flex flex-col md:flex-row gap-4">
+        <CustomSelect<UserFilters>
+          id="dateType"
+          label="Date Type"
+          name="dateType"
+          apiUrl="/Options/userDateTypes"
+          optionValueKey="value"
+          optionLabelKeys={['label']}
+          multiple
+          setValue={setValue}
+          model="User"
+          value={watch('dateType')}
+          placeholder={t('Select Date Types')}
+        />
         <DateTimeInput
-          id="createdAtFrom"
+          id="from"
           label="From Date"
-          name="createdAtFrom"
-          value={watch('createdAtFrom') ?? null}
+          name="from"
+          value={watch('from') ?? null}
           setValue={(field, value) =>
             setValue(field as keyof UserFilters, value)
           }
-          error={errors.createdAtFrom}
+          error={errors.from}
           placeholder="Select start date"
           showTime={false}
           showResetButton
@@ -187,14 +253,14 @@ export function UserFilterForm({
         />
 
         <DateTimeInput
-          id="createdAtTo"
+          id="to"
           label="To Date"
-          name="createdAtTo"
-          value={watch('createdAtTo') ?? null}
+          name="to"
+          value={watch('to') ?? null}
           setValue={(field, value) =>
             setValue(field as keyof UserFilters, value)
           }
-          error={errors.createdAtTo}
+          error={errors.to}
           placeholder="Select end date"
           showTime={false}
           showResetButton
