@@ -15,3 +15,24 @@ export interface IUserLog {
   operatingSystem?: string | null;
   userAgent?: string | null;
 }
+
+export interface IUser {
+  id: string
+  name: string
+  username: string
+  email: string
+  mobileNo?: string
+  profileImage?: string
+  bio?: string
+  dateOfBirth?: string
+  gender?: string
+  address?: string
+  qrCode?: string
+  timezone?: string
+  language?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  roles: string[]
+  permissions: string[]
+}

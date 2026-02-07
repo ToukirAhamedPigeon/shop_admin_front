@@ -10,6 +10,8 @@ type SingleImageProps = {
   className?: string
   onClick?: () => void
   isQRCode?: boolean
+  title?: string
+  description?: string | React.ReactNode
 }
 
 type GroupImageProps = {
@@ -20,11 +22,14 @@ type GroupImageProps = {
 }
 
 export default function Fancybox(props: SingleImageProps | GroupImageProps) {
+  /* ---------------- GROUP MODE ---------------- */
   if ('mode' in props && props.mode === 'group') {
     return (
       <Lightbox
         open
-        close={props.onClose}
+        close={() => {
+      setOpen(false)
+    }}
         index={props.openIndex}
         slides={props.slides.map(slide => ({
           src: slide.src,
@@ -36,7 +41,17 @@ export default function Fancybox(props: SingleImageProps | GroupImageProps) {
     )
   }
 
-  const { src, alt, className, onClick, isQRCode } = props as SingleImageProps
+  /* ---------------- SINGLE MODE ---------------- */
+  const {
+    src,
+    alt,
+    className,
+    onClick,
+    isQRCode,
+    title,
+    description,
+  } = props as SingleImageProps
+
   const [open, setOpen] = useState(false)
   const qrRef = useRef<HTMLDivElement>(null)
 
@@ -59,6 +74,7 @@ export default function Fancybox(props: SingleImageProps | GroupImageProps) {
               justify-content: center;
               align-items: center;
               height: 100vh;
+              font-family: sans-serif;
             }
             img {
               max-width: 100%;
@@ -71,6 +87,7 @@ export default function Fancybox(props: SingleImageProps | GroupImageProps) {
         </body>
       </html>
     `)
+
     printWindow.document.close()
     printWindow.focus()
     printWindow.print()
@@ -79,53 +96,70 @@ export default function Fancybox(props: SingleImageProps | GroupImageProps) {
 
   return (
     <>
+      {/* Thumbnail */}
       <img
         src={src}
         alt={alt}
         width={200}
         height={200}
         className={`${className ?? ''} cursor-pointer object-cover`}
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
           onClick ? onClick() : setOpen(true)
         }}
       />
 
+      {/* Lightbox */}
       <Lightbox
         open={open}
         close={() => setOpen(false)}
         slides={[{ src }]}
         render={{
-          slide: () =>
-            isQRCode ? (
-              <div
-                ref={qrRef}
-                className="flex flex-col items-center justify-center min-h-[80vh] bg-white p-6"
-              >
+          slide: () => (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`flex flex-col items-center justify-center min-h-[80vh] ${
+                isQRCode ? 'bg-white p-6' : 'bg-black p-6'
+              }`}
+            >
+              <div ref={isQRCode ? qrRef : undefined}>
                 <img
                   src={src}
                   alt={alt}
-                  width={300}
-                  height={300}
-                  className="object-contain"
+                  width={isQRCode ? 300 : 600}
+                  height={isQRCode ? 300 : 600}
+                  className="object-contain mx-auto"
                 />
+
+                {/* 🔹 Title & Description */}
+                {(title || description) && (
+                  <div className="mt-4 text-center">
+                    {title && (
+                      <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {title}
+                      </div>
+                    )}
+                    {description && (
+                      <div className="mt-1 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                        {description}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* QR Print Button */}
+              {isQRCode && (
                 <button
                   onClick={handlePrint}
                   className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
                   Print QR Code
                 </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center min-h-[80vh] bg-black">
-                <img
-                  src={src}
-                  alt={alt}
-                  width={600}
-                  height={600}
-                  className="object-contain"
-                />
-              </div>
-            ),
+              )}
+            </div>
+          ),
         }}
       />
     </>

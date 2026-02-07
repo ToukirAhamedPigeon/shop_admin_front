@@ -102,4 +102,63 @@ export function formatDateTime(dateStr: string): string {
   export function getCustomDateTime(utcDate: string, format:string="YYYY-MM-DD", tz:string="Asia/Dhaka"): string {
         return moment.utc(utcDate).tz(tz).format(format);
   }
+
+  export type AgeFormat =
+  | 'full'      // Years + months + days
+  | 'yearsOnly' // Only years
+  | 'monthsOnly'// Only months
+  | 'daysOnly'; // Only days
+
+/**
+ * Calculate time passed from a given date.
+ * @param dateStr - input date string (ISO or compatible)
+ * @param format - desired format ('full', 'yearsOnly', 'monthsOnly', 'daysOnly')
+ * @returns Human-readable string like '20 years 5 months 10 days'
+ */
+export function getPassedTime(
+  dateStr: string | Date | null | undefined,
+  format: AgeFormat = 'full'
+): string {
+  if (!dateStr) return '-';
+
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+  if (isNaN(date.getTime())) return '-'; // invalid date
+
+  const now = new Date();
+  let years = now.getFullYear() - date.getFullYear();
+  let months = now.getMonth() - date.getMonth();
+  let days = now.getDate() - date.getDate();
+
+  if (days < 0) {
+    months -= 1;
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0); // last day of previous month
+    days += prevMonth.getDate();
+  }
+
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  switch (format) {
+    case 'yearsOnly':
+      return years > 0 ? `${years} year${years > 1 ? 's' : ''}` : '0 year';
+    case 'monthsOnly':
+      const totalMonths = years * 12 + months;
+      return totalMonths > 0 ? `${totalMonths} month${totalMonths > 1 ? 's' : ''}` : '0 month';
+    case 'daysOnly':
+      const diffTime = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays > 0 ? `${diffDays} day${diffDays > 1 ? 's' : ''}` : '0 day';
+    case 'full':
+    default:
+      const parts: string[] = [];
+      if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+      if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+      if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+
+      if (parts.length === 0) return '0 day';
+      return parts.join(' ');
+  }
+}
   

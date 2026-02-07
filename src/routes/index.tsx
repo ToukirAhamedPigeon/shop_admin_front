@@ -11,6 +11,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "@/layouts/AdminLayout";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
+import UsersPage from "@/modules/settings/users/pages/UsersPage";
 
 export default function AppRoutes() {
   return (
@@ -37,6 +38,15 @@ export default function AppRoutes() {
           element={
             <PermissionRoute anyOf={["read-admin-dashboard"]}>
               <DashboardPage />
+            </PermissionRoute>
+          }
+        />
+
+        <Route
+          path="settings/users"
+          element={
+            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+              <UsersPage />
             </PermissionRoute>
           }
         />

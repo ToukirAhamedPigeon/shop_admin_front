@@ -90,7 +90,7 @@ export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormPr
           id="collectionName"
           label="Collection Name"
           name="collectionName"
-          apiUrl="/UserLog/collections"
+          apiUrl="/Options/userLogCollections"
           optionValueKey="value"
           optionLabelKeys={["label"]}
           multiple
@@ -103,7 +103,7 @@ export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormPr
           id="actionType"
           label="Action Type"
           name="actionType"
-          apiUrl="/UserLog/action-types"
+          apiUrl="/Options/userLogActionTypes"
           optionValueKey="value"
           optionLabelKeys={["label"]}
           multiple
@@ -116,7 +116,7 @@ export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormPr
           id="createdBy"
           label="Created By"
           name="createdBy"
-          apiUrl="/UserLog/creators"
+          apiUrl="/Options/userLogCreators"
           optionValueKey="value"
           optionLabelKeys={["label"]}
           multiple

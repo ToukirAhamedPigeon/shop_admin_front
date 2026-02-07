@@ -43,7 +43,7 @@ export default function Modal({
           onClick={onClose} // close on backdrop click
         >
           {/* Full-screen container ensures modal centering */}
-          <div className="w-full h-full flex items-center justify-center px-4">
+          <div className="w-full h-full flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
             <ModalCore
               title={title}
               onClose={onClose}

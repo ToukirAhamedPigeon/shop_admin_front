@@ -7,7 +7,8 @@ import {
   LayoutDashboard,
   Settings,
   History,
-  SlidersHorizontal 
+  SlidersHorizontal, 
+  Users
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
@@ -46,6 +47,16 @@ const menuItems: MenuItem[] = [
         defaultLabel: "App Settings",
         icon: <SlidersHorizontal size={18} className="mr-2" />,
         basePath: "/settings/app-settings",
+        permissions: [
+          // "read-admin-user-logs"
+          "read-admin-dashboard"
+        ],
+      },
+      {
+        label: "common.users.title",
+        defaultLabel: "Users",
+        icon: <Users size={18} className="mr-2" />,
+        basePath: "/settings/users",
         permissions: [
           // "read-admin-user-logs"
           "read-admin-dashboard"
