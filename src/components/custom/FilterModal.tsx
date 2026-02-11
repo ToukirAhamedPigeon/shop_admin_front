@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,8 @@ interface FilterModalProps<T> {
   initialFilters: T
   renderForm: (
     filterValues: T,
-    setFilterValues: React.Dispatch<React.SetStateAction<T>>
+    setFilterValues: React.Dispatch<React.SetStateAction<T>>,
+    onResetRef?: React.MutableRefObject<(() => void) | null>
   ) => React.ReactNode
 }
 
@@ -35,7 +36,7 @@ export function FilterModal<T>({
 }: FilterModalProps<T>) {
   const {t} = useTranslations()
   const [filterValues, setFilterValues] = useState<T>(initialFilters)
-
+  const resetRef = useRef<(() => void) | null>(null);
   const LOCAL_KEY = `filterModal:${tableId}`
 
   useEffect(() => {
@@ -66,8 +67,15 @@ export function FilterModal<T>({
     onClose()
   }
 
+  // 🔹 Updated Reset: call form's handleReset if exists
   const handleReset = () => {
+    // 🔹 Reset the form first
+    resetRef.current?.()
+
+    // 🔹 Reset modal-level state
     setFilterValues(initialFilters)
+
+    // 🔹 Clear persisted filters
     localStorage.removeItem(LOCAL_KEY)
   }
 
@@ -80,7 +88,7 @@ export function FilterModal<T>({
           <DialogTitle>{t(title)}</DialogTitle>
         </DialogHeader>
 
-        <div className="py-4 px-2 overflow-y-auto dark:text-white">{renderForm(filterValues, setFilterValues)}</div>
+        <div className="py-4 px-2 overflow-y-auto dark:text-white">{renderForm(filterValues, setFilterValues, resetRef)}</div>
 
         <DialogFooter className="flex flex-row justify-center sm:justify-end gap-2 dark:text-white">
           <Button variant="outline" onClick={handleReset}>

@@ -19,14 +19,25 @@ export interface LogFilters {
 interface LogFilterFormProps {
   filterValues: LogFilters;
   setFilterValues: React.Dispatch<React.SetStateAction<LogFilters>>;
+  onResetRef?: React.MutableRefObject<(() => void) | null>;
   onClose?: () => void;
 }
 
-export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormProps) {
+export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: LogFilterFormProps) {
+
+  const DEFAULT_LOG_FILTERS: LogFilters = {
+    collectionName: [],
+    actionType: [],
+    createdBy: [],
+    createdAtFrom: null,
+    createdAtTo: null,
+  };
+
   const hasReadAllPermission = can(['read-all-logs']);
   const initialized = useRef(false);
   const user = useAppSelector((state) => state.auth.user);
   const { t } = useTranslations();
+  const isResetting = useRef(false);
 
   const { watch, reset, setValue, formState: { errors } } = useForm<LogFilters>({
     defaultValues: {
@@ -38,6 +49,35 @@ export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormPr
         : [user?.id ?? ''],
     },
   });
+
+ /* ----------------------------------------
+   * Expose handleReset to modal via resetRef
+   * -------------------------------------- */
+  const handleReset = () => {
+    isResetting.current = true;
+
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+
+    reset({
+      ...DEFAULT_LOG_FILTERS,
+      createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
+    });
+
+    setFilterValues({
+      ...DEFAULT_LOG_FILTERS,
+      createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
+    });
+
+    setTimeout(() => {
+      isResetting.current = false;
+    }, 0);
+  };
+
+  useEffect(() => {
+    if (onResetRef) { // 🔹 assign form's handleReset to resetRef
+      onResetRef.current = handleReset;
+    }
+  }, [onResetRef]);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -64,11 +104,15 @@ export function LogFilterForm({ filterValues, setFilterValues }: LogFilterFormPr
 
   useEffect(() => {
     const subscription = watch((values) => {
+      if (isResetting.current) return; // 🔑 IMPORTANT
+
       const cleaned: LogFilters = {
         ...values,
         collectionName: values.collectionName?.filter((v): v is string => typeof v === 'string'),
         actionType: values.actionType?.filter((v): v is string => typeof v === 'string'),
-        createdBy: (values.createdBy ?? []).filter((v): v is string => typeof v === 'string'),
+        createdBy: (values.createdBy ?? []).filter(
+          (v): v is string => typeof v === 'string'
+        ),
       };
 
       setFilterValues((prev) => {

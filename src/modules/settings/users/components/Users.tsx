@@ -424,7 +424,7 @@ export default function Users() {
           onClose={() => setFilterModalOpen(false)}
           onApply={newFilters => { setFilters(newFilters); setFilterModalOpen(false) }}
           initialFilters={filters}
-          renderForm={(filterValues, setFilterValues) => (<UserFilterForm filterValues={filterValues} setFilterValues={setFilterValues} />)}
+          renderForm={(filterValues, setFilterValues, resetRef) => (<UserFilterForm filterValues={filterValues} setFilterValues={setFilterValues} onResetRef={resetRef} />)}
         />
       )}
     </motion.div>

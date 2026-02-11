@@ -9,10 +9,10 @@ import { BOOLEAN_OPTIONS, GENDER_OPTIONS } from '@/constants';
 const LOCAL_STORAGE_KEY = 'userFilters';
 
 export interface UserFilters {
-  roleIds?: string[];
-  permissionIds?: string[];
-  isActive?: string;
-  isDeleted?: string;
+  roles?: string[];
+  permissions?: string[];
+  isActiveStr?: string;
+  isDeletedStr?: string;
   createdBy?: string[];
   updatedBy?: string[];
   gender?: string[];
@@ -24,17 +24,34 @@ export interface UserFilters {
 interface UserFilterFormProps {
   filterValues: UserFilters;
   setFilterValues: React.Dispatch<React.SetStateAction<UserFilters>>;
+  onResetRef?: React.MutableRefObject<(() => void) | null>;
   onClose?: () => void;
 }
 
 export function UserFilterForm({
   filterValues,
   setFilterValues,
+  onResetRef,
 }: UserFilterFormProps) {
   const initialized = useRef(false);
   const user = useAppSelector((state) => state.auth.user);
   const hasReadAllPermission = can(['read-admin-dashboard']);
   const { t } = useTranslations();
+  const isResetting = useRef(false);
+
+  const DEFAULT_USER_FILTERS: UserFilters = {
+    roles: [],
+    permissions: [],
+    isActiveStr: 'true',
+    isDeletedStr: 'false',
+    createdBy: [],
+    updatedBy: [],
+    gender: [],
+    dateType: [],
+    from: null,
+    to: null,
+ };
+
 
   const {
     watch,
@@ -51,6 +68,35 @@ export function UserFilterForm({
         : [user?.id ?? ''],
     },
   });
+
+    /* ----------------------------------------
+   * Expose handleReset to modal via resetRef
+   * -------------------------------------- */
+  const handleReset = () => {
+    isResetting.current = true;
+
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+
+    reset({
+      ...DEFAULT_USER_FILTERS,
+      createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
+    });
+
+    setFilterValues({
+      ...DEFAULT_USER_FILTERS,
+      createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
+    });
+
+    setTimeout(() => {
+      isResetting.current = false;
+    }, 0);
+  };
+
+  useEffect(() => {
+    if (onResetRef) { // 🔹 assign form's handleReset to resetRef
+      onResetRef.current = handleReset;
+    }
+  }, [onResetRef]);
 
   /* ----------------------------------------
    * Load from localStorage (once)
@@ -91,12 +137,20 @@ export function UserFilterForm({
    * -------------------------------------- */
   useEffect(() => {
     const subscription = watch((values) => {
+      if (isResetting.current) return; // 🔑 IMPORTANT
+
       const cleaned: UserFilters = {
         ...values,
-        roleIds: values.roleIds?.filter((v): v is string => typeof v === 'string'),
-        permissionIds: values.permissionIds?.filter((v): v is string => typeof v === 'string'),
-        isActive: typeof values.isActive === 'string' ? values.isActive : values.isActive?.[0] ?? 'true',
-        isDeleted: typeof values.isDeleted === 'string' ? values.isDeleted : values.isDeleted?.[0] ?? 'false',
+        roles: values.roles?.filter((v): v is string => typeof v === 'string'),
+        permissions: values.permissions?.filter((v): v is string => typeof v === 'string'),
+        isActiveStr:
+          typeof values.isActiveStr === 'string'
+            ? values.isActiveStr
+            : values.isActiveStr?.[0] ?? 'true',
+        isDeletedStr:
+          typeof values.isDeletedStr === 'string'
+            ? values.isDeletedStr
+            : values.isDeletedStr?.[0] ?? 'false',
         gender: values.gender?.filter((v): v is string => typeof v === 'string'),
         dateType: values.dateType?.filter((v): v is string => typeof v === 'string'),
         createdBy: values.createdBy?.filter((v): v is string => typeof v === 'string'),
@@ -115,34 +169,35 @@ export function UserFilterForm({
     return () => subscription.unsubscribe();
   }, [watch, setFilterValues]);
 
+
   return (
     <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
       <div className="flex flex-col md:flex-row gap-4">
         <CustomSelect<UserFilters>
           id="roleIds"
           label="Roles"
-          name="roleIds"
+          name="roles"
           apiUrl="/Options/roles"
           optionValueKey="value"
           optionLabelKeys={['label']}
           multiple
           setValue={setValue}
           model="User"
-          value={watch('roleIds')}
+          value={watch('roles')}
           placeholder={t('Select Role(s)')}
         />
 
         <CustomSelect<UserFilters>
-          id="permissionIds"
+          id="permissions"
           label="Permissions"
-          name="permissionIds"
+          name="permissions"
           apiUrl="/Options/permissions"
           optionValueKey="value"
           optionLabelKeys={['label']}
           multiple
           setValue={setValue}
           model="User"
-          value={watch('permissionIds')}
+          value={watch('permissions')}
           placeholder={t('Select Permission(s)')}
         />
       </div>
@@ -150,28 +205,28 @@ export function UserFilterForm({
         <CustomSelect<UserFilters>
           id="isActive"
           label="Is Active?"
-          name="isActive"
+          name="isActiveStr"
           options={BOOLEAN_OPTIONS}
           optionValueKey="value"
           optionLabelKeys={['label']}
           multiple={false} // single-select
           setValue={setValue}
           model="User"
-          value={watch('isActive') || 'true'} // default Yes
+          value={watch('isActiveStr') || 'true'} // default Yes
           placeholder={t('Is Active?')}
         />
 
         <CustomSelect<UserFilters>
           id="isDeleted"
           label="Is Deleted?"
-          name="isDeleted"
+          name="isDeletedStr"
           options={BOOLEAN_OPTIONS}
           optionValueKey="value"
           optionLabelKeys={['label']}
           multiple={false} // single-select
           setValue={setValue}
           model="User"
-          value={watch('isDeleted') || 'false'} // default No
+          value={watch('isDeletedStr') || 'false'} // default No
           placeholder={t('Is Deleted?')}
         />
 

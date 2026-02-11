@@ -364,8 +364,8 @@ export default function LogListTable() {
           setFilterModalOpen(false)
         }}
         initialFilters={filters}
-        renderForm={(filterValues, setFilterValues) => (
-          <LogFilterForm filterValues={filterValues} setFilterValues={setFilterValues} onClose={() => setFilterModalOpen(false)} />
+        renderForm={(filterValues, setFilterValues, resetRef) => (
+          <LogFilterForm filterValues={filterValues} setFilterValues={setFilterValues} onClose={() => setFilterModalOpen(false)} onResetRef={resetRef} />
         )}
       />
     </motion.div>
