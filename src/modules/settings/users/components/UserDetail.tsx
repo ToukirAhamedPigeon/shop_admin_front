@@ -66,8 +66,11 @@ export default function UserDetail({ user }: { user: any }) {
     ['Active', user.isActive ? 'Yes' : 'No'],
     ['Roles', user.roles?.join(', ') || '-'],
     ['Permissions', user.permissions?.join(', ') || '-'],
+    ['Created By', user.createdByName ?? '-'],
+    ['Updated By', user.updatedByName ?? '-'],
     ['Created At', getCustomDateTime(user.createdAt)],
     ['Updated At', getCustomDateTime(user.updatedAt)],
+    
   ]
 
   return (

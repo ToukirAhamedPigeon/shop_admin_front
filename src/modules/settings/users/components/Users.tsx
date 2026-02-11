@@ -150,8 +150,8 @@ const getAllColumns = ({
   { header: 'Mobile', accessorKey: 'mobileNo' },
   { header: 'NID', accessorKey: 'nid' },
   { header: 'Gender', accessorKey: 'gender', cell: ({ getValue }) => ((getValue()!=null)?capitalize(getValue() as string) ?? '-' : '-') },
-  { header: 'Timezone', accessorKey: 'timezone' },
-  { header: 'Language', accessorKey: 'language' },
+  // { header: 'Timezone', accessorKey: 'timezone' },
+  // { header: 'Language', accessorKey: 'language' },
   {
     header: 'Date of Birth',
     accessorKey: 'dateOfBirth',
@@ -221,6 +221,16 @@ const getAllColumns = ({
     accessorKey: 'createdAt',
     cell: ({ getValue }) =>
       getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    header: 'Created By',
+    accessorKey: 'createdByName',
+    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span>,
+  },
+  {
+    header: 'Updated By',
+    accessorKey: 'updatedByName',
+    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span>,
   },
 ]
 
