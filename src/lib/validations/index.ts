@@ -14,17 +14,20 @@ export type SignInSchemaType = z.infer<typeof signInSchema>
 
 
 export const checkValueExists = async (
-  collection: string,
+  model: string,
   fieldName: string,
   fieldValue: string,
   exceptFieldValue?: string,
-  exceptFieldName: string = '_id'
+  exceptFieldName: string = 'Id'
   ): Promise<boolean> => {
   try {
+    if (!fieldValue || fieldValue.trim() === '') {
+      return false
+    }
       const res = await api.post(
-      `/check-unique`,
+      `common/check-unique`,
       {
-        collection,
+        model,
         fieldName,
         fieldValue,
         exceptFieldName,

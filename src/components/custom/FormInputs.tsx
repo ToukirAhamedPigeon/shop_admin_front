@@ -234,6 +234,7 @@ type SingleImageInputProps = {
   disabled?: boolean;
   isRequired?: boolean;
   className?: string;
+  minHeightClass?: string;
 };
 
 export const SingleImageInput: React.FC<SingleImageInputProps> = ({
@@ -245,6 +246,7 @@ export const SingleImageInput: React.FC<SingleImageInputProps> = ({
   disabled = false,
   isRequired = false,
   className,
+  minHeightClass=''
 }) => {
   const {t} = useTranslations()
   const { getRootProps, getInputProps } = useDropzone({
@@ -267,8 +269,8 @@ export const SingleImageInput: React.FC<SingleImageInputProps> = ({
       <div
         {...getRootProps()}
         className={cn(
-          "border border-dashed border-gray-400 dark:border-slate-600 p-4 text-center rounded-md cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition",
-          disabled && "bg-gray-100 dark:bg-slate-700 cursor-not-allowed opacity-70"
+          "border border-dashed border-gray-400 dark:border-slate-600 p-4 text-center rounded-md cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition flex flex-col items-center justify-center",
+          disabled && "bg-gray-100 dark:bg-slate-700 cursor-not-allowed opacity-70",minHeightClass
         )}
       >
         <input {...getInputProps()} />
@@ -352,7 +354,7 @@ export interface CustomSelectProps<T extends Record<string, any>> {
   label: string;
   name: Path<T>;
   setValue: UseFormSetValue<T>;
-  error?: FieldError;
+  error?: FieldError | undefined | any;
   isRequired?: boolean;
   placeholder?: string;
   model: string;

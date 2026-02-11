@@ -1,7 +1,5 @@
 import * as XLSX from 'xlsx'
 import { formatDateTime } from './formatDate'
-import { useSelector } from 'react-redux'
-import type { RootState } from '@/redux/store'
 
 export const exportExcel = ({data, fileName, sheetName}: {data: any, fileName: string, sheetName: string}) => {
     const ws = XLSX.utils.json_to_sheet(data)

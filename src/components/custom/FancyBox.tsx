@@ -63,30 +63,39 @@ export default function Fancybox(props: SingleImageProps | GroupImageProps) {
     if (!printWindow) return
 
     printWindow.document.write(`
-      <html>
-        <head>
-          <title>Print QR Code</title>
-          <style>
-            body {
-              margin: 0;
-              padding: 20px;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 100vh;
-              font-family: sans-serif;
-            }
-            img {
-              max-width: 100%;
-              height: auto;
-            }
-          </style>
-        </head>
-        <body>
+    <html>
+      <head>
+        <title>Print QR Code</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: sans-serif;
+          }
+          .print-container {
+            display: flex;
+            flex-direction: column; /* ✅ Stack items vertically */
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+          }
+          img {
+            max-width: 100%;
+            height: auto;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-container">
           ${qrContent}
-        </body>
-      </html>
-    `)
+        </div>
+      </body>
+    </html>
+  `)
 
     printWindow.document.close()
     printWindow.focus()
@@ -131,17 +140,17 @@ export default function Fancybox(props: SingleImageProps | GroupImageProps) {
                   height={isQRCode ? 300 : 600}
                   className="object-contain mx-auto"
                 />
-
+                <br />
                 {/* 🔹 Title & Description */}
                 {(title || description) && (
                   <div className="mt-4 text-center">
                     {title && (
-                      <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-500">
                         {title}
                       </div>
                     )}
                     {description && (
-                      <div className="mt-1 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                      <div className="mt-1 text-sm text-gray-600 dark:text-gray-500 whitespace-pre-wrap">
                         {description}
                       </div>
                     )}
@@ -153,7 +162,7 @@ export default function Fancybox(props: SingleImageProps | GroupImageProps) {
               {isQRCode && (
                 <button
                   onClick={handlePrint}
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
                 >
                   Print QR Code
                 </button>

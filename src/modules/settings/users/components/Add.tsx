@@ -1,5 +1,3 @@
-'use client'
-
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,58 +10,87 @@ import DateTimeInput,{BasicInput, BasicTextarea, CustomSelect, PasswordInput, Si
 import { useTranslations } from "@/hooks/useTranslations";
 import { useAppDispatch } from '@/hooks/useRedux';
 import { dispatchShowToast } from "@/lib/dispatch";
+import { BOOLEAN_OPTIONS, GENDER_OPTIONS } from '@/constants'
+import { createUsers } from '../api'
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
 export const schema = z.object({
+  // Name: required
   name: z.string().min(1, 'Name is required'),
-  username: z.string().min(1, 'Username is required'),
+
+  // Username: required, min 4 chars
+  username: z
+    .string()
+    .min(4, 'Username must be at least 4 characters'),
+
+  // Email: required and valid
   email: z.string().email({ message: "Invalid email" }),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmed_password: z.string().min(1, 'Confirmed password is required'),
 
-  // ✅ FIXED IMAGE TYPE
-  image: z
-    .instanceof(File)
-    .refine((file) => file.type.startsWith("image/"), {
-      message: "Only image files are allowed",
+  // Password: required, min 6, must have uppercase, lowercase, number, special char
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .refine((val) => /[A-Z]/.test(val), {
+      message: "Password must contain at least one uppercase letter",
     })
-    .optional(),
+    .refine((val) => /[a-z]/.test(val), {
+      message: "Password must contain at least one lowercase letter",
+    })
+    .refine((val) => /[0-9]/.test(val), {
+      message: "Password must contain at least one number",
+    })
+    .refine((val) => /[!@#$%^&*(),.?":{}|<>]/.test(val), {
+      message: "Password must contain at least one special character",
+    }),
 
-  bp_no: z.string().optional(),
-  phone_1: z.string().min(11, 'Phone Number must be at least 11 digits').optional(),
-  phone_2: z.string().optional(),
-  address: z.string().optional(),
-  blood_group: z.string().optional(),
+  // Confirm Password: must match password
+  confirmed_password: z.string(),
+
+  // Mobile: optional but min 11 digits if provided
+  mobile_no: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.length >= 11, {
+      message: "Mobile Number must be at least 11 digits",
+    }),
+
+  // NID: optional, but uniqueness handled via API
   nid: z.string().optional(),
 
-  // ✅ keep this (works fine)
-  dob: z.coerce.date().optional(),
-
-  description: z.string().optional(),
-
-  current_status: z.string().min(1, 'Status is required'),
-
-  role_ids: z
-    .array(
-      z.string().regex(objectIdRegex, {
-        message: "Each role ID must be a valid ObjectId",
-      })
-    )
-    .nonempty({ message: "Please select at least one role" }),
-
-  permission_ids: z.array(
-    z.string().regex(objectIdRegex, {
-      message: "Each permission ID must be a valid ObjectId",
+  // Profile Image: optional, jpg/jpeg/png, max 500kb
+  profile_image: z
+    .instanceof(File)
+    .optional()
+    .refine((file) => !file || ['image/jpeg','image/jpg','image/png'].includes(file.type), {
+      message: "Profile image must be jpg, jpeg or png",
     })
-  )
-}).refine(
-  (data) => data.password === data.confirmed_password,
-  {
-    path: ['confirmed_password'],
-    message: "Passwords don't match",
-  }
-);
+    .refine((file) => !file || file.size <= 5 * 1024 * 1024, {
+      message: "Profile image must be less than 5MB",
+    }),
+
+  // Optional fields
+  address: z.string().optional(),
+  bio: z.string().optional(),
+  blood_group: z.string().optional(),
+  dob: z.coerce.date().optional(),
+  is_active: z.string().optional(),
+  gender: z.string().optional(),
+
+  // Roles: optional array
+  // Roles: required array, must have at least 1
+  roles: z.array(z.string())
+    .min(1, 'At least one role must be selected'),
+
+  // Permissions: optional array
+  permissions: z.array(z.string()).optional(),
+
+})
+.refine((data) => data.password === data.confirmed_password, {
+  path: ['confirmed_password'],
+  message: "Passwords don't match",
+});
+
 
 type FormData = z.infer<typeof schema>
 
@@ -94,107 +121,131 @@ export default function Add({fetchData}:RegisterProps) {
     email: '',
     password: '',
     confirmed_password: '',
-    image: undefined,
-    bp_no: '',
-    phone_1: '',
-    phone_2: '',
+    profile_image: undefined,
+    mobile_no: '',
     address: '',
     blood_group: '',
     nid: '',
     dob: undefined,
-    description: '',
-    current_status: 'Active',
-    role_ids: [],
-    permission_ids: []
-  }
+    bio: '',
+    is_active: 'true',
+    gender: 'male',
+    roles: [],
+    permissions: []
+  },
+  mode: 'onChange',        
+  reValidateMode: 'onChange'
 })
 
   const {
     preview,
     clearImage,
     onDrop,
-  } = useProfilePicture(setValue, setError, 'image', watch('image'));
+  } = useProfilePicture(setValue, setError, 'profile_image', watch('profile_image'));
 
   // const imagePic = watch('image')
 
   // Form Submit
+  // UPDATED SUBMIT FUNCTION
   const onSubmit = async (data: FormData) => {
     setSubmitLoading(true);
-  
+
     try {
-      // Check if username is already taken
-      const usernameTaken = await checkValueExists("User", "username", data.username);
+
+      // 🔹 Server-side uniqueness should exist,
+      // but keeping client-side pre-check as you had
+      const usernameTaken = await checkValueExists("User", "Username", data.username);
       if (usernameTaken) {
         setError("username", { type: "manual", message: "Username already exists" });
-        setSubmitLoading(false);
         return;
       }
-  
-      // Check if bp_no is taken (if provided)
-      if (data.bp_no && data.bp_no.trim().length > 0) {
-        const bpNoTaken = await checkValueExists("User", "bp_no", data.bp_no);
-        if (bpNoTaken) {
-          setError("bp_no", { type: "manual", message: "BP No already exists" });
-          setSubmitLoading(false);
-          return;
-        }
+
+      const emailTaken = await checkValueExists("User", "Email", data.email);
+      if (emailTaken) {
+        setError("email", { type: "manual", message: "Email already exists" });
+        return;
       }
-  
-      // Prepare data for submission
-      const formData = new FormData();
-      formData.append("name", data.name);
-      formData.append("username", data.username);
-      formData.append("email", data.email);
-      formData.append("password", data.password);
-      formData.append("confirmed_password", data.confirmed_password);
-      formData.append("current_status", data.current_status);
-      formData.append("dob", data.dob?.toISOString() ?? "");
-  
-      if (data.image) formData.append("image", data.image);
-      if (data.bp_no) formData.append("bp_no", data.bp_no);
-      if (data.phone_1) formData.append("phone_1", data.phone_1);
-      if (data.phone_2) formData.append("phone_2", data.phone_2);
-      if (data.address) formData.append("address", data.address);
-      if (data.blood_group) formData.append("blood_group", data.blood_group);
-      if (data.nid) formData.append("nid", data.nid);
-      if (data.description) formData.append("description", data.description);
-  
-      // Append role_ids and permission_ids as JSON
-      formData.append("role_ids", JSON.stringify(data.role_ids));
-      formData.append("permission_ids", JSON.stringify(data.permission_ids));
-  
-      // const res = await api.post("/users/register", formData, {
-      //   headers: {
-      //     Authorization: `Bearer ${token}`, // make sure token is available in scope
-      //     "Content-Type": "multipart/form-data",
-      //   },
-      // });
-  
-      // const result = res.data;
-  
-      // if (!result.success) {
-      //   throw new Error(result.message || "Registration failed");
-      // }
-      // await initAuthUser(dispatch, true);
-      // dispatchShowToast({
-      //       type: "success",
-      //       message: t("User registered successfully!","User registered successfully!"),
-      //       duration: 10000,
-      //     });
-      reset(); // Reset form values
+
+      const nidTaken = await checkValueExists("User", "NID", data.nid || "");
+      if (nidTaken) {
+        setError("nid", { type: "manual", message: "NID already exists" });
+        return;
+      }
+
+      // 🔥 IMPORTANT: use different variable name to avoid shadowing FormData type
+      const formDataPayload = new window.FormData(); // ✅ UPDATED
+
+
+      formDataPayload.append("Name", data.name); // ✅ UPDATED (PascalCase)
+      formDataPayload.append("Username", data.username); // ✅ UPDATED
+      formDataPayload.append("Email", data.email); // ✅ UPDATED
+      formDataPayload.append("Password", data.password); // ✅ UPDATED
+      formDataPayload.append("ConfirmedPassword", data.confirmed_password); // ✅ UPDATED (fixed key)
+      formDataPayload.append("IsActive", data.is_active ?? "true"); // ✅ UPDATED
+
+      if (data.mobile_no)
+        formDataPayload.append("MobileNo", data.mobile_no); // ✅ UPDATED
+
+      if (data.nid)
+        formDataPayload.append("NID", data.nid); // ✅ UPDATED (exact DTO name)
+
+      // =============================
+      // 🔹 Profile
+      // =============================
+      if (data.profile_image)
+        formDataPayload.append("ProfileImage", data.profile_image); // ✅ UPDATED
+
+      if (data.address)
+        formDataPayload.append("Address", data.address); // ✅ UPDATED
+
+      if (data.bio)
+        formDataPayload.append("Bio", data.bio); // ✅ UPDATED (was description ❌)
+
+      if (data.gender)
+        formDataPayload.append("Gender", data.gender); // ✅ UPDATED
+
+      if (data.dob)
+        formDataPayload.append("DateOfBirth", data.dob.toISOString()); 
+
+      data.roles.forEach(role => {
+        formDataPayload.append("Roles", role); // ✅ UPDATED
+      });
+
+      data.permissions?.forEach(permission => {
+        formDataPayload.append("Permissions", permission); 
+      });
+
+
+      const res = await createUsers(formDataPayload);
+
+      const result = res.data;
+
+      if (res.status !== 200 && res.status !== 201) {
+        throw new Error(result.message || "Registration failed");
+      }
+
+      dispatchShowToast({
+        type: "success",
+        message: t("User registered successfully!", "User registered successfully!"),
+        duration: 5000,
+      });
+
+      reset();
       await fetchData();
-  
+
     } catch (error: any) {
       console.error(error);
+
       dispatchShowToast({
-         type: "danger",
-         message: error.message || t("Something went wrong during registration","Something went wrong during registration"),
-            duration: 10000,
-      })
+        type: "danger",
+        message: error.message || t("Something went wrong", "Something went wrong"),
+        duration: 5000,
+      });
     } finally {
       setSubmitLoading(false);
     }
   };
+
   
 
   // Reset Handler
@@ -209,35 +260,30 @@ export default function Add({fetchData}:RegisterProps) {
       transition={{ duration: 0.5, ease: 'easeInOut' }}
       className="flex items-center justify-center"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="p-3 w-full space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="p-2 w-full space-y-4">
 
       {/* Name + Username */}
       <div className="flex flex-col md:flex-row gap-4">
-        <BasicInput
-        id="name"
-        label="Name"
-        isRequired
-        placeholder="Name"
-        register={register("name", { required: "Name is required" })}
-        error={errors.name}
-        model={model}
-      />
-       <UniqueInput
-          id="username"
-          label="Username"
-          placeholder="Username"
-          model={model}
-          isRequired={true}
-          register={register('username')}
-          error={errors.username}
-          uniqueErrorMessage="Username already exists"
-          field="username"
-          watchValue={watch('username')}
-        />
-      </div>
-
-      {/* Password + Confirm Password */}
-      <div className="flex flex-col md:flex-row gap-4">
+        <div className="w-full space-y-4 flex flex-col justify-end">
+          <div className="flex flex-col justify-end">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Provide User Information</h2>  
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+              Fill all required fields with (<span className="text-red-500 dark:text-red-400">*</span>) before submitting.
+            </span>
+         </div>
+        
+        <UniqueInput
+            id="username"
+            label="Username"
+            placeholder="Username"
+            model={model}
+            isRequired={true}
+            register={register('username')}
+            error={errors.username}
+            uniqueErrorMessage="Username already exists"
+            field="Username"
+            watchValue={watch('username')}
+          />
           <PasswordInput
             id="password"
             label="Password"
@@ -256,10 +302,32 @@ export default function Add({fetchData}:RegisterProps) {
             {...register('confirmed_password')}
             error={errors.confirmed_password?.message}
           />
+        </div>
+        <div className="w-full">
+          {/* Profile Picture */}
+            <SingleImageInput
+              label="Profile Picture"
+              preview={preview}
+              onDrop={onDrop}
+              clearImage={clearImage}
+              error={errors.profile_image}
+              className='sm:text-center text-left'
+              isRequired={false}
+              minHeightClass='h-[250px]'
+            />
+        </div>
       </div>
-
       {/*  BP No + Email */}
       <div className="flex flex-col md:flex-row gap-4">
+        <BasicInput
+          id="name"
+          label="Name"
+          isRequired
+          placeholder="Name"
+          register={register("name", { required: "Name is required" })}
+          error={errors.name}
+          model={model}
+        />
         <UniqueInput
             id="email"
             label="Email"
@@ -268,102 +336,87 @@ export default function Add({fetchData}:RegisterProps) {
             register={register('email')}
             error={errors.email}
             uniqueErrorMessage="Email already exists"
-            field="email"
+            field="Email"
             isRequired={true}
             watchValue={watch('email')}
         />
-        <UniqueInput
-            id="bp_no"
-            label="BP No"
-            placeholder="BP No"
-            model={model}
-            register={register('bp_no')}
-            error={errors.bp_no}
-            uniqueErrorMessage="BP No already exists"
-            field="bp_no"
-            watchValue={watch('bp_no') ?? ''}
-          />
       </div>
 
-        {/* Phone 1 + Phone 2 */}
         <div className="flex flex-col md:flex-row gap-4">
-          <BasicInput
-            id="phone_1"
-            label="Phone 1"
-            type="number"
+          <UniqueInput
+            id="mobile_no"
+            label="Mobile No"
+            field="MobileNo"
             isRequired={true}
-            placeholder="Phone 1"
-            register={register("phone_1")}
-            error={errors.phone_1}
+            placeholder="Mobile No"
+            register={register("mobile_no")}
+            uniqueErrorMessage="Mobile Number already exists"
+            error={errors.mobile_no}
             model={model}
-            onWheel={(e) => e.currentTarget.blur()}
-          />
-          <BasicInput
-            id="phone_2"
-            label="Phone 2"
-            type="number"
-            placeholder="Phone 2"
-            register={register("phone_2")}
-            error={errors.phone_2}
-            model={model}
-            onWheel={(e) => e.currentTarget.blur()}
-          />
-        </div>
-
-        {/* Blood Group + Current Status */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <CustomSelect<FormData>
-            id="current_status"
-            label="Current Status"
-            name="current_status"
-            placeholder="Select Current Status"
-            isRequired={true}
-            options={[
-              { label: "Active", value: "Active" },
-              { label: "Inactive", value: "Inactive" },
-            ]}
-            error={errors.current_status}
-            setValue={setValue}
-            value={watch("current_status")}
-            model={model}
+            watchValue={watch('mobile_no') ||''}
           />
           <CustomSelect<FormData>
-            id="role_ids"
+            id="roles"
             label="Roles"
-            name="role_ids"
+            name="roles"
             setValue={setValue}
             model="User"
-            apiUrl="/get-options"
+            apiUrl="/Options/roles"
             collection="Role"
             labelFields={["name"]}
-            valueFields={["_id"]}
+            valueFields={["name"]}
             sortOrder="asc"
             isRequired={true}
             placeholder="Select Roles"
             multiple={true}
-            value={watch("role_ids")}
-            error={errors.role_ids?.[0]}
+            value={watch("roles")}
+            error={errors.roles && ('message' in errors.roles ? errors.roles : undefined)}
           />
         </div>
 
         <CustomSelect<FormData>
-            id="permission_ids"
+            id="permissions"
             label="Permissions"
-            name="permission_ids"
+            name="permissions"
             setValue={setValue}
             model="User"
-            apiUrl="/get-options"
+            apiUrl="/Options/permissions"
             collection="Permission"
             labelFields={["name"]}
-            valueFields={["_id"]}
+            valueFields={["name"]}
             sortOrder="asc"
             isRequired={false}
             placeholder="Select Permissions"
             multiple={true}
-            value={watch("permission_ids")}
-            error={errors.permission_ids?.[0]}
+            value={watch("permissions")}
+            error={errors.permissions?.[0]}
           />
-
+        <div className="flex flex-col md:flex-row gap-4">
+          <CustomSelect<FormData>
+            id="is_active"
+            label="Is Active?"
+            name="is_active"
+            placeholder="Select Current Status"
+            isRequired={true}
+            options={BOOLEAN_OPTIONS}
+            error={errors.is_active}
+            setValue={setValue}
+            value={watch("is_active")}
+            model={model}
+          />
+          <CustomSelect<FormData>
+            id="gender"
+            label="Gender"
+            name="gender"
+            placeholder="Select Gender"
+            isRequired={false}
+            options={GENDER_OPTIONS}
+            error={errors.gender}
+            setValue={setValue}
+            value={watch("gender")}
+            model={model}
+          />
+        </div>
         {/* DOB + NID */}
         <div className="flex flex-col md:flex-row gap-4">
           <DateTimeInput
@@ -378,42 +431,38 @@ export default function Add({fetchData}:RegisterProps) {
             showResetButton={true}
             model={model}
           />
-          <BasicInput
+          <UniqueInput
             id="nid"
             label="NID"
             placeholder="NID"
-            register={register("nid")}
-            error={errors.nid}
             model={model}
+            isRequired={false}
+            register={register('nid')}
+            error={errors.nid}
+            uniqueErrorMessage="NID already exists"
+            field="NID"
+            watchValue={watch('nid') ||''}
           />
         </div>
-
-          {/* Profile Picture */}
-          <SingleImageInput
-            label="Profile Picture"
-            preview={preview}
-            onDrop={onDrop}
-            clearImage={clearImage}
-            error={errors.image}
-            isRequired={false}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Address */}
+          <BasicTextarea
+            id="address"
+            label="Address"
+            placeholder="Enter a address"
+            register={register("address")}
+            error={errors.address}
           />
-
-        {/* Address */}
-         <BasicTextarea
-          id="address"
-          label="Address"
-          placeholder="Enter a address"
-          register={register("address")}
-          error={errors.address}
-        />
-        {/* Description */}
-        <BasicTextarea
-          id="description"
-          label="Description"
-          placeholder="Enter a description"
-          register={register("description")}
-          error={errors.description}
-        />
+          {/* Bio */}
+          <BasicTextarea
+            id="bio"
+            label="Bio"
+            placeholder="Enter a bio"
+            register={register("bio")}
+            error={errors.bio}
+          />
+        </div>
+        
 
         
 

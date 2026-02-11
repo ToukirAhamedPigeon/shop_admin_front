@@ -73,7 +73,7 @@ export default function FormHolderSheet({
 
         {/* Body */}
         <div
-          className="overflow-y-auto px-4 pt-4 pb-6 text-gray-800 dark:text-gray-200"
+          className="overflow-y-auto px-4 pt-0 pb-6 text-gray-800 dark:text-gray-200"
           style={{
             height: "calc(100% - 56px)",
           }}

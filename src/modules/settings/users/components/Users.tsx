@@ -41,6 +41,7 @@ import { generateQRImage } from '@/lib/generateQRImage'
 import { can } from '@/lib/authCheck'
 import FormHolderSheet from '@/components/custom/FormHolderSheet'
 import Add from './Add'
+import { capitalize } from '@/lib/helpers'
 
 /* ---------------------------------- */
 /* Columns */
@@ -79,7 +80,7 @@ const getAllColumns = ({
     accessorKey: 'profileImage',
     cell: ({ row, getValue }) => {
       const user = row.original
-      const src = (getValue() as string) || '/human.png'
+      const src = (getValue() as string)? import.meta.env.VITE_API_BASE_URL + (getValue() as string) || '/human.png' : '/human.png'
 
       return (
         <div className="flex justify-center">
@@ -133,21 +134,22 @@ const getAllColumns = ({
             }
             alt="QR Code"
             isQRCode
-            className="w-12 h-12"
+            className="w-20 h-20"
           />
-          <span className="text-xs text-gray-500 break-all max-w-[80px] text-center">
+          {/* <span className="text-xs text-gray-500 break-all max-w-[80px] text-center">
             {qr}
-          </span>
+          </span> */}
         </div>
       )
     },
-    meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    meta: { customClassName: 'text-center', tdClassName: 'text-center min-w-[120px]' },
   },
   { header: 'Name', accessorKey: 'name' },
   { header: 'Username', accessorKey: 'username' },
   { header: 'Email', accessorKey: 'email' },
   { header: 'Mobile', accessorKey: 'mobileNo' },
-  { header: 'Gender', accessorKey: 'gender' },
+  { header: 'NID', accessorKey: 'nid' },
+  { header: 'Gender', accessorKey: 'gender', cell: ({ getValue }) => ((getValue()!=null)?capitalize(getValue() as string) ?? '-' : '-') },
   { header: 'Timezone', accessorKey: 'timezone' },
   { header: 'Language', accessorKey: 'language' },
   {

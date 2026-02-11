@@ -3,6 +3,7 @@ import { getCustomDateTime, getPassedTime } from '@/lib/formatDate'
 import { generateQRImage } from '@/lib/generateQRImage'
 import { useEffect, useState } from 'react'
 import Fancybox from '@/components/custom/FancyBox'
+import { capitalize } from '@/lib/helpers'
 
 export default function UserDetail({ user }: { user: any }) {
    const [qrImg, setQrImg] = useState<string | null>(null)
@@ -16,7 +17,7 @@ export default function UserDetail({ user }: { user: any }) {
     [
       'Profile Image',
       <Fancybox
-        src={user.profileImage || '/human.png'}
+        src={(user?.profileImage)?import.meta.env.VITE_API_BASE_URL + user.profileImage || '/human.png': '/human.png'}
         alt="Profile Image"
         title={user.name}
         description={`${user.email}\n${user.mobileNo ?? ''}`}
@@ -35,7 +36,7 @@ export default function UserDetail({ user }: { user: any }) {
             isQRCode
             className="w-28 h-28"
           />
-          <span className="text-xs text-gray-500 break-all max-w-[200px]">
+          <span className="text-xs text-gray-900 dark:text-gray-300 break-all max-w-[200px]">
             {user.qrCode}
           </span>
         </div>
@@ -47,7 +48,8 @@ export default function UserDetail({ user }: { user: any }) {
     ['Username', user.username],
     ['Email', user.email],
     ['Mobile', user.mobileNo ?? '-'],
-    ['Gender', user.gender ?? '-'],
+    ['NID', user.nid ?? '-'],
+    ['Gender', (user.gender!=null)?capitalize(user.gender):'-'],
     ['Date of Birth', user.dateOfBirth ? (
       <>
         {getCustomDateTime(user.dateOfBirth, 'YYYY-MM-DD')}

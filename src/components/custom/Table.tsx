@@ -154,27 +154,27 @@ export function TableHeaderActions({
 }: TableHeaderActionsProps) {
   const { t } = useTranslations();
   return (
-    <div className="flex justify-between items-center mb-4 dark:text-gray-200">
+    <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-3 mb-4 dark:text-gray-200">
       {showSearch &&
         <Input
           aria-label="Search"
           placeholder={t("Search") + "..."}
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-[120px] md:w-1/3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+          className="w-full sm:w-[220px] md:w-1/3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
         />
       }
       <div className="flex gap-2 relative">
         {showAddButton && onAddNew && (
-            <Button
-              onClick={onAddNew}
-              aria-label="Add new item"
-              className="btn-success-gradient flex items-center"
-            >
-              <FaPlus />
-              <span className="hidden lg:block ml-1">{t(addButtonLabel)}</span>
-            </Button>
-          )}
+          <Button
+            onClick={onAddNew}
+            aria-label="Add new item"
+            className="btn-success-gradient flex items-center"
+          >
+            <FaPlus />
+            <span className="hidden lg:block ml-1">{t(addButtonLabel)}</span>
+          </Button>
+        )}
 
         {showFilterButton && onFilter && (
           <Button
@@ -391,7 +391,7 @@ export function TablePaginationFooter({
                     className={`min-w-[36px] transition-all duration-200 ${
                       p === pageIndex
                         ? "bg-blue-600 text-white hover:bg-blue-600"
-                        : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        : "bg-gray-200 text-blue-600 dark:text-blue-300 dark:hover:bg-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700"
                     }`}
                   >
                     {formatNumber(p + 1, currentLang)}
