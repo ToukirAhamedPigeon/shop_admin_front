@@ -1,8 +1,14 @@
 // src/store/toastSlice.ts
 import { createSlice, nanoid } from "@reduxjs/toolkit"
-import type { PayloadAction } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit"
 
-export type ToastType = "success" | "danger" | "warning" | "info" | "custom"
+export type ToastType =
+  | "success"
+  | "danger"
+  | "warning"
+  | "info"
+  | "custom"
+
 export type ToastPosition =
   | "top-left"
   | "top-right"
@@ -19,14 +25,16 @@ export type ToastAnimation =
   | "fade-in"
 
 export interface Toast {
-  id?: string
-  type?: ToastType
+  id: string
+  type: ToastType
   message: string
-  showClose?: boolean
-  position?: ToastPosition
-  animation?: ToastAnimation
-  duration?: number
+  showClose: boolean
+  position: ToastPosition
+  animation: ToastAnimation
+  duration: number
 }
+
+type ToastInput = Partial<Omit<Toast, "id">>
 
 interface ToastState {
   toasts: Toast[]
@@ -34,6 +42,18 @@ interface ToastState {
 
 const initialState: ToastState = {
   toasts: [],
+}
+
+/**
+ * 🔥 Centralized Default Toast
+ */
+const DEFAULT_TOAST: Omit<Toast, "id"> = {
+  type: "info",
+  message: "",
+  showClose: true,
+  position: "top-right",
+  animation: "slide-right-in",
+  duration: 3000,
 }
 
 const toastSlice = createSlice({
@@ -44,20 +64,25 @@ const toastSlice = createSlice({
       reducer: (state, action: PayloadAction<Toast>) => {
         state.toasts.push(action.payload)
       },
-      prepare: (options: Partial<Omit<Toast, "id">>) => ({
+
+      /**
+       * ✅ No options required
+       * showToast() works
+       * showToast({ message: "Hi" }) works
+       */
+      prepare: (options?: ToastInput) => ({
         payload: {
           id: nanoid(),
-          type: options.type || "info",
-          message: options.message || "",
-          showClose: options.showClose ?? true,
-          position: options.position || "top-right",
-          animation: options.animation || "slide-right-in",
-          duration: options.duration || 3000,
-        } as Toast,
+          ...DEFAULT_TOAST,
+          ...options,
+        },
       }),
     },
+
     removeToast: (state, action: PayloadAction<string>) => {
-      state.toasts = state.toasts.filter((t) => t.id !== action.payload)
+      state.toasts = state.toasts.filter(
+        (t) => t.id !== action.payload
+      )
     },
   },
 })

@@ -1,7 +1,7 @@
 // src/components/ToastContainer.tsx
 import { useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
-import type{ RootState, AppDispatch } from "@/redux/store" // ✅ adjust import based on your store setup
+import type { RootState, AppDispatch } from "@/redux/store"
 import { removeToast } from "@/redux/slices/toastSlice"
 import { motion, AnimatePresence } from "framer-motion"
 import { CheckCircle2, XCircle, AlertTriangle, Info } from "lucide-react"
@@ -42,7 +42,18 @@ const positionClasses: Record<Toast["position"], string> = {
   "bottom-right": "bottom-4 right-4",
 }
 
-const animationVariants = {
+const positions = Object.keys(
+  positionClasses
+) as Toast["position"][]
+
+const animationVariants: Record<
+  Toast["animation"],
+  {
+    initial: any
+    animate: any
+    exit: any
+  }
+> = {
   "slide-right-in": {
     initial: { x: 50, opacity: 0 },
     animate: { x: 0, opacity: 1 },
@@ -71,31 +82,39 @@ const animationVariants = {
 }
 
 export default function ToastContainer() {
-  const toasts = useSelector((state: RootState) => state.toast.toasts)
+  const toasts = useSelector(
+    (state: RootState) => state.toast.toasts
+  )
+
   const dispatch = useDispatch<AppDispatch>()
 
   useEffect(() => {
     const timers = toasts
       .filter((t) => t.duration > 0)
-      .map((t) => setTimeout(() => dispatch(removeToast(t.id)), t.duration))
+      .map((t) =>
+        setTimeout(
+          () => dispatch(removeToast(t.id)),
+          t.duration
+        )
+      )
+
     return () => timers.forEach(clearTimeout)
   }, [toasts, dispatch])
 
   return (
     <>
-      {Object.keys(positionClasses).map((pos) => (
+      {positions.map((pos) => (
         <div
           key={pos}
-          className={`fixed z-[9999] ${positionClasses[pos as Toast["position"]]} space-y-2`}
+          className={`fixed z-[9999] ${positionClasses[pos]} space-y-2`}
         >
           <AnimatePresence>
             {toasts
               .filter((t) => t.position === pos)
               .map((toast) => {
-                const style = typeStyles[toast.type] || typeStyles.info
+                const style = typeStyles[toast.type]
                 const anim =
-                  animationVariants[toast.animation] ||
-                  animationVariants["slide-right-in"]
+                  animationVariants[toast.animation]
 
                 return (
                   <motion.div
@@ -107,12 +126,16 @@ export default function ToastContainer() {
                     className={`flex items-center gap-3 border-l-4 rounded-xl shadow-lg p-4 w-80 ${style.bg}`}
                   >
                     {style.icon && <div>{style.icon}</div>}
+
                     <div className="flex-1 text-sm font-medium">
                       {toast.message}
                     </div>
+
                     {toast.showClose && (
                       <button
-                        onClick={() => dispatch(removeToast(toast.id))}
+                        onClick={() =>
+                          dispatch(removeToast(toast.id))
+                        }
                         className="text-gray-500 hover:text-gray-700 cursor-pointer"
                       >
                         ✕

@@ -38,6 +38,9 @@ import type { IUser } from '@/types'
 import { UserFilterForm } from './UserFilterForm'
 import Fancybox from '@/components/custom/FancyBox'
 import { generateQRImage } from '@/lib/generateQRImage'
+import { can } from '@/lib/authCheck'
+import FormHolderSheet from '@/components/custom/FormHolderSheet'
+import Add from './Add'
 
 /* ---------------------------------- */
 /* Columns */
@@ -234,6 +237,8 @@ export default function Users() {
   const [showColumnModal, setShowColumnModal] = useState(false)
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [filters, setFilters] = useState<Record<string, any>>({})
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [showAddButton,setShowAddButton]= useState(false)
 
   // Stable fetcher function
   const stableFetcher = useCallback(
@@ -296,6 +301,10 @@ export default function Users() {
     [pageIndex, pageSize]
   )
 
+  useEffect(() => {
+    setShowAddButton(can(['read-admin-dashboard']))
+  },[])
+
   // Load column visibility from backend or default
   useEffect(() => {
     if (!userId) return
@@ -335,6 +344,8 @@ export default function Users() {
         <TableHeaderActions
           searchValue={globalFilter}
           onSearchChange={setGlobalFilter}
+          onAddNew={() => setIsSheetOpen(true)}
+          showAddButton={showAddButton}
           onColumnSettings={() => setShowColumnModal(true)}
           onPrint={() => printTableById('printable-user-table', 'Users')}
           onExport={() => exportVisibleTableToExcel({ data, columns: allColumns, visibleColumnIds: visibleIds, fileName: 'Users' })}
@@ -427,6 +438,15 @@ export default function Users() {
           renderForm={(filterValues, setFilterValues, resetRef) => (<UserFilterForm filterValues={filterValues} setFilterValues={setFilterValues} onResetRef={resetRef} />)}
         />
       )}
+
+      {showAddButton && <FormHolderSheet
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        title="Add New User"
+        titleDivClassName="success-gradient"
+      >
+        <Add fetchData={fetchData} />
+      </FormHolderSheet>}
     </motion.div>
   )
 }

@@ -15,8 +15,9 @@ import { setTableColumnSettings } from '@/redux/slices/tableColumnSettingsSlice'
 import type { ColumnsPayload } from '@/redux/slices/tableColumnSettingsSlice'
 
 
-
-export const dispatchShowToast = (toast: Toast) => store.dispatch(showToast(toast))
+type ToastInput = Partial<Omit<Toast, "id">>
+export const dispatchShowToast = (toast?: ToastInput) =>
+  store.dispatch(showToast(toast))
 ;
 export const dispatchShowLoader = (payload?: ShowLoaderPayload) => store.dispatch(showLoader(payload));
 export const dispatchHideLoader = () => store.dispatch(hideLoader());

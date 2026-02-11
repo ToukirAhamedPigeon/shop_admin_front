@@ -166,11 +166,15 @@ export function TableHeaderActions({
       }
       <div className="flex gap-2 relative">
         {showAddButton && onAddNew && (
-          <Button variant="success" onClick={onAddNew} aria-label="Add new item">
-            <FaPlus />
-            <span className="hidden lg:block ml-1">{t(addButtonLabel)}</span>
-          </Button>
-        )}
+            <Button
+              onClick={onAddNew}
+              aria-label="Add new item"
+              className="btn-success-gradient flex items-center"
+            >
+              <FaPlus />
+              <span className="hidden lg:block ml-1">{t(addButtonLabel)}</span>
+            </Button>
+          )}
 
         {showFilterButton && onFilter && (
           <Button
