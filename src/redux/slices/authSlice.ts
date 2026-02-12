@@ -69,7 +69,7 @@ export const loginUser = createAsyncThunk<LoginResponse, LoginUserPayload>(
       await dispatch(fetchCsrfToken());
       return response;
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || "Login failed");
+      return rejectWithValue(err.response?.data || "Login failed");
     }
   }
 );

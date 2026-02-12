@@ -7,10 +7,12 @@ import { capitalize } from '@/lib/helpers'
 import { resendVerification } from '@/modules/auth/api'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { can } from '@/lib/authCheck'
+import { Loader2, Mail } from 'lucide-react'
 
 
 export default function UserDetail({ user }: { user: any }) {
    const [qrImg, setQrImg] = useState<string | null>(null)
+   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (user.qrCode) {
@@ -54,16 +56,19 @@ export default function UserDetail({ user }: { user: any }) {
     [
       'Email Verification',
       user.emailVerifiedAt ? (
-        <span className="text-green-600 font-semibold">Verified at {getCustomDateTime(user.emailVerifiedAt, 'YYYY-MM-DD HH:mm:ss')}</span>
+        <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-700 dark:text-gray-200">at {getCustomDateTime(user.emailVerifiedAt, 'YYYY-MM-DD HH:mm:ss')}</small></span>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <span className="text-red-500 font-semibold">Not Verified</span>
 
           {can(['read-admin-dashboard']) && (
             <button
+              disabled={loading}
               onClick={async () => {
                 try {
+                  setLoading(true)
                   const res = await resendVerification(user.id)
+
                   dispatchShowToast({
                     type: "success",
                     message: res.data,
@@ -73,11 +78,37 @@ export default function UserDetail({ user }: { user: any }) {
                     type: "danger",
                     message: err.response?.data || "Failed to resend email",
                   })
+                } finally {
+                  setLoading(false)
                 }
               }}
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm w-fit"
+              className={`
+                group inline-flex items-center gap-2
+                px-3 py-1.5
+                rounded-lg
+                cursor-pointer
+                text-sm font-medium
+                transition-all duration-200 ease-in-out
+                bg-emerald-600
+                hover:bg-emerald-700
+                text-white
+                shadow-sm hover:shadow
+                focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-1
+                active:scale-[0.98]
+                disabled:opacity-60 disabled:cursor-not-allowed
+              `}
             >
-              Resend Verification Email
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 transition-transform group-hover:rotate-12" />
+                  Resend Verification Email
+                </>
+              )}
             </button>
           )}
         </div>

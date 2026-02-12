@@ -60,7 +60,7 @@ export default function LoginPage() {
         }
         else {
           const errorMessage = result.payload;
-
+          
           if (errorMessage === "EMAIL_NOT_VERIFIED") {
             dispatchShowToast({
               type: "danger",

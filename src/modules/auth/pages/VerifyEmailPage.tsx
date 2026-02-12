@@ -63,13 +63,14 @@ export default function VerifyEmailPage() {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 transition-colors duration-500"
-      style={{
-        backgroundImage:
-          theme === "light"
-            ? "url('/login-bg.jpg')"
-            : "url('/login-bg-dark.jpg')",
-      }}
+        className={`fixed inset-0 flex items-center justify-center
+                    bg-no-repeat bg-cover bg-center
+                    transition-colors duration-500
+                    ${
+                        theme === "light"
+                        ? "bg-[url('/login-bg.jpg')]"
+                        : "bg-[url('/login-bg-dark.jpg')]"
+                    }`}
     >
       <motion.div
         className="absolute top-4 right-10 z-20 flex items-center gap-3"

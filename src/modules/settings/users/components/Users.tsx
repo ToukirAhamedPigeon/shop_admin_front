@@ -168,7 +168,7 @@ const getAllColumns = ({
   },
   { header: 'Email Verification', accessorKey: 'emailVerifiedAt', cell: ({ getValue }) => (
     getValue() ? (
-      <span className="text-green-600 font-semibold">Verified at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</span>
+      <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-700 dark:text-gray-200">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span>
     ) : (
       <span className="text-red-500 font-semibold">Not Verified</span>
     )
