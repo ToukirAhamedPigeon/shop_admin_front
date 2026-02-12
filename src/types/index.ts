@@ -36,3 +36,24 @@ export interface IUser {
   roles: string[]
   permissions: string[]
 }
+
+export interface UserFormValues {
+  name: string
+  username: string
+  email: string
+  password?: string            // optional for edit
+  confirmed_password?: string  // optional for edit
+  profile_image?: File | null  // allow null because useProfilePicture can set null
+  mobile_no?: string
+  address?: string
+  bio?: string
+  nid?: string
+  dob?: Date | null
+  gender?: string
+  is_active: "true" | "false"
+  roles: string[]
+  permissions?: string[]
+}
+
+
+

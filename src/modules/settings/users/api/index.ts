@@ -13,3 +13,12 @@ export const createUsers = async (formDataPayload: FormData): Promise<AxiosRespo
 
 export const regenerateQr = (id: string) =>
   api.post(`/users/${id}/regenerate-qr`)
+
+export const updateUser = async (id: string, formData: FormData) =>
+  api.put(`/users/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  })
+
+export const getUserById = (id: string) =>
+  api.get(`/users/${id}`)
+

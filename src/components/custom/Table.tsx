@@ -18,7 +18,6 @@ interface RowActionsProps<T> {
   showDetail?: boolean
   showEdit?: boolean
   showDelete?: boolean
-
   detailPermissions?: string[]
   editPermissions?: string[]
   deletePermissions?: string[]

@@ -16,7 +16,7 @@ const buttonVariants = cva(
         success:
           "bg-green-600 text-white shadow hover:bg-green-700",
         warning:
-          "bg-yellow-500 text-white shadow hover:bg-yellow-600",
+          "bg-amber-600 text-white shadow hover:bg-amber-700",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:

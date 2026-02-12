@@ -41,19 +41,28 @@ import { generateQRImage } from '@/lib/generateQRImage'
 import { can } from '@/lib/authCheck'
 import FormHolderSheet from '@/components/custom/FormHolderSheet'
 import Add from './Add'
+import Edit from './Edit'
+import { useEditSheet } from '@/hooks/useEditSheet'
 import { capitalize } from '@/lib/helpers'
 
+
 /* ---------------------------------- */
-/* Columns */
+/* Columns Definition */
 /* ---------------------------------- */
 const getAllColumns = ({
   pageIndex,
   pageSize,
   fetchDetail,
+  handleEditClick,
+  showDetail = true,
+  showEdit = true,
 }: {
   pageIndex: number
   pageSize: number
-  fetchDetail: (item: IUser | string) => void
+  fetchDetail: (item: IUser) => void
+  handleEditClick: (item: IUser) => void
+  showDetail?: boolean
+  showEdit?: boolean
 }): ColumnDef<IUser>[] => [
   {
     header: 'SL',
@@ -70,7 +79,9 @@ const getAllColumns = ({
       <RowActions
         row={row.original}
         onDetail={() => fetchDetail(row.original)}
-        showDetail
+        onEdit={() => handleEditClick(row.original)}
+        showDetail={showDetail}
+        showEdit={showEdit}
       />
     ),
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
@@ -80,7 +91,9 @@ const getAllColumns = ({
     accessorKey: 'profileImage',
     cell: ({ row, getValue }) => {
       const user = row.original
-      const src = (getValue() as string)? import.meta.env.VITE_API_BASE_URL + (getValue() as string) || '/human.png' : '/human.png'
+      const src = getValue()
+        ? import.meta.env.VITE_API_BASE_URL + (getValue() as string)
+        : '/human.png'
 
       return (
         <div className="flex justify-center">
@@ -101,8 +114,9 @@ const getAllColumns = ({
     },
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
   },
-
-    // New QR Code Column
+  /* ---------------------------------- */
+  /* QR Code Column - auto generate image */
+  /* ---------------------------------- */
   {
     header: 'QR Code',
     accessorKey: 'qrCode',
@@ -112,14 +126,10 @@ const getAllColumns = ({
       const [qrImg, setQrImg] = useState<string | null>(null)
 
       useEffect(() => {
-        if (qr) {
-          generateQRImage(qr).then(setQrImg)
-        }
+        if (qr) generateQRImage(qr).then(setQrImg)
       }, [qr])
 
-      if (!qr || !qrImg) {
-        return <span className="text-gray-400">-</span>
-      }
+      if (!qr || !qrImg) return <span className="text-gray-400">-</span>
 
       return (
         <div className="flex flex-col items-center gap-1">
@@ -136,9 +146,6 @@ const getAllColumns = ({
             isQRCode
             className="w-20 h-20"
           />
-          {/* <span className="text-xs text-gray-500 break-all max-w-[80px] text-center">
-            {qr}
-          </span> */}
         </div>
       )
     },
@@ -149,9 +156,11 @@ const getAllColumns = ({
   { header: 'Email', accessorKey: 'email' },
   { header: 'Mobile', accessorKey: 'mobileNo' },
   { header: 'NID', accessorKey: 'nid' },
-  { header: 'Gender', accessorKey: 'gender', cell: ({ getValue }) => ((getValue()!=null)?capitalize(getValue() as string) ?? '-' : '-') },
-  // { header: 'Timezone', accessorKey: 'timezone' },
-  // { header: 'Language', accessorKey: 'language' },
+  { 
+    header: 'Gender', 
+    accessorKey: 'gender', 
+    cell: ({ getValue }) => getValue() ? capitalize(getValue() as string) : '-' 
+  },
   {
     header: 'Date of Birth',
     accessorKey: 'dateOfBirth',
@@ -161,94 +170,29 @@ const getAllColumns = ({
           {getCustomDateTime(getValue() as string, 'YYYY-MM-DD')}
           <br />
           <small>
-            ({getPassedTime(getCustomDateTime(getValue() as string, 'YYYY-MM-DD') as string,'yearsOnly')})
+            ({getPassedTime(getCustomDateTime(getValue() as string, 'YYYY-MM-DD') as string, 'yearsOnly')})
           </small>
         </>
       ) : '-',
   },
-  { header: 'Email Verification', accessorKey: 'emailVerifiedAt', cell: ({ getValue }) => (
-    getValue() ? (
-      <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-700 dark:text-gray-200">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span>
-    ) : (
-      <span className="text-red-500 font-semibold">Not Verified</span>
-    )
-  )},
-  {
-    header: 'Active',
-    accessorKey: 'isActive',
-    cell: ({ getValue }) =>
-      getValue() ? 'Yes' : <span className="text-red-500">No</span>,
-  },
-  {
-    header: 'Roles',
-    accessorKey: 'roles',
-    cell: ({ getValue }) => {
-      const roles = getValue() as string[] | undefined
-      return roles && roles.length ? roles.join(', ') : <span className="text-gray-400">-</span>
-    },
-  },
-  {
-    header: 'Permissions',
-    accessorKey: 'permissions',
-    cell: ({ getValue }) => {
-      const perms = getValue() as string[] | undefined
-      if (!perms || !perms.length) return <span className="text-gray-400">-</span>
-      return <ExpandableText text={perms.join(', ')} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" />
-    },
-    meta: { customClassName: 'text-left min-w-[300px]'},
-  },
-  {
-    header: 'Address',
-    accessorKey: 'address',
-    cell: ({ getValue }) => {
-      const val = getValue() as string
-      if (!val) return <span className="text-gray-400">-</span>
-      return <ExpandableText text={val} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" />
-    },
-    meta: { customClassName: 'text-left min-w-[300px]'},
-  },
-  {
-    header: 'Bio',
-    accessorKey: 'bio',
-    cell: ({ getValue }) => {
-      const val = getValue() as string
-      if (!val) return <span className="text-gray-400">-</span>
-      return <ExpandableText text={val} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" />
-    },
-    meta: { customClassName: 'text-left min-w-[300px]'},
-  },
-  {
-    header: 'Last Updated At',
-    accessorKey: 'updatedAt',
-    cell: ({ getValue }) =>
-      getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-',
-  },
-  {
-    header: 'Created At',
-    accessorKey: 'createdAt',
-    cell: ({ getValue }) =>
-      getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-',
-  },
-  {
-    header: 'Created By',
-    accessorKey: 'createdByName',
-    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span>,
-  },
-  {
-    header: 'Updated By',
-    accessorKey: 'updatedByName',
-    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span>,
-  },
+  { header: 'Email Verification', accessorKey: 'emailVerifiedAt', cell: ({ getValue }) => getValue() ? <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-700 dark:text-gray-200">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-red-500 font-semibold">Not Verified</span> },
+  { header: 'Active', accessorKey: 'isActive', cell: ({ getValue }) => getValue() ? 'Yes' : <span className="text-red-500">No</span> },
+  { header: 'Roles', accessorKey: 'roles', cell: ({ getValue }) => (getValue() as string[] | undefined)?.join(', ') || <span className="text-gray-400">-</span> },
+  { header: 'Permissions', accessorKey: 'permissions', cell: ({ getValue }) => { const perms = getValue() as string[] | undefined; return perms?.length ? <ExpandableText text={perms.join(', ')} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span> }, meta: { customClassName: 'text-left min-w-[300px]' } },
+  { header: 'Address', accessorKey: 'address', cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, meta: { customClassName: 'text-left min-w-[300px]' } },
+  { header: 'Bio', accessorKey: 'bio', cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, meta: { customClassName: 'text-left min-w-[300px]' } },
+  { header: 'Last Updated At', accessorKey: 'updatedAt', cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-' },
+  { header: 'Created At', accessorKey: 'createdAt', cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-' },
+  { header: 'Created By', accessorKey: 'createdByName', cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> },
+  { header: 'Updated By', accessorKey: 'updatedByName', cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> },
 ]
 
 /* ---------------------------------- */
-/* Component */
+/* Users Component */
 /* ---------------------------------- */
 export default function Users() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '')
-  const { isModalOpen, selectedItem, fetchDetail, closeModal, detailLoading } =
-    useDetailModal<IUser>('/users')
-
+  const { isModalOpen, selectedItem, fetchDetail, closeModal, detailLoading } = useDetailModal<IUser>('/users')
   const fetchDetailRef = useRef(fetchDetail)
   fetchDetailRef.current = fetchDetail
 
@@ -257,74 +201,36 @@ export default function Users() {
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [filters, setFilters] = useState<Record<string, any>>({})
   const [isSheetOpen, setIsSheetOpen] = useState(false)
-  const [showAddButton,setShowAddButton]= useState(false)
+  const [showAddButton, setShowAddButton] = useState(false)
+  const showDetail= true
+  const showEdit= can(['read-admin-dashboard'])
 
-  // Stable fetcher function
-  const stableFetcher = useCallback(
-    async ({
-      q = '',
-      page,
-      limit,
-      sortBy = 'createdAt',
-      sortOrder = 'asc',
-    }: {
-      q?: string
-      page: number
-      limit: number
-      sortBy?: string
-      sortOrder?: string
-    }): Promise<{ data: IUser[]; total: number; grandTotalCount: number }> => {
-      const res = await api.post('/users', {
-        q,
-        page,
-        limit,
-        sortBy,
-        sortOrder,
-        ...filters,
-      })
-      return {
-        data: res.data.users as IUser[],
-        total: res.data.users.length,
-        grandTotalCount: res.data.grandTotalCount,
-      }
-    },
-    [filters]
-  )
+  const {isOpen: isEditSheetOpen,itemToEdit: userToEdit,openEdit: handleEditClick,closeEdit: closeEditSheet} = useEditSheet<IUser>()
 
-  const {
-    data,
-    totalCount,
-    grandTotalCount,
-    loading,
-    sorting,
-    setSorting,
-    pageIndex,
-    setPageIndex,
-    pageSize,
-    setPageSize,
-    fetchData,
-    globalFilter,
-    setGlobalFilter,
-  } = useTable<IUser>({
+  // Stable fetcher for useTable
+  const stableFetcher = useCallback(async ({ q = '', page, limit, sortBy = 'createdAt', sortOrder = 'asc' }: { q?: string; page: number; limit: number; sortBy?: string; sortOrder?: string }): Promise<{ data: IUser[]; total: number; grandTotalCount: number }> => {
+    const res = await api.post('/users', { q, page, limit, sortBy, sortOrder, ...filters })
+    return { data: res.data.users as IUser[], total: res.data.users.length, grandTotalCount: res.data.grandTotalCount }
+  }, [filters])
+
+  const { data, totalCount, grandTotalCount, loading, sorting, setSorting, pageIndex, setPageIndex, pageSize, setPageSize, fetchData, globalFilter, setGlobalFilter } = useTable<IUser>({
     fetcher: stableFetcher,
     defaultSort: 'createdAt',
   })
 
-  const allColumns = useMemo(
-    () =>
-      getAllColumns({
-        pageIndex,
-        pageSize,
-        fetchDetail: item => fetchDetailRef.current(item),
-      }),
-    [pageIndex, pageSize]
-  )
+  const allColumns = useMemo(() => getAllColumns({
+    pageIndex,
+    pageSize,
+    fetchDetail: item => fetchDetailRef.current(item),
+    handleEditClick,
+    showDetail,
+    showEdit,
+  }), [pageIndex, pageSize])
 
-  useEffect(() => {
-    setShowAddButton(can(['read-admin-dashboard']))
-  },[])
+  // Show Add Button based on permission
+  useEffect(() => { setShowAddButton(can(['read-admin-dashboard'])) }, [])
 
-  // Load column visibility from backend or default
+  // Load Column Visibility from backend
   useEffect(() => {
     if (!userId) return
     let mounted = true
@@ -332,9 +238,7 @@ export default function Users() {
       try {
         const { visibleColumns } = await refreshColumnSettings<IUser>('userTable', userId, allColumns)
         if (mounted) setVisible(visibleColumns.length ? visibleColumns : allColumns)
-      } catch (err) {
-        console.error(err)
-      }
+      } catch (err) { console.error(err) }
     })()
     return () => { mounted = false }
   }, [userId, allColumns])
@@ -359,75 +263,75 @@ export default function Users() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-      <div className="table-container relative space-y-2">
-        <TableHeaderActions
-          searchValue={globalFilter}
-          onSearchChange={setGlobalFilter}
-          onAddNew={() => setIsSheetOpen(true)}
-          showAddButton={showAddButton}
-          onColumnSettings={() => setShowColumnModal(true)}
-          onPrint={() => printTableById('printable-user-table', 'Users')}
-          onExport={() => exportVisibleTableToExcel({ data, columns: allColumns, visibleColumnIds: visibleIds, fileName: 'Users' })}
-          onFilter={() => setFilterModalOpen(true)}
-          isFilterActive={isFilterActive}
-        />
+      {/* Table Actions */}
+      <TableHeaderActions
+        searchValue={globalFilter}
+        onSearchChange={setGlobalFilter}
+        onAddNew={() => setIsSheetOpen(true)}
+        showAddButton={showAddButton}
+        onColumnSettings={() => setShowColumnModal(true)}
+        onPrint={() => printTableById('printable-user-table', 'Users')}
+        onExport={() => exportVisibleTableToExcel({ data, columns: allColumns, visibleColumnIds: visibleIds, fileName: 'Users' })}
+        onFilter={() => setFilterModalOpen(true)}
+        isFilterActive={isFilterActive}
+      />
 
-        <div className="relative rounded-sm shadow overflow-hidden bg-white dark:bg-gray-800" id="printable-user-table">
-          <div className="max-h-[600px] min-h-[200px] overflow-y-auto">
-            {loading && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-opacity-70 mt-20">
-                <TableLoader loading />
-              </div>
-            )}
-
-            <table className="table-auto w-full text-left border border-collapse">
-              <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id} className={`p-2 border ${header.column.columnDef.meta?.customClassName || ''}`}>
-                        <div className="flex justify-between items-center w-full cursor-pointer" onClick={header.column.getToggleSortingHandler()}>
-                          <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                          <span className="ml-2">
-                            {header.column.getIsSorted() === 'asc' ? <FaSortUp size={12} /> : header.column.getIsSorted() === 'desc' ? <FaSortDown size={12} /> : <FaSort size={12} />}
-                          </span>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <motion.tbody
-                key={pageIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              >
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="border-b dark:border-gray-700">
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </motion.tbody>
-            </table>
-          </div>
+      {/* Table */}
+      <div className="relative rounded-sm shadow overflow-hidden bg-white dark:bg-gray-800" id="printable-user-table">
+        <div className="max-h-[600px] min-h-[200px] overflow-y-auto">
+          {loading && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-opacity-70 mt-20">
+              <TableLoader loading />
+            </div>
+          )}
+          <table className="table-auto w-full text-left border border-collapse">
+            <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className={`p-2 border ${header.column.columnDef.meta?.customClassName || ''}`}>
+                      <div className="flex justify-between items-center w-full cursor-pointer" onClick={header.column.getToggleSortingHandler()}>
+                        <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                        <span className="ml-2">
+                          {header.column.getIsSorted() === 'asc' ? <FaSortUp size={12} /> : header.column.getIsSorted() === 'desc' ? <FaSortDown size={12} /> : <FaSort size={12} />}
+                        </span>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <motion.tbody
+              key={pageIndex}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              {table.getRowModel().rows.map(row => (
+                <tr key={row.id} className="border-b dark:border-gray-700">
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </motion.tbody>
+          </table>
         </div>
-
-        <TablePaginationFooter
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          grandTotalCount={grandTotalCount}
-          setPendingPage={setPageIndex}
-          setPageIndex={setPageIndex}
-          setPageSize={setPageSize}
-        />
       </div>
+
+      {/* Pagination */}
+      <TablePaginationFooter
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        grandTotalCount={grandTotalCount}
+        setPendingPage={setPageIndex}
+        setPageIndex={setPageIndex}
+        setPageSize={setPageSize}
+      />
 
       {/* User Detail Modal */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="User Details" widthPercent={70}>
@@ -441,7 +345,7 @@ export default function Users() {
           open={showColumnModal}
           onClose={() => setShowColumnModal(false)}
           initialColumns={allColumns}
-          onChange={setVisible}
+          onChange={setVisible} // ✅ update visible columns here
         />
       )}
 
@@ -452,19 +356,42 @@ export default function Users() {
           title="Filter Users"
           open={filterModalOpen}
           onClose={() => setFilterModalOpen(false)}
-          onApply={newFilters => { setFilters(newFilters); setFilterModalOpen(false) }}
+          onApply={newFilters => { setFilters(newFilters); setFilterModalOpen(false) }} // ✅ apply filters
           initialFilters={filters}
-          renderForm={(filterValues, setFilterValues, resetRef) => (<UserFilterForm filterValues={filterValues} setFilterValues={setFilterValues} onResetRef={resetRef} />)}
+          renderForm={(filterValues, setFilterValues, resetRef) => (
+            <UserFilterForm filterValues={filterValues} setFilterValues={setFilterValues} onResetRef={resetRef} />
+          )}
         />
       )}
 
-      {showAddButton && <FormHolderSheet
-        open={isSheetOpen}
-        onOpenChange={setIsSheetOpen}
-        title="Add New User"
-        titleDivClassName="success-gradient"
+      {/* Add User Sheet */}
+      {showAddButton && (
+        <FormHolderSheet
+          open={isSheetOpen}
+          onOpenChange={setIsSheetOpen}
+          title="Add New User"
+          titleDivClassName="success-gradient"
+        >
+          <Add fetchData={fetchData} /> {/* ✅ fetchData refresh table after adding */}
+        </FormHolderSheet>
+      )}
+       {/* Edit Modal */}  
+      {showEdit && <FormHolderSheet
+        open={isEditSheetOpen}
+        onOpenChange={closeEditSheet}
+        title="Edit User"
+        titleDivClassName="warning-gradient"
       >
-        <Add fetchData={fetchData} />
+        {userToEdit && (
+          <Edit
+            userId={userToEdit.id as string}
+            onClose={closeEditSheet}
+            fetchData={async () => {
+              //closeEditSheet()
+              fetchData()
+            }}
+          />
+        )}
       </FormHolderSheet>}
     </motion.div>
   )

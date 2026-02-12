@@ -124,7 +124,6 @@ export default function Add({fetchData}:RegisterProps) {
     profile_image: undefined,
     mobile_no: '',
     address: '',
-    blood_group: '',
     nid: '',
     dob: undefined,
     bio: '',
@@ -342,140 +341,137 @@ export default function Add({fetchData}:RegisterProps) {
         />
       </div>
 
-        <div className="flex flex-col md:flex-row gap-4">
-          <UniqueInput
-            id="mobile_no"
-            label="Mobile No"
-            field="MobileNo"
-            isRequired={true}
-            placeholder="Mobile No"
-            register={register("mobile_no")}
-            uniqueErrorMessage="Mobile Number already exists"
-            error={errors.mobile_no}
-            model={model}
-            watchValue={watch('mobile_no') ||''}
-          />
-          <CustomSelect<FormData>
-            id="roles"
-            label="Roles"
-            name="roles"
-            setValue={setValue}
-            model="User"
-            apiUrl="/Options/roles"
-            collection="Role"
-            labelFields={["name"]}
-            valueFields={["name"]}
-            sortOrder="asc"
-            isRequired={true}
-            placeholder="Select Roles"
-            multiple={true}
-            value={watch("roles")}
-            error={errors.roles && ('message' in errors.roles ? errors.roles : undefined)}
-          />
-        </div>
-
+      <div className="flex flex-col md:flex-row gap-4">
+        <UniqueInput
+          id="mobile_no"
+          label="Mobile No"
+          field="MobileNo"
+          isRequired={true}
+          placeholder="Mobile No"
+          register={register("mobile_no")}
+          uniqueErrorMessage="Mobile Number already exists"
+          error={errors.mobile_no}
+          model={model}
+          watchValue={watch('mobile_no') ||''}
+        />
         <CustomSelect<FormData>
-            id="permissions"
-            label="Permissions"
-            name="permissions"
-            setValue={setValue}
-            model="User"
-            apiUrl="/Options/permissions"
-            collection="Permission"
-            labelFields={["name"]}
-            valueFields={["name"]}
-            sortOrder="asc"
-            isRequired={false}
-            placeholder="Select Permissions"
-            multiple={true}
-            value={watch("permissions")}
-            error={errors.permissions?.[0]}
-          />
-        <div className="flex flex-col md:flex-row gap-4">
-          <CustomSelect<FormData>
-            id="is_active"
-            label="Is Active?"
-            name="is_active"
-            placeholder="Select Current Status"
-            isRequired={true}
-            options={BOOLEAN_OPTIONS}
-            error={errors.is_active}
-            setValue={setValue}
-            value={watch("is_active")}
-            model={model}
-          />
-          <CustomSelect<FormData>
-            id="gender"
-            label="Gender"
-            name="gender"
-            placeholder="Select Gender"
-            isRequired={false}
-            options={GENDER_OPTIONS}
-            error={errors.gender}
-            setValue={setValue}
-            value={watch("gender")}
-            model={model}
-          />
-        </div>
+          id="roles"
+          label="Roles"
+          name="roles"
+          setValue={setValue}
+          model="User"
+          apiUrl="/Options/roles"
+          collection="Role"
+          labelFields={["name"]}
+          valueFields={["name"]}
+          sortOrder="asc"
+          isRequired={true}
+          placeholder="Select Roles"
+          multiple={true}
+          value={watch("roles")}
+          error={errors.roles && ('message' in errors.roles ? errors.roles : undefined)}
+        />
+      </div>
+
+      <CustomSelect<FormData>
+          id="permissions"
+          label="Permissions"
+          name="permissions"
+          setValue={setValue}
+          model="User"
+          apiUrl="/Options/permissions"
+          collection="Permission"
+          labelFields={["name"]}
+          valueFields={["name"]}
+          sortOrder="asc"
+          isRequired={false}
+          placeholder="Select Permissions"
+          multiple={true}
+          value={watch("permissions")}
+          error={errors.permissions?.[0]}
+        />
+      <div className="flex flex-col md:flex-row gap-4">
+        <CustomSelect<FormData>
+          id="is_active"
+          label="Is Active?"
+          name="is_active"
+          placeholder="Select Current Status"
+          isRequired={true}
+          options={BOOLEAN_OPTIONS}
+          error={errors.is_active}
+          setValue={setValue}
+          value={watch("is_active")}
+          model={model}
+        />
+        <CustomSelect<FormData>
+          id="gender"
+          label="Gender"
+          name="gender"
+          placeholder="Select Gender"
+          isRequired={false}
+          options={GENDER_OPTIONS}
+          error={errors.gender}
+          setValue={setValue}
+          value={watch("gender")}
+          model={model}
+        />
+      </div>
         {/* DOB + NID */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <DateTimeInput
-            id="dob"
-            label="Date of Birth"
-            name="dob"
-            value={watch('dob') ?? null}
-            setValue={(field: string, value: Date | null) => setValue(field as any, value)}
-            error={errors.dob}
-            placeholder="Select your date of birth"
-            showTime={false}
-            showResetButton={true}
-            model={model}
-          />
-          <UniqueInput
-            id="nid"
-            label="NID"
-            placeholder="NID"
-            model={model}
-            isRequired={false}
-            register={register('nid')}
-            error={errors.nid}
-            uniqueErrorMessage="NID already exists"
-            field="NID"
-            watchValue={watch('nid') ||''}
-          />
-        </div>
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Address */}
-          <BasicTextarea
-            id="address"
-            label="Address"
-            placeholder="Enter a address"
-            register={register("address")}
-            error={errors.address}
-          />
-          {/* Bio */}
-          <BasicTextarea
-            id="bio"
-            label="Bio"
-            placeholder="Enter a bio"
-            register={register("bio")}
-            error={errors.bio}
-          />
-        </div>
+      <div className="flex flex-col md:flex-row gap-4">
+        <DateTimeInput
+          id="dob"
+          label="Date of Birth"
+          name="dob"
+          value={watch('dob') ?? null}
+          setValue={(field: string, value: Date | null) => setValue(field as any, value)}
+          error={errors.dob}
+          placeholder="Select your date of birth"
+          showTime={false}
+          showResetButton={true}
+          model={model}
+        />
+        <UniqueInput
+          id="nid"
+          label="NID"
+          placeholder="NID"
+          model={model}
+          isRequired={false}
+          register={register('nid')}
+          error={errors.nid}
+          uniqueErrorMessage="NID already exists"
+          field="NID"
+          watchValue={watch('nid') ||''}
+        />
+      </div>
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Address */}
+        <BasicTextarea
+          id="address"
+          label="Address"
+          placeholder="Enter a address"
+          register={register("address")}
+          error={errors.address}
+        />
+        {/* Bio */}
+        <BasicTextarea
+          id="bio"
+          label="Bio"
+          placeholder="Enter a bio"
+          register={register("bio")}
+          error={errors.bio}
+        />
+      </div>
         
-
-        
-
-        {/* Submit Actions */}
-        <div className="flex justify-between gap-4 mt-4 border-t border-gray-300 pt-4">
+      {/* Submit Actions */}
+      <div className="flex justify-between gap-4 mt-4 border-t border-gray-300 pt-4">
           <Button type="button" variant="outline" onClick={handleReset} disabled={submitLoading}>
             {t('Reset Form')}
           </Button>
           <Button type="submit" className="btn-success-gradient" disabled={submitLoading}>
             {submitLoading ? t('Registering')+'...' : t('Register User')}
           </Button>
-        </div>
-        </form>
+    </div>
+    </form>
 
     </motion.div>
   )
