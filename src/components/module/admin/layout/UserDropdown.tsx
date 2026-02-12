@@ -22,7 +22,7 @@ export default function UserDropdown() {
   const user = useAppSelector((state) => state.auth.user);
 
   if (!user) return null;
-  console.log(user);
+  // console.log(user);
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
