@@ -130,6 +130,11 @@ export const ResetPasswordApi: ApiDefinition = {
   ],
 };
 
+export const VerifyEmailApi = {
+  url: "/users/verify-email",
+};
+
+
 export const ValidateResetTokenApi: ApiDefinition = {
   url: "/auth/reset-password/validate/:token",
   method: "GET",

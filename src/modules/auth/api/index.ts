@@ -7,6 +7,7 @@ import {
   LogoutApi,
   LogoutAllApi,
   LogoutOthersApi,
+  VerifyEmailApi,
 } from "@/routes/api";
 import type {LoginResponse, RefreshResponse} from "./../types"
 
@@ -36,4 +37,8 @@ export const logoutAllApi = async (): Promise<void> => {
 
 export const logoutOthersApi = async (): Promise<void> => {
   await api.post(LogoutOthersApi.url, {}, { withCredentials: true });
+};
+
+export const verifyEmail = async (token: string) => {
+  return api.get(`${VerifyEmailApi.url}?token=${token}`);
 };

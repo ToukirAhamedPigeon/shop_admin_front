@@ -12,6 +12,8 @@ import AdminLayout from "@/layouts/AdminLayout";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
 import UsersPage from "@/modules/settings/users/pages/UsersPage";
+import VerifyEmailPage from "@/modules/auth/pages/VerifyEmailPage";
+
 
 export default function AppRoutes() {
   return (
@@ -22,6 +24,15 @@ export default function AppRoutes() {
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
       <Route path="/reset-password/:token" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+      <Route
+        path="/verify-email"
+        element={
+          <PublicRoute>
+            <VerifyEmailPage />
+          </PublicRoute>
+        }
+      />
+
 
       {/* Protected layout */}
       <Route
