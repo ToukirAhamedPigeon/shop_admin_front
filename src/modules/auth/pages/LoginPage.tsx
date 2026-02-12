@@ -58,13 +58,25 @@ export default function LoginPage() {
           //   message: "Login successful"
           // });
         }
-        else{
-          dispatchShowToast({
-            type: "danger",
-            message: "Invalid Credentials",
-            duration: 10000,
-          });
-        }
+        else {
+          const errorMessage = result.payload;
+
+          if (errorMessage === "EMAIL_NOT_VERIFIED") {
+            dispatchShowToast({
+              type: "danger",
+              duration: 20000,
+              message:
+                "Your Email is not verified yet. Check your registered email address to verify. Contact Admin if you face any trouble.",
+            });
+          } else {
+            dispatchShowToast({
+              type: "danger",
+              message: "Invalid Credentials",
+              duration: 10000,
+            });
+          }
+      }
+
     } catch (error) {
       console.log(error);
       dispatchHideLoader();

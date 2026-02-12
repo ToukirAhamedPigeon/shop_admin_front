@@ -42,3 +42,6 @@ export const logoutOthersApi = async (): Promise<void> => {
 export const verifyEmail = async (token: string) => {
   return api.get(`${VerifyEmailApi.url}?token=${token}`);
 };
+export const resendVerification = async (userId: string) => {
+  return api.post(`/users/${userId}/resend-verification`);
+};

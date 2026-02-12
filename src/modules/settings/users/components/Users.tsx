@@ -166,6 +166,13 @@ const getAllColumns = ({
         </>
       ) : '-',
   },
+  { header: 'Email Verification', accessorKey: 'emailVerifiedAt', cell: ({ getValue }) => (
+    getValue() ? (
+      <span className="text-green-600 font-semibold">Verified at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</span>
+    ) : (
+      <span className="text-red-500 font-semibold">Not Verified</span>
+    )
+  )},
   {
     header: 'Active',
     accessorKey: 'isActive',

@@ -4,6 +4,10 @@ import { generateQRImage } from '@/lib/generateQRImage'
 import { useEffect, useState } from 'react'
 import Fancybox from '@/components/custom/FancyBox'
 import { capitalize } from '@/lib/helpers'
+import { resendVerification } from '@/modules/auth/api'
+import { dispatchShowToast } from '@/lib/dispatch'
+import { can } from '@/lib/authCheck'
+
 
 export default function UserDetail({ user }: { user: any }) {
    const [qrImg, setQrImg] = useState<string | null>(null)
@@ -47,6 +51,38 @@ export default function UserDetail({ user }: { user: any }) {
     ['Name', user.name],
     ['Username', user.username],
     ['Email', user.email],
+    [
+      'Email Verification',
+      user.emailVerifiedAt ? (
+        <span className="text-green-600 font-semibold">Verified at {getCustomDateTime(user.emailVerifiedAt, 'YYYY-MM-DD HH:mm:ss')}</span>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <span className="text-red-500 font-semibold">Not Verified</span>
+
+          {can(['read-admin-dashboard']) && (
+            <button
+              onClick={async () => {
+                try {
+                  const res = await resendVerification(user.id)
+                  dispatchShowToast({
+                    type: "success",
+                    message: res.data,
+                  })
+                } catch (err: any) {
+                  dispatchShowToast({
+                    type: "danger",
+                    message: err.response?.data || "Failed to resend email",
+                  })
+                }
+              }}
+              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm w-fit"
+            >
+              Resend Verification Email
+            </button>
+          )}
+        </div>
+      ),
+    ],
     ['Mobile', user.mobileNo ?? '-'],
     ['NID', user.nid ?? '-'],
     ['Gender', (user.gender!=null)?capitalize(user.gender):'-'],
