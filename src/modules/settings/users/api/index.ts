@@ -10,3 +10,6 @@ export const createUsers = async (formDataPayload: FormData): Promise<AxiosRespo
     });
    return response;
 }
+
+export const regenerateQr = (id: string) =>
+  api.post(`/users/${id}/regenerate-qr`)

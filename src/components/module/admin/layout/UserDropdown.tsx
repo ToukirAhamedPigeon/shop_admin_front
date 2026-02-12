@@ -16,7 +16,7 @@ import { capitalize } from "@/lib/helpers";
 import { useTranslations } from "@/hooks/useTranslations";
 
 export default function UserDropdown() {
-  const t = useTranslations();
+  const {t} = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
 
   const user = useAppSelector((state) => state.auth.user);

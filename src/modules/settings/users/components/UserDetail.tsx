@@ -8,11 +8,14 @@ import { resendVerification } from '@/modules/auth/api'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { can } from '@/lib/authCheck'
 import { Loader2, Mail } from 'lucide-react'
+import { regenerateQr } from '../api'
 
 
-export default function UserDetail({ user }: { user: any }) {
+export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?: () => void }) {
    const [qrImg, setQrImg] = useState<string | null>(null)
    const [loading, setLoading] = useState(false)
+   const [qrLoading, setQrLoading] = useState(false)
+
 
   useEffect(() => {
     if (user.qrCode) {
@@ -32,23 +35,62 @@ export default function UserDetail({ user }: { user: any }) {
     ],
     [
       'QR Code',
-      user.qrCode && qrImg ? (
-        <div className="flex flex-col items-start gap-2">
-          <Fancybox
-            src={qrImg}
-            alt="QR Code"
-            title={user.name}
-            description={`${user.email}\n${user.mobileNo ?? ''}`}
-            isQRCode
-            className="w-28 h-28"
-          />
-          <span className="text-xs text-gray-900 dark:text-gray-300 break-all max-w-[200px]">
-            {user.qrCode}
-          </span>
-        </div>
-      ) : (
-        <span className="text-gray-400">-</span>
-      ),
+      <div className="flex flex-col items-start gap-2">
+        {user.qrCode && qrImg ? (
+          <>
+            <Fancybox
+              src={qrImg}
+              alt="QR Code"
+              title={user.name}
+              description={`${user.email}\n${user.mobileNo ?? ''}`}
+              isQRCode
+              className="w-28 h-28"
+            />
+
+            <span className="text-xs text-gray-900 dark:text-gray-300 break-all max-w-[200px]">
+              {user.qrCode}
+            </span>
+          </>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )}
+
+        {/* 🔥 NEW BUTTON */}
+        {can(['read-admin-dashboard']) && (
+          <button
+            disabled={qrLoading}
+            onClick={async () => {
+              try {
+                setQrLoading(true)
+                const res = await regenerateQr(user.id)
+                onUpdated?.()
+
+                // Update QR image instantly
+                generateQRImage(res.data.qrCode).then(setQrImg)
+
+                // 🔥 Update local user object
+                user.qrCode = res.data.qrCode
+
+                dispatchShowToast({
+                  type: "success",
+                  message: "QR Code regenerated successfully",
+                })
+
+              } catch (err: any) {
+                dispatchShowToast({
+                  type: "danger",
+                  message: err.response?.data || "Failed to regenerate QR",
+                })
+              } finally {
+                setQrLoading(false)
+              }
+            }}
+            className="px-3 py-1.5 text-xs rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition cursor-pointer"
+          >
+            {qrLoading ? "Generating..." : user.qrCode ? "Regenerate QR" : "Generate QR"}
+          </button>
+        )}
+      </div>
     ],
     ['Name', user.name],
     ['Username', user.username],

@@ -431,7 +431,7 @@ export default function Users() {
 
       {/* User Detail Modal */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="User Details" widthPercent={70}>
-        {detailLoading || !selectedItem ? <TableLoader loading /> : <UserDetail user={selectedItem} />}
+        {detailLoading || !selectedItem ? <TableLoader loading /> : <UserDetail user={selectedItem} onUpdated={fetchData}/>}
       </Modal>
 
       {/* Column Visibility Modal */}
