@@ -124,6 +124,9 @@ export default function Fancybox(props: SingleImageProps | GroupImageProps) {
         open={open}
         close={() => setOpen(false)}
         slides={[{ src }]}
+        styles={{
+          container: { backgroundColor: "rgba(0,0,0,0.9)" } 
+        }}
         render={{
           slide: () => (
             <div

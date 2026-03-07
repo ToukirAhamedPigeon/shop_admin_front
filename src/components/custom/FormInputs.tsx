@@ -316,18 +316,6 @@ export const SingleImageInput: React.FC<SingleImageInputProps> = ({
     </div>
   );
 };
-interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  labelFallback?: string;
-  error?: string;
-  isHidden?: boolean;
-  registerProps?: any;
-  inputClassName?: string;
-  isRequiredStar?: boolean;
-  placeholder?: string;
-  placeholderFallback?: string;
-  showForgotPasswordLink?: boolean;
-}
 
 //DateTimeInput
 
@@ -586,6 +574,20 @@ export function CustomSelect<T extends Record<string, any>>({
   );
 }
 
+interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  labelFallback?: string;
+  error?: string;
+  isHidden?: boolean;
+  registerProps?: any;
+  inputClassName?: string;
+  isRequiredStar?: boolean;
+  placeholder?: string;
+  placeholderFallback?: string;
+  showForgotPasswordLink?: boolean;
+  helperText?: string;
+}
+
 export const PasswordInput = ({
   label,
   labelFallback,
@@ -597,6 +599,7 @@ export const PasswordInput = ({
   placeholder,
   placeholderFallback,
   showForgotPasswordLink = false,
+  helperText,
   ...rest
 }: PasswordInputProps) => {
   const [hidden, setHidden] = useState(isHidden);
@@ -647,7 +650,7 @@ export const PasswordInput = ({
           )}
         </button>
       </div>
-
+      {helperText && <p className="text-sm text-gray-500 dark:text-gray-400">{helperText}</p>}
       {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
     </div>
   );

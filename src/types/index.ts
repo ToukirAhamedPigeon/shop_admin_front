@@ -43,7 +43,7 @@ export interface UserFormValues {
   email: string
   password?: string            // optional for edit
   confirmed_password?: string  // optional for edit
-  profile_image?: File | null  // allow null because useProfilePicture can set null
+  profile_image?: File | string | null  // allow null because useProfilePicture can set null
   mobile_no?: string
   address?: string
   bio?: string

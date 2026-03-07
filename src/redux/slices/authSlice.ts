@@ -1,18 +1,19 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import api from "@/lib/axios";
-import type {User, LoginResponse, RefreshResponse} from "@/modules/auth/types"
-import {fetchCsrfTokenApi, loginApi, refreshApi, logoutApi, logoutAllApi, logoutOthersApi} from "@/modules/auth/api"
-
-
+import type { User, LoginResponse, RefreshResponse } from "@/modules/auth/types";
+import {
+  fetchCsrfTokenApi,
+  loginApi,
+  refreshApi,
+  logoutApi,
+  logoutAllApi,
+  logoutOthersApi,
+} from "@/modules/auth/api";
 
 // =========================
-// User & API Response Types
+// Auth State Interface - EXPORTED
 // =========================
-
-// =========================
-// Auth State Interface
-// =========================
-interface AuthState {
+export interface AuthState {
   user: User | null;
   accessToken: string | null;
   csrfToken: string | null;
@@ -40,75 +41,77 @@ const initialState: AuthState = {
 // =========================
 
 // Fetch CSRF Token
-export const fetchCsrfToken = createAsyncThunk<string>(
+export const fetchCsrfToken = createAsyncThunk<string, void, { rejectValue: string }>(
   "auth/fetchCsrfToken",
   async (_, { rejectWithValue }) => {
     try {
       const response = await fetchCsrfTokenApi();
       const token = response?.csrfToken || null;
-      
+
       if (!token) {
         return rejectWithValue("Failed to fetch CSRF token");
       }
-    // ✅ Choose correct header key based on auth type
+      // ✅ Choose correct header key based on auth type
       api.defaults.headers.common["X-CSRF-TOKEN"] = token;
       return token;
-    } catch {
+    } catch (error) {
       return rejectWithValue("Failed to fetch CSRF token");
     }
   }
 );
 
 // Login User
-export const loginUser = createAsyncThunk<LoginResponse, LoginUserPayload>(
-  "auth/loginUser",
-  async (credentials, { rejectWithValue, dispatch }) => {
-    try {
-      // ✅ Add Sanctum CSRF token if using Sanctum
-      const response = await loginApi(credentials);
-      await dispatch(fetchCsrfToken());
-      return response;
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data || "Login failed");
-    }
+export const loginUser = createAsyncThunk<
+  LoginResponse,
+  LoginUserPayload,
+  { rejectValue: string }
+>("auth/loginUser", async (credentials, { rejectWithValue, dispatch }) => {
+  try {
+    // ✅ Add Sanctum CSRF token if using Sanctum
+    const response = await loginApi(credentials);
+    await dispatch(fetchCsrfToken());
+    return response;
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message || "Login failed");
   }
-);
+});
 
 // Refresh Access Token
-export const refreshAccessToken = createAsyncThunk<RefreshResponse>(
-  "auth/refreshAccessToken",
-  async (_, { rejectWithValue, dispatch, getState }) => {
-    try {
-      const state = getState() as { auth: AuthState };
-      if (state.auth.isLoggedOut) throw new Error("User logged out, skip refresh");
+export const refreshAccessToken = createAsyncThunk<
+  RefreshResponse,
+  void,
+  { rejectValue: string }
+>("auth/refreshAccessToken", async (_, { rejectWithValue, dispatch, getState }) => {
+  try {
+    const state = getState() as { auth: AuthState };
+    if (state.auth.isLoggedOut) throw new Error("User logged out, skip refresh");
 
-      const expiry = localStorage.getItem("refreshTokenExpiry");
-      if (!expiry) {
-        dispatch(logout());
-        return rejectWithValue("No refresh token expiry found");
-      }
-
-      const expiryDate = new Date(expiry);
-      if (isNaN(expiryDate.getTime()) || expiryDate <= new Date()) {
-        dispatch(logout());
-        return rejectWithValue("Refresh token expired");
-      }
-
-      if (!state.auth.csrfToken) {
-        await dispatch(fetchCsrfToken());
-      }
-
-      const response = await refreshApi();
-      return response;
-    } catch (err: any) {
+    const expiry = localStorage.getItem("refreshTokenExpiry");
+    if (!expiry) {
       dispatch(logout());
-      return rejectWithValue(err.response?.data?.message || "Refresh failed");
+      return rejectWithValue("No refresh token expiry found");
     }
+
+    const expiryDate = new Date(expiry);
+    if (isNaN(expiryDate.getTime()) || expiryDate <= new Date()) {
+      dispatch(logout());
+      return rejectWithValue("Refresh token expired");
+    }
+
+    if (!state.auth.csrfToken) {
+      await dispatch(fetchCsrfToken());
+    }
+
+    const response = await refreshApi();
+    return response;
+  } catch (err: any) {
+    dispatch(logout());
+    return rejectWithValue(err.response?.data?.message || "Refresh failed");
   }
-);
+});
 
 // Logout Current Session
-export const logoutUser = createAsyncThunk<void>(
+export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>(
   "auth/logoutUser",
   async (_, { rejectWithValue, dispatch }) => {
     try {
@@ -122,7 +125,7 @@ export const logoutUser = createAsyncThunk<void>(
 );
 
 // Logout All Sessions
-export const logoutUserAll = createAsyncThunk<void>(
+export const logoutUserAll = createAsyncThunk<void, void, { rejectValue: string }>(
   "auth/logoutUserAll",
   async (_, { rejectWithValue, dispatch }) => {
     try {
@@ -136,7 +139,7 @@ export const logoutUserAll = createAsyncThunk<void>(
 );
 
 // Logout Other Sessions
-export const logoutUserOther = createAsyncThunk<void>(
+export const logoutUserOther = createAsyncThunk<void, void, { rejectValue: string }>(
   "auth/logoutUserOther",
   async (_, { rejectWithValue, dispatch }) => {
     try {
@@ -156,7 +159,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
-     // console.log("Logoutting user");
+      // console.log("Logoutting user");
       state.user = null;
       state.accessToken = null;
       state.csrfToken = null;
@@ -222,9 +225,15 @@ const authSlice = createSlice({
       })
 
       // Logout errors
-      .addCase(logoutUser.rejected, (state, action) => { state.error = action.payload as string; })
-      .addCase(logoutUserAll.rejected, (state, action) => { state.error = action.payload as string; })
-      .addCase(logoutUserOther.rejected, (state, action) => { state.error = action.payload as string; });
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+      .addCase(logoutUserAll.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+      .addCase(logoutUserOther.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
   },
 });
 

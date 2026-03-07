@@ -1,28 +1,64 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { schema } from "./Add"
-import type { UserFormValues } from "@/types"
-import { getUserById, updateUser } from "../api"
+import { getUserForEditById, updateUser } from "../api"
 import { dispatchShowToast } from "@/lib/dispatch"
 import { Button } from "@/components/ui/button"
-import DateTimeInput, {
+import {
   BasicInput,
   BasicTextarea,
   CustomSelect,
-  PasswordInput,
   SingleImageInput,
   UniqueInput
 } from "@/components/custom/FormInputs"
-import { BOOLEAN_OPTIONS, GENDER_OPTIONS } from "@/constants"
+import { BOOLEAN_OPTIONS } from "@/constants"
 import { useProfilePicture } from "@/hooks/useProfilePicture"
 import { useTranslations } from "@/hooks/useTranslations"
+import z from "zod"
 
 interface Props {
   userId: string
   fetchData: () => Promise<void>
   onClose: () => void
 }
+
+export const editSchema = z.object({
+   // Name: required
+    name: z.string().min(1, 'Name is required'),
+  
+    // Username: required, min 4 chars
+    username: z
+      .string()
+      .min(4, 'Username must be at least 4 characters'),
+  
+    // Email: required and valid
+    email: z.string().email({ message: "Invalid email" }),
+    // Mobile: optional but min 11 digits if provided
+    mobile_no: z
+      .string()
+      .optional()
+      .refine((val) => !val || val.length >= 11, {
+        message: "Mobile Number must be at least 11 digits",
+      }),
+  
+    // NID: optional, but uniqueness handled via API
+    nid: z.string().optional(),
+    // Optional fields
+    address: z.string().optional(),
+    is_active: z.string().optional(),
+    roles: z.array(z.string())
+      .min(1, 'At least one role must be selected'),
+  
+    // Permissions: optional array
+    permissions: z.array(z.string()).optional(),
+    profile_image: z.union([
+      z.instanceof(File),
+      z.string(),
+      z.undefined()
+    ]).optional(),
+})
+
+export type EditUserFormValues = z.infer<typeof editSchema>
 
 export default function Edit({ userId, fetchData, onClose }: Props) {
   const { t } = useTranslations()
@@ -38,22 +74,17 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
     reset,
     watch,
     formState: { errors }
-  } = useForm<UserFormValues>({
-    resolver: zodResolver(schema) as any,
+  } = useForm<EditUserFormValues>({
+    resolver: zodResolver(editSchema) as any,
     defaultValues: {
       name: "",
       username: "",
       email: "",
-      password: "",
-      confirmed_password: "",
       profile_image: undefined,
       mobile_no: "",
       address: "",
       nid: "",
-      dob: null,
-      bio: "",
       is_active: "true",
-      gender: "male",
       roles: [],
       permissions: []
     }
@@ -75,9 +106,8 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const res = await getUserById(userId)
+        const res = await getUserForEditById(userId)
         const user = res.data
-
         // Reset form only once with fetched data
         reset({
           name: user.name ?? "",
@@ -86,20 +116,17 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
           mobile_no: user.mobileNo ?? "",
           nid: user.nid ?? "",
           address: user.address ?? "",
-          bio: user.bio ?? "",
-          gender: user.gender ?? "male",
-          dob: user.dateOfBirth ? new Date(user.dateOfBirth) : null,
           is_active: user.isActive ? "true" : "false",
           roles: user.roles || [],
           permissions: user.permissions || [],
-          password: "",
-          confirmed_password: "",
           profile_image: user.profileImage ?? undefined
         })
 
-        if (user.profileImage) onDrop([user.profileImage as any], user.profileImage as any)
-        else clearImage()
-      } catch {
+        if (user.profileImage) {
+          setValue("profile_image", import.meta.env.VITE_API_BASE_URL + user.profileImage, { shouldValidate: false })
+        }
+      } catch(e) {
+        console.log(e)
         dispatchShowToast({ type: "danger", message: t("Failed to load user") })
       } finally {
         setLoading(false)
@@ -112,34 +139,56 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
   // ------------------------------
   // Sync profile image when its value changes
   // ------------------------------
+  const profileImg = watch("profile_image")
+  const prevProfileImgRef = useRef(profileImg)
+
   useEffect(() => {
-    const profileImg = watch("profile_image")
-    if (profileImg) onDrop([profileImg as any], profileImg as any)
-    else clearImage()
-  }, [watch("profile_image")])
+    // Only clear if we're explicitly setting to undefined/null AND it's not the initial load
+    if (!profileImg && prevProfileImgRef.current && !loading) {
+      clearImage()
+    }
+    prevProfileImgRef.current = profileImg
+  }, [profileImg, loading])
 
   // ------------------------------
   // Form Submit
   // ------------------------------
-  const onSubmit = async (data: UserFormValues) => {
+  const onSubmit = async (data: EditUserFormValues) => {
     setSubmitLoading(true)
     try {
       const formData = new FormData()
-
+    
+      // Handle regular fields
       Object.entries(data).forEach(([key, value]) => {
         if (value === undefined || value === null) return
-
+        
+        // Skip profile_image - handle separately
+        if (key === 'profile_image') return
+        
         if (Array.isArray(value)) {
           value.forEach(v => formData.append(key, v))
-        } else if (value instanceof File) {
-          formData.append(key, value)
         } else if (value instanceof Date) {
           formData.append(key, value.toISOString())
         } else {
           formData.append(key, String(value))
         }
       })
-
+      
+      // Handle profile image with clear flags
+      const currentProfileImage = watch("profile_image")
+      
+      if (currentProfileImage instanceof File) {
+        // Case: New image uploaded
+        formData.append("profile_image", currentProfileImage)
+        formData.append("remove_profile_image", "false")
+      } else if (!currentProfileImage && preview === null) {
+        // Case: Image was removed (preview is null AND no file in form state)
+        formData.append("remove_profile_image", "true")
+      } else {
+        // Case: Keep existing image
+        formData.append("remove_profile_image", "false")
+      }
+    
       await updateUser(userId, formData)
 
       dispatchShowToast({ type: "success", message: t("User updated successfully") })
@@ -165,41 +214,66 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
       {/* Name + Username + Password */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="w-full space-y-4 flex flex-col justify-end">
-          <div className="flex flex-col justify-end">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">{t("Provide User Information")}</h2>
-            <span className="text-sm text-slate-500 dark:text-slate-400">
-              {t("Fill all required fields")} (<span className="text-red-500">*</span>)
-            </span>
-          </div>
           <div className="flex flex-col md:flex-row gap-4">
-            <UniqueInput
-                id="username"
-                label={t("Username")}
-                placeholder="Username"
-                model={model}
+            <div className="w-full space-y-4 flex flex-col">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">{t("Provide User Information")}</h2>
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  {t("Fill all required fields")} (<span className="text-red-500">*</span>)
+                </span>
+              </div>
+              
+              <BasicInput
+                id="name"
+                label="Name"
                 isRequired
-                register={register("username")}
-                error={errors.username}
-                uniqueErrorMessage={t("Username already exists")}
-                field="Username"
-                exceptFieldName="Id"
-                exceptFieldValue={userId}
-                watchValue={watch("username")}
-            />
-            <UniqueInput
-                id="email"
-                label={t("Email")}
-                placeholder="Email"
+                placeholder="Name"
+                register={register("name", { required: "Name is required" })}
+                error={errors.name}
                 model={model}
-                register={register("email")}
-                error={errors.email}
-                uniqueErrorMessage={t("Email already exists")}
-                field="Email"
-                isRequired
-                exceptFieldName="Id"
-                exceptFieldValue={userId}
-                watchValue={watch("email") || ""}
-            />
+              />
+              <UniqueInput
+                  id="username"
+                  label={t("Username")}
+                  placeholder="Username"
+                  model={model}
+                  isRequired
+                  register={register("username")}
+                  error={errors.username}
+                  uniqueErrorMessage={t("Username already exists")}
+                  field="Username"
+                  exceptFieldName="Id"
+                  exceptFieldValue={userId}
+                  watchValue={watch("username")}
+              />
+              <UniqueInput
+                  id="email"
+                  label={t("Email")}
+                  placeholder="Email"
+                  model={model}
+                  register={register("email")}
+                  error={errors.email}
+                  uniqueErrorMessage={t("Email already exists")}
+                  field="Email"
+                  isRequired
+                  exceptFieldName="Id"
+                  exceptFieldValue={userId}
+                  watchValue={watch("email") || ""}
+              />
+            </div>
+            <div className="w-full">
+              {/* Profile Picture */}
+                <SingleImageInput
+                  label="Profile Picture"
+                  preview={preview}
+                  onDrop={onDrop}
+                  clearImage={clearImage}
+                  error={errors.profile_image}
+                  className='sm:text-center text-left'
+                  isRequired={false}
+                  minHeightClass='h-[250px]'
+                />
+            </div>
           </div>
         </div>
       </div>
@@ -226,7 +300,7 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
           watchValue={watch("mobile_no") || ""}
         />
 
-        <CustomSelect<UserFormValues>
+        <CustomSelect<EditUserFormValues>
           id="roles"
           label={t("Roles")}
           name="roles"
@@ -246,7 +320,7 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
       </div>
 
       {/* Permissions */}
-      <CustomSelect<UserFormValues>
+      <CustomSelect<EditUserFormValues>
         id="permissions"
         label={t("Permissions")}
         name="permissions"
@@ -266,7 +340,7 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
 
       {/* Status + Gender */}
       <div className="flex flex-col md:flex-row gap-4">
-        <CustomSelect<UserFormValues>
+        <CustomSelect<EditUserFormValues>
           id="is_active"
           label={t("Is Active?")}
           name="is_active"
@@ -288,6 +362,8 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
           error={errors.nid}
           uniqueErrorMessage={t("NID already exists")}
           field="NID"
+          exceptFieldName="Id"
+          exceptFieldValue={userId}
           watchValue={watch("nid") || ""}
         />
       </div>

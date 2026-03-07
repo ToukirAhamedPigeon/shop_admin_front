@@ -13,6 +13,10 @@ import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
 import UsersPage from "@/modules/settings/users/pages/UsersPage";
 import VerifyEmailPage from "@/modules/auth/pages/VerifyEmailPage";
+import ChangePasswordPage from "@/modules/settings/users/pages/ChangePasswordPage";
+
+import ProfileEditPage from "@/modules/settings/users/pages/ProfileEditPage";
+import VerifyPasswordChangePage from "@/modules/settings/users/pages/VerifyPasswordChangePage";
 
 
 export default function AppRoutes() {
@@ -58,6 +62,31 @@ export default function AppRoutes() {
           element={
             <PermissionRoute anyOf={["read-admin-dashboard"]}>
               <UsersPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="settings/profile"
+          element={
+            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+              <ProfileEditPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="settings/change-password"
+          element={
+            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+              <ChangePasswordPage />
+            </PermissionRoute>
+          }
+        />
+
+        <Route
+          path="verify-password-change/:token"
+          element={
+            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+              <VerifyPasswordChangePage />
             </PermissionRoute>
           }
         />

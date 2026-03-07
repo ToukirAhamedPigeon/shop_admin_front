@@ -2,46 +2,89 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 
-// 🔹 Redux
+// Redux
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
 
-// 🔹 Global CSS
+// Global CSS
 import "./index.css";
 
-// 🔹 CSRF Initialization
-import { fetchCsrfToken } from "./redux/slices/authSlice";
+// Auth
+import {
+  fetchCsrfToken,
+  logout,
+  setAccessToken,
+} from "./redux/slices/authSlice";
 
-// 🔹 Language Initialization
-import { fetchTranslations, setLanguage } from "./redux/slices/languageSlice";
+// Language
+import {
+  fetchTranslations,
+  setLanguage,
+} from "./redux/slices/languageSlice";
+
+// Axios handlers
+import {
+  setAccessTokenGetter,
+  setRefreshSuccessHandler,
+  setLogoutHandler,
+  setCsrfTokenGetter,
+} from "@/lib/axios";
+
+// Components
 import GlobalLoader from "@/components/custom/GlobalLoader";
 import ToastContainer from "./components/custom/ToastContainer";
-  // const AUTH_TYPE = import.meta.env.VITE_AUTH_TYPE || "jwt";
 
 // ============================================================
-// STEP 1: Initialize CSRF + Language before rendering App
+// STEP 1: Bind Axios Auth Handlers
 // ============================================================
+
+// Access token getter
+setAccessTokenGetter(() => store.getState().auth.accessToken);
+
+// CSRF token getter
+setCsrfTokenGetter(() => store.getState().auth.csrfToken);
+
+// Refresh success handler
+setRefreshSuccessHandler((token) => {
+  store.dispatch(setAccessToken(token));
+});
+
+// Logout handler
+setLogoutHandler(() => {
+  store.dispatch(logout());
+});
+
+// Global logout event
+window.addEventListener("logout", () => {
+  store.dispatch(logout());
+});
+
+// ============================================================
+// STEP 2: Initialize App (CSRF + Language)
+// ============================================================
+
 const initApp = async () => {
   try {
-    // ✅ 1. Get CSRF
+    // ✅ Fetch CSRF
     await store.dispatch(fetchCsrfToken()).unwrap();
-    // if (AUTH_TYPE === "sanctum") {
-    //       await store.dispatch(checkAuth()).unwrap();
-    // }
 
-    // ✅ 2. Initialize Language
+    // ✅ Initialize language
     const savedLang = localStorage.getItem("lang") || "en";
+
     store.dispatch(setLanguage(savedLang));
-    await store.dispatch(fetchTranslations({ lang: savedLang })).unwrap();
+
+    await store.dispatch(
+      fetchTranslations({ lang: savedLang })
+    ).unwrap();
   } catch (err) {
-    // Auto logout if CSRF fetch fails
     window.dispatchEvent(new Event("logout"));
   }
 };
 
 // ============================================================
-// STEP 2: Render React App
+// STEP 3: Render React App
 // ============================================================
+
 initApp().finally(() => {
   ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>

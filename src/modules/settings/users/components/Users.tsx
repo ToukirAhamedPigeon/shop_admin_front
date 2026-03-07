@@ -44,6 +44,9 @@ import Add from './Add'
 import Edit from './Edit'
 import { useEditSheet } from '@/hooks/useEditSheet'
 import { capitalize } from '@/lib/helpers'
+import { useDeleteWithConfirm } from '@/hooks/useDeleteWithConfirm'
+import { useAppSelector } from '@/hooks/useRedux'
+import ConfirmDialog from '@/components/custom/ConfirmDialog'
 
 
 /* ---------------------------------- */
@@ -54,15 +57,21 @@ const getAllColumns = ({
   pageSize,
   fetchDetail,
   handleEditClick,
+  confirmDelete,
+  authRoles,
   showDetail = true,
   showEdit = true,
+  showDelete = true
 }: {
   pageIndex: number
   pageSize: number
   fetchDetail: (item: IUser) => void
   handleEditClick: (item: IUser) => void
+  confirmDelete: (id: string) => void
+  authRoles: string[]
   showDetail?: boolean
   showEdit?: boolean
+  showDelete?: boolean
 }): ColumnDef<IUser>[] => [
   {
     header: 'SL',
@@ -80,8 +89,10 @@ const getAllColumns = ({
         row={row.original}
         onDetail={() => fetchDetail(row.original)}
         onEdit={() => handleEditClick(row.original)}
+        onDelete={() => confirmDelete(row.original.id)}
         showDetail={showDetail}
         showEdit={showEdit}
+        showDelete={showDelete && !(row.original as any).roleNames?.split(',').map((r:string) => r.trim()).includes('developer')}
       />
     ),
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
@@ -192,9 +203,11 @@ const getAllColumns = ({
 /* ---------------------------------- */
 export default function Users() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '')
+  const authroles = useAppSelector((state) => state.auth.user?.roles || [])
   const { isModalOpen, selectedItem, fetchDetail, closeModal, detailLoading } = useDetailModal<IUser>('/users')
   const fetchDetailRef = useRef(fetchDetail)
   fetchDetailRef.current = fetchDetail
+  const hasFetchedRef = useRef(false);
 
   const [visible, setVisible] = useState<ColumnDef<IUser>[]>([])
   const [showColumnModal, setShowColumnModal] = useState(false)
@@ -204,6 +217,7 @@ export default function Users() {
   const [showAddButton, setShowAddButton] = useState(false)
   const showDetail= true
   const showEdit= can(['read-admin-dashboard'])
+  const showDelete= can(['read-admin-dashboard'])
 
   const {isOpen: isEditSheetOpen,itemToEdit: userToEdit,openEdit: handleEditClick,closeEdit: closeEditSheet} = useEditSheet<IUser>()
 
@@ -218,14 +232,26 @@ export default function Users() {
     defaultSort: 'createdAt',
   })
 
-  const allColumns = useMemo(() => getAllColumns({
-    pageIndex,
-    pageSize,
-    fetchDetail: item => fetchDetailRef.current(item),
-    handleEditClick,
-    showDetail,
-    showEdit,
-  }), [pageIndex, pageSize])
+  const {dialogOpen,confirmDelete,cancelDelete,handleDelete,deleteLoading} = useDeleteWithConfirm({
+    endpoint: '/users',
+    onSuccess: fetchData,
+  })
+
+   const allColumns = useMemo(
+    () =>
+      getAllColumns({
+        pageIndex,
+        pageSize,
+        fetchDetail,
+        handleEditClick,
+        authRoles: authroles,
+        confirmDelete,
+        showDetail,
+        showEdit,
+        showDelete,
+      }),
+    [pageIndex, pageSize, fetchDetail, handleEditClick, authroles, confirmDelete, showDetail, showEdit, showDelete]
+  )
 
   // Show Add Button based on permission
   useEffect(() => { setShowAddButton(can(['read-admin-dashboard'])) }, [])
@@ -241,9 +267,14 @@ export default function Users() {
       } catch (err) { console.error(err) }
     })()
     return () => { mounted = false }
-  }, [userId, allColumns])
+  }, [userId])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { 
+    if (!hasFetchedRef.current) {
+      fetchData();
+      hasFetchedRef.current = true;
+    }
+  }, [fetchData]);
 
   const visibleIds = visible.map(c => c.id ?? ((c as any).accessorKey ?? ''))
   const isFilterActive = Object.values(filters).some(v => v && (Array.isArray(v) ? v.length > 0 : true))
@@ -375,6 +406,15 @@ export default function Users() {
           <Add fetchData={fetchData} /> {/* ✅ fetchData refresh table after adding */}
         </FormHolderSheet>
       )}
+      {showDelete && <ConfirmDialog
+        open={dialogOpen}
+        onCancel={cancelDelete}
+        onConfirm={handleDelete}
+        title="Confirm Deletion"
+        description="Are you sure you want to delete"
+        confirmLabel={deleteLoading ? 'Deleting' : 'Delete'}
+        loading={deleteLoading}
+      />}
        {/* Edit Modal */}  
       {showEdit && <FormHolderSheet
         open={isEditSheetOpen}
