@@ -21,6 +21,7 @@ import {
   TablePaginationFooter,
   RowActions,
   IndexCell,
+  EmptyState,
 } from '@/components/custom/Table'
 import Modal from '@/components/custom/Modal'
 import { ColumnVisibilityManager } from '@/components/custom/ColumnVisibilityManager'
@@ -47,7 +48,6 @@ import { capitalize } from '@/lib/helpers'
 import { useDeleteWithConfirm } from '@/hooks/useDeleteWithConfirm'
 import { useAppSelector } from '@/hooks/useRedux'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
-
 
 /* ---------------------------------- */
 /* Columns Definition */
@@ -92,7 +92,7 @@ const getAllColumns = ({
         onDelete={() => confirmDelete(row.original.id)}
         showDetail={showDetail}
         showEdit={showEdit}
-        showDelete={showDelete && !(row.original as any).roleNames?.split(',').map((r:string) => r.trim()).includes('developer')}
+        showDelete={showDelete && !(row.original as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')}
       />
     ),
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
@@ -204,10 +204,20 @@ const getAllColumns = ({
 export default function Users() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '')
   const authroles = useAppSelector((state) => state.auth.user?.roles || [])
-  const { isModalOpen, selectedItem, fetchDetail, closeModal, detailLoading } = useDetailModal<IUser>('/users')
+
+  const {
+    isModalOpen,
+    selectedItem,
+    fetchDetail,
+    closeModal,
+    detailLoading
+  } = useDetailModal<IUser>('/users')
+
   const fetchDetailRef = useRef(fetchDetail)
   fetchDetailRef.current = fetchDetail
-  const hasFetchedRef = useRef(false);
+
+  const hasFetchedRef = useRef(false)
+  const prevFiltersRef = useRef<Record<string, any>>({})
 
   const [visible, setVisible] = useState<ColumnDef<IUser>[]>([])
   const [showColumnModal, setShowColumnModal] = useState(false)
@@ -215,86 +225,239 @@ export default function Users() {
   const [filters, setFilters] = useState<Record<string, any>>({})
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showAddButton, setShowAddButton] = useState(false)
-  const showDetail= true
-  const showEdit= can(['read-admin-dashboard'])
-  const showDelete= can(['read-admin-dashboard'])
 
-  const {isOpen: isEditSheetOpen,itemToEdit: userToEdit,openEdit: handleEditClick,closeEdit: closeEditSheet} = useEditSheet<IUser>()
+  const showDetail = true
+  const showEdit = can(['read-admin-dashboard'])
+  const showDelete = can(['read-admin-dashboard'])
 
-  // Stable fetcher for useTable
-  const stableFetcher = useCallback(async ({ q = '', page, limit, sortBy = 'createdAt', sortOrder = 'asc' }: { q?: string; page: number; limit: number; sortBy?: string; sortOrder?: string }): Promise<{ data: IUser[]; total: number; grandTotalCount: number }> => {
-    const res = await api.post('/users', { q, page, limit, sortBy, sortOrder, ...filters })
-    return { data: res.data.users as IUser[], total: res.data.users.length, grandTotalCount: res.data.grandTotalCount }
-  }, [filters])
+  const {
+    isOpen: isEditSheetOpen,
+    itemToEdit: userToEdit,
+    openEdit: handleEditClick,
+    closeEdit: closeEditSheet
+  } = useEditSheet<IUser>()
 
-  const { data, totalCount, grandTotalCount, loading, sorting, setSorting, pageIndex, setPageIndex, pageSize, setPageSize, fetchData, globalFilter, setGlobalFilter } = useTable<IUser>({
-    fetcher: stableFetcher,
-    defaultSort: 'createdAt',
-  })
+  /* ---------------- Stable Fetcher ---------------- */
 
-  const {dialogOpen,confirmDelete,cancelDelete,handleDelete,deleteLoading} = useDeleteWithConfirm({
-    endpoint: '/users',
-    onSuccess: fetchData,
-  })
+  const stableFetcher = useCallback(
+    async ({
+      q = '',
+      page,
+      limit,
+      sortBy = 'createdAt',
+      sortOrder = 'asc'
+    }: {
+      q?: string
+      page: number
+      limit: number
+      sortBy?: string
+      sortOrder?: string
+    }): Promise<{
+      data: IUser[]
+      total: number
+      grandTotalCount: number
+    }> => {
+      // Clean filters to remove empty arrays and convert empty strings to null
+      const cleanFilters = Object.entries(filters).reduce((acc, [key, value]) => {
+        // Convert empty strings to null for date fields
+        if ((key === 'from' || key === 'to') && value === '') {
+          acc[key] = null
+        }
+        // Skip empty arrays
+        else if (Array.isArray(value) && value.length === 0) {
+          // Skip
+        }
+        // Keep other values
+        else {
+          acc[key] = value
+        }
+        return acc
+      }, {} as Record<string, any>)
 
-   const allColumns = useMemo(
-    () =>
-      getAllColumns({
-        pageIndex,
-        pageSize,
-        fetchDetail,
-        handleEditClick,
-        authRoles: authroles,
-        confirmDelete,
-        showDetail,
-        showEdit,
-        showDelete,
-      }),
-    [pageIndex, pageSize, fetchDetail, handleEditClick, authroles, confirmDelete, showDetail, showEdit, showDelete]
+      const res = await api.post('/users', {
+        q,
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+        ...cleanFilters
+      })
+
+      return {
+        data: res.data.users as IUser[],
+        total: res.data.totalCount,
+        grandTotalCount: res.data.grandTotalCount
+      }
+    },
+    [filters]
   )
 
-  // Show Add Button based on permission
-  useEffect(() => { setShowAddButton(can(['read-admin-dashboard'])) }, [])
+  /* ---------------- Table Hook ---------------- */
 
-  // Load Column Visibility from backend
+  const {
+    data,
+    totalCount,
+    grandTotalCount,
+    loading,
+    error,
+    sorting,
+    setSorting,
+    pageIndex,
+    setPageIndex,
+    pageSize,
+    setPageSize,
+    fetchData,
+    globalFilter,
+    setGlobalFilter
+  } = useTable<IUser>({
+    fetcher: stableFetcher,
+    defaultSort: 'createdAt'
+  })
+
+  /* ---------------- Delete Hook ---------------- */
+
+  const {
+    dialogOpen,
+    confirmDelete,
+    cancelDelete,
+    handleDelete,
+    deleteLoading
+  } = useDeleteWithConfirm({
+    endpoint: '/users',
+    onSuccess: fetchData
+  })
+
+  /* ---------------- Stable Columns ---------------- */
+
+  const allColumnsRef = useRef<ColumnDef<IUser>[]>([])
+
+  if (!allColumnsRef.current.length) {
+    allColumnsRef.current = getAllColumns({
+      pageIndex,
+      pageSize,
+      fetchDetail,
+      handleEditClick,
+      authRoles: authroles,
+      confirmDelete,
+      showDetail,
+      showEdit,
+      showDelete
+    })
+  }
+
+  const allColumns = allColumnsRef.current
+
+  /* ---------------- Add Button Permission ---------------- */
+
+  useEffect(() => {
+    setShowAddButton(can(['read-admin-dashboard']))
+  }, [])
+
+  /* ---------------- Load Column Settings ---------------- */
+
   useEffect(() => {
     if (!userId) return
+
     let mounted = true
-    ;(async () => {
+
+    const loadColumnSettings = async () => {
       try {
-        const { visibleColumns } = await refreshColumnSettings<IUser>('userTable', userId, allColumns)
-        if (mounted) setVisible(visibleColumns.length ? visibleColumns : allColumns)
-      } catch (err) { console.error(err) }
-    })()
-    return () => { mounted = false }
-  }, [userId])
+        const { visibleColumns } = await refreshColumnSettings<IUser>(
+          'userTable',
+          userId,
+          allColumns
+        )
 
-  useEffect(() => { 
-    if (!hasFetchedRef.current) {
-      fetchData();
-      hasFetchedRef.current = true;
+        if (mounted) {
+          setVisible(visibleColumns.length ? visibleColumns : allColumns)
+        }
+      } catch (err) {
+        console.error(err)
+      }
     }
-  }, [fetchData]);
 
-  const visibleIds = visible.map(c => c.id ?? ((c as any).accessorKey ?? ''))
-  const isFilterActive = Object.values(filters).some(v => v && (Array.isArray(v) ? v.length > 0 : true))
+    loadColumnSettings()
+
+    return () => {
+      mounted = false
+    }
+  }, [userId, allColumns])
+
+  /* ---------------- Initial Fetch ---------------- */
+
+  useEffect(() => {
+    if (!hasFetchedRef.current) {
+      fetchData()
+      hasFetchedRef.current = true
+    }
+  }, [fetchData])
+
+  /* ---------------- Filters Fetch ---------------- */
+
+  useEffect(() => {
+    // Skip initial fetch
+    if (!hasFetchedRef.current) return
+    
+    // Skip if filters haven't changed
+    if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
+      return
+    }
+
+    console.log('Filters changed, fetching data...', filters)
+    fetchData()
+    prevFiltersRef.current = filters
+    
+  }, [filters, fetchData])
+
+  /* ---------------- Visible Column IDs ---------------- */
+
+  const visibleIds = useMemo(
+    () => visible.map(c => c.id ?? ((c as any).accessorKey ?? '')),
+    [visible]
+  )
+
+  const isFilterActive = useMemo(
+    () =>
+      Object.values(filters).some(
+        v => v && (Array.isArray(v) ? v.length > 0 : true)
+      ),
+    [filters]
+  )
+
+  /* ---------------- Table Instance ---------------- */
 
   const table = useReactTable({
     data,
     columns: visible,
-    state: { sorting, pagination: { pageIndex, pageSize } },
+    state: {
+      sorting,
+      pagination: {
+        pageIndex,
+        pageSize
+      }
+    },
     onSortingChange: setSorting as OnChangeFn<SortingState>,
     manualPagination: true,
     manualSorting: true,
     pageCount: Math.ceil(totalCount / pageSize),
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    getPaginationRowModel: getPaginationRowModel()
   })
 
+  /* ---------------- Empty State ---------------- */
+
+  const showEmptyState = !loading && !error && data.length === 0
+  const showErrorState = !loading && error
+
+  /* ---------------- UI ---------------- */
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-      {/* Table Actions */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <TableHeaderActions
         searchValue={globalFilter}
         onSearchChange={setGlobalFilter}
@@ -302,100 +465,187 @@ export default function Users() {
         showAddButton={showAddButton}
         onColumnSettings={() => setShowColumnModal(true)}
         onPrint={() => printTableById('printable-user-table', 'Users')}
-        onExport={() => exportVisibleTableToExcel({ data, columns: allColumns, visibleColumnIds: visibleIds, fileName: 'Users' })}
+        onExport={() =>
+          exportVisibleTableToExcel({
+            data,
+            columns: allColumns,
+            visibleColumnIds: visibleIds,
+            fileName: 'Users'
+          })
+        }
         onFilter={() => setFilterModalOpen(true)}
         isFilterActive={isFilterActive}
       />
 
-      {/* Table */}
-      <div className="relative rounded-sm shadow overflow-hidden bg-white dark:bg-gray-800" id="printable-user-table">
+      {/* TABLE */}
+      <div
+        className="relative rounded-sm shadow overflow-hidden bg-white dark:bg-gray-800"
+        id="printable-user-table"
+      >
         <div className="max-h-[600px] min-h-[200px] overflow-y-auto">
           {loading && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-opacity-70 mt-20">
               <TableLoader loading />
             </div>
           )}
-          <table className="table-auto w-full text-left border border-collapse">
-            <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} className={`p-2 border ${header.column.columnDef.meta?.customClassName || ''}`}>
-                      <div className="flex justify-between items-center w-full cursor-pointer" onClick={header.column.getToggleSortingHandler()}>
-                        <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                        <span className="ml-2">
-                          {header.column.getIsSorted() === 'asc' ? <FaSortUp size={12} /> : header.column.getIsSorted() === 'desc' ? <FaSortDown size={12} /> : <FaSort size={12} />}
-                        </span>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <motion.tbody
-              key={pageIndex}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id} className="border-b dark:border-gray-700">
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </motion.tbody>
-          </table>
+
+          {showErrorState && (
+            <EmptyState
+              message="Error loading users"
+              suggestion="Please try again or contact support"
+            />
+          )}
+
+          {showEmptyState && (
+            <EmptyState
+              message="No users found"
+              suggestion="Try adjusting your filters or add a new user"
+            />
+          )}
+
+          {!showEmptyState && !showErrorState && (
+            <table className="table-auto w-full text-left border border-collapse">
+              <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th
+                        key={header.id}
+                        className={`p-2 border ${header.column.columnDef.meta?.customClassName || ''
+                          }`}
+                      >
+                        <div
+                          className="flex justify-between items-center w-full cursor-pointer"
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          <span>
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </span>
+                          <span className="ml-2">
+                            {header.column.getIsSorted() === 'asc' ? (
+                              <FaSortUp size={12} />
+                            ) : header.column.getIsSorted() === 'desc' ? (
+                              <FaSortDown size={12} />
+                            ) : (
+                              <FaSort size={12} />
+                            )}
+                          </span>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+
+              <motion.tbody
+                key={pageIndex}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{
+                  duration: 0.5,
+                  ease: 'easeOut'
+                }}
+              >
+                {table.getRowModel().rows.map(row => (
+                  <tr key={row.id} className="border-b dark:border-gray-700">
+                    {row.getVisibleCells().map(cell => (
+                      <td
+                        key={cell.id}
+                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''
+                          }`}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </motion.tbody>
+            </table>
+          )}
         </div>
       </div>
 
-      {/* Pagination */}
-      <TablePaginationFooter
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        totalCount={totalCount}
-        grandTotalCount={grandTotalCount}
-        setPendingPage={setPageIndex}
-        setPageIndex={setPageIndex}
-        setPageSize={setPageSize}
-      />
+      {/* PAGINATION */}
+      {!showEmptyState && !showErrorState && totalCount > 0 && (
+        <TablePaginationFooter
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          totalCount={totalCount}
+          grandTotalCount={grandTotalCount}
+          setPageIndex={setPageIndex}
+          setPageSize={setPageSize}
+        />
+      )}
 
-      {/* User Detail Modal */}
-      <Modal isOpen={isModalOpen} onClose={closeModal} title="User Details" widthPercent={70}>
-        {detailLoading || !selectedItem ? <TableLoader loading /> : <UserDetail user={selectedItem} onUpdated={fetchData}/>}
+      {/* USER DETAIL */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title="User Details"
+        widthPercent={70}
+      >
+        {detailLoading || !selectedItem ? (
+          <TableLoader loading />
+        ) : (
+          <UserDetail user={selectedItem} onUpdated={fetchData} />
+        )}
       </Modal>
 
-      {/* Column Visibility Modal */}
+      {/* COLUMN MANAGER */}
       {showColumnModal && (
         <ColumnVisibilityManager<IUser>
           tableId="userTable"
           open={showColumnModal}
           onClose={() => setShowColumnModal(false)}
           initialColumns={allColumns}
-          onChange={setVisible} // ✅ update visible columns here
+          onChange={setVisible}
         />
       )}
 
-      {/* Filter Modal */}
-      {filterModalOpen && (
-        <FilterModal
-          tableId="userTable"
-          title="Filter Users"
-          open={filterModalOpen}
-          onClose={() => setFilterModalOpen(false)}
-          onApply={newFilters => { setFilters(newFilters); setFilterModalOpen(false) }} // ✅ apply filters
-          initialFilters={filters}
-          renderForm={(filterValues, setFilterValues, resetRef) => (
-            <UserFilterForm filterValues={filterValues} setFilterValues={setFilterValues} onResetRef={resetRef} />
-          )}
-        />
-      )}
+      {/* FILTER MODAL */}
+      <FilterModal
+        tableId="userTable"
+        title="Filter Users"
+        open={filterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        onApply={newFilters => {
+          console.log('Applying filters:', newFilters)
+          
+          // Clean the filters before setting
+          const cleanedFilters = Object.entries(newFilters).reduce((acc, [key, value]) => {
+            // Convert empty strings to null for date fields
+            if ((key === 'from' || key === 'to') && value === '') {
+              acc[key] = null
+            } else {
+              acc[key] = value
+            }
+            return acc
+          }, {} as Record<string, any>)
+          
+          // Reset to page 0 (first page) and update filters
+          setPageIndex(0)
+          setFilters(cleanedFilters)
+          setFilterModalOpen(false)
+        }}
+        initialFilters={filters}
+        renderForm={(filterValues, setFilterValues, resetRef) => (
+          <UserFilterForm
+            filterValues={filterValues}
+            setFilterValues={setFilterValues}
+            onClose={() => setFilterModalOpen(false)}
+            onResetRef={resetRef}
+          />
+        )}
+      />
 
-      {/* Add User Sheet */}
+      {/* ADD USER */}
       {showAddButton && (
         <FormHolderSheet
           open={isSheetOpen}
@@ -403,36 +653,42 @@ export default function Users() {
           title="Add New User"
           titleDivClassName="success-gradient"
         >
-          <Add fetchData={fetchData} /> {/* ✅ fetchData refresh table after adding */}
+          <Add fetchData={fetchData} />
         </FormHolderSheet>
       )}
-      {showDelete && <ConfirmDialog
-        open={dialogOpen}
-        onCancel={cancelDelete}
-        onConfirm={handleDelete}
-        title="Confirm Deletion"
-        description="Are you sure you want to delete"
-        confirmLabel={deleteLoading ? 'Deleting' : 'Delete'}
-        loading={deleteLoading}
-      />}
-       {/* Edit Modal */}  
-      {showEdit && <FormHolderSheet
-        open={isEditSheetOpen}
-        onOpenChange={closeEditSheet}
-        title="Edit User"
-        titleDivClassName="warning-gradient"
-      >
-        {userToEdit && (
-          <Edit
-            userId={userToEdit.id as string}
-            onClose={closeEditSheet}
-            fetchData={async () => {
-              //closeEditSheet()
-              fetchData()
-            }}
-          />
-        )}
-      </FormHolderSheet>}
+
+      {/* DELETE */}
+      {showDelete && (
+        <ConfirmDialog
+          open={dialogOpen}
+          onCancel={cancelDelete}
+          onConfirm={handleDelete}
+          title="Confirm Deletion"
+          description="Are you sure you want to delete"
+          confirmLabel={deleteLoading ? 'Deleting' : 'Delete'}
+          loading={deleteLoading}
+        />
+      )}
+
+      {/* EDIT */}
+      {showEdit && (
+        <FormHolderSheet
+          open={isEditSheetOpen}
+          onOpenChange={closeEditSheet}
+          title="Edit User"
+          titleDivClassName="warning-gradient"
+        >
+          {userToEdit && (
+            <Edit
+              userId={userToEdit.id as string}
+              onClose={closeEditSheet}
+              fetchData={async () => {
+                fetchData()
+              }}
+            />
+          )}
+        </FormHolderSheet>
+      )}
     </motion.div>
   )
 }

@@ -239,7 +239,6 @@ interface TablePaginationFooterProps {
   totalCount: number
   grandTotalCount?: number
   setPageIndex: (value: number) => void
-  setPendingPage: (value: number) => void
   setPageSize: (value: number) => void
   showRecordInfo?: boolean
   showPagination?: boolean
@@ -252,7 +251,6 @@ export function TablePaginationFooter({
   totalCount,
   grandTotalCount,
   setPageIndex,
-  setPendingPage,
   setPageSize,
   showRecordInfo = true,
   showPagination = true,
@@ -262,10 +260,10 @@ export function TablePaginationFooter({
   const { t } = useTranslations()
   const totalPage = Math.ceil(totalCount / pageSize)
 
-  /* ------------------ Helpers ------------------ */
+  // Don't show pagination if there's no data
+  if (totalCount === 0) return null
 
-  // 🔢 Bangla numeral support
-  
+  /* ------------------ Helpers ------------------ */
 
   // 📄 Responsive page button count
   const maxVisiblePages =
@@ -314,16 +312,16 @@ export function TablePaginationFooter({
     const handler = (e: KeyboardEvent) => {
       if (!showPagination) return
       if (e.key === "ArrowLeft" && pageIndex > 0) {
-        setPendingPage(pageIndex - 1)
+        setPageIndex(pageIndex - 1)
       }
       if (e.key === "ArrowRight" && pageIndex < totalPage - 1) {
-        setPendingPage(pageIndex + 1)
+        setPageIndex(pageIndex + 1)
       }
     }
 
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [pageIndex, totalPage, setPendingPage, showPagination])
+  }, [pageIndex, totalPage, setPageIndex, showPagination])
 
   /* ------------------ Render ------------------ */
 
@@ -337,7 +335,7 @@ export function TablePaginationFooter({
           {totalCount > 0 ? formatNumber(pageIndex * pageSize + 1, currentLang) : 0} {t("to")}{" "}
           {formatNumber(Math.min((pageIndex + 1) * pageSize, totalCount), currentLang)}{" "}
           {t("of")} {formatNumber(totalCount, currentLang)} {t("filtered results")}
-          {typeof grandTotalCount === "number" && (
+          {typeof grandTotalCount === "number" && grandTotalCount > 0 && (
             <> ({t("total")} {formatNumber(grandTotalCount, currentLang)})</>
           )}
         </span>
@@ -366,11 +364,11 @@ export function TablePaginationFooter({
         )}
 
         {/* 🔹 Pagination */}
-        {showPagination && (
+        {showPagination && totalPage > 1 && (
           <>
             <Button
               size="sm"
-              onClick={() => setPendingPage(Math.max(pageIndex - 1, 0))}
+              onClick={() => setPageIndex(pageIndex - 1)}
               disabled={pageIndex === 0}
               className="dark:bg-gray-800 dark:hover:bg-gray-700"
             >
@@ -386,11 +384,11 @@ export function TablePaginationFooter({
                   <Button
                     key={p}
                     size="sm"
-                    onClick={() => setPendingPage(p)}
+                    onClick={() => setPageIndex(p)}
                     className={`min-w-[36px] transition-all duration-200 ${
                       p === pageIndex
                         ? "bg-blue-600 text-white hover:bg-blue-600"
-                        : "bg-gray-200 text-blue-600 dark:text-blue-300 dark:hover:bg-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        : "bg-gray-200 text-blue-600 dark:text-blue-300 dark:hover:bg-gray-700 hover:bg-gray-300 dark:bg-gray-800"
                     }`}
                   >
                     {formatNumber(p + 1, currentLang)}
@@ -401,8 +399,8 @@ export function TablePaginationFooter({
 
             <Button
               size="sm"
-              onClick={() => setPendingPage(Math.min(pageIndex + 1, totalPage - 1))}
-              disabled={(pageIndex + 1) * pageSize >= totalCount}
+              onClick={() => setPageIndex(pageIndex + 1)}
+              disabled={pageIndex >= totalPage - 1}
               className="dark:bg-gray-800 dark:hover:bg-gray-700"
             >
               {t("Next")}
@@ -419,7 +417,7 @@ export function TablePaginationFooter({
                 if (e.key === "Enter") {
                   const value = Number((e.target as HTMLInputElement).value)
                   if (value >= 1 && value <= totalPage) {
-                    setPendingPage(value - 1)
+                    setPageIndex(value - 1)
                   }
                 }
               }}
@@ -440,3 +438,29 @@ export function TableLoader({ loading }: { loading: boolean }) {
     </div>
   ) : null;
 }
+
+export const EmptyState = ({ message, suggestion }: { message?: string; suggestion?: string }) => (
+  <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+    <svg
+      className="w-16 h-16 mb-4 text-gray-400"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+      />
+    </svg>
+    <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
+      {message || "No data found"}
+    </p>
+    {suggestion && (
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        {suggestion}
+      </p>
+    )}
+  </div>
+)
