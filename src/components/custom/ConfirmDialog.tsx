@@ -12,6 +12,7 @@ interface ConfirmDialogProps {
   confirmLabel?: string
   cancelLabel?: string
   loading?: boolean
+  variant?: 'destructive' | 'success'
 }
 
 const ConfirmDialog = ({
@@ -23,6 +24,7 @@ const ConfirmDialog = ({
   confirmLabel = 'Yes',
   cancelLabel = 'Cancel',
   loading = false,
+  variant = 'destructive' 
 }: ConfirmDialogProps) => {
   const { t } = useTranslations();
   return (
@@ -31,10 +33,10 @@ const ConfirmDialog = ({
         <DialogHeader>
           <DialogTitle>{t(title)}</DialogTitle>
         </DialogHeader>
-        <div className="text-gray-700 text-center sm:text-left">{t(description)}?</div>
+        <div className="text-gray-700 dark:text-gray-200 text-center sm:text-left">{t(description)}?</div>
         <DialogFooter>
           <Button variant="ghost" onClick={onCancel} disabled={loading}>{t(cancelLabel)}</Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={loading}>
+          <Button variant={variant} onClick={onConfirm} disabled={loading}>
             {t(confirmLabel)}
           </Button>
         </DialogFooter>

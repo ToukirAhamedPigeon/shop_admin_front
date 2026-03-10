@@ -15,12 +15,15 @@ interface RowActionsProps<T> {
   onDetail?: (row: T) => void
   onEdit?: (row: T) => void
   onDelete?: (row: T) => void
+  onRestore?: (row: T) => void 
   showDetail?: boolean
   showEdit?: boolean
   showDelete?: boolean
+  showRestore?: boolean
   detailPermissions?: string[]
   editPermissions?: string[]
   deletePermissions?: string[]
+  restorePermissions?: string[]
 }
 
 export function RowActions<T>({
@@ -28,12 +31,15 @@ export function RowActions<T>({
   onDetail,
   onEdit,
   onDelete,
+  onRestore,
   showDetail = true,
   showEdit = true,
   showDelete = true,
-   detailPermissions = [],
+  showRestore = true,
+  detailPermissions = [],
   editPermissions = [],
   deletePermissions = [],
+  restorePermissions = [],
 }: RowActionsProps<T>) {
   const { t } = useTranslations();
   return (
@@ -61,6 +67,17 @@ export function RowActions<T>({
           <Button size="sm" variant="destructive" onClick={() => onDelete(row)}>
             <FaTrash />
             <span className="hidden md:block">{t("Delete")}</span>
+          </Button>
+        </Can>
+      )}
+
+      {showRestore && onRestore && (
+        <Can anyOf={restorePermissions}>
+          <Button size="sm" variant="success" onClick={() => onRestore(row)}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className="hidden md:block ml-1">{t("Restore")}</span>
           </Button>
         </Can>
       )}
@@ -256,16 +273,14 @@ export function TablePaginationFooter({
   showPagination = true,
   showRowsPerPage = true,
 }: TablePaginationFooterProps) {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY - BEFORE ANY EARLY RETURNS
   const { currentLang } = useSelector((state: RootState) => state.language);
   const { t } = useTranslations()
+  
+  // Calculate total pages (this is not a hook, it's fine)
   const totalPage = Math.ceil(totalCount / pageSize)
 
-  // Don't show pagination if there's no data
-  if (totalCount === 0) return null
-
-  /* ------------------ Helpers ------------------ */
-
-  // 📄 Responsive page button count
+  // 📄 Responsive page button count (this is not a hook either)
   const maxVisiblePages =
     typeof window !== "undefined"
       ? window.innerWidth < 640
@@ -275,7 +290,7 @@ export function TablePaginationFooter({
         : 7
       : 5
 
-  // 📌 Page number generator
+  // 📌 Page number generator - THIS IS A HOOK (useMemo)
   const pageNumbers = useMemo(() => {
     const pages: (number | "...")[] = []
 
@@ -306,8 +321,7 @@ export function TablePaginationFooter({
     return pages
   }, [pageIndex, totalPage, maxVisiblePages])
 
-  /* ------------------ Keyboard Navigation ------------------ */
-
+  /* ------------------ Keyboard Navigation - THIS IS A HOOK (useEffect) ------------------ */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!showPagination) return
@@ -323,11 +337,13 @@ export function TablePaginationFooter({
     return () => window.removeEventListener("keydown", handler)
   }, [pageIndex, totalPage, setPageIndex, showPagination])
 
-  /* ------------------ Render ------------------ */
+  // NOW we can conditionally return based on data (after all hooks)
+  // Don't show pagination if there's no data
+  if (totalCount === 0) return null
 
+  /* ------------------ Render ------------------ */
   return (
     <div className="flex flex-col md:flex-row justify-between items-center mt-4 text-sm gap-2 dark:text-gray-200 transition-all duration-300">
-
       {/* 🔹 Record Info */}
       {showRecordInfo && (
         <span className="text-gray-700 dark:text-gray-200">
@@ -342,7 +358,6 @@ export function TablePaginationFooter({
       )}
 
       <div className="flex items-center gap-2 flex-wrap">
-
         {/* 🔹 Rows per page */}
         {showRowsPerPage && (
           <>

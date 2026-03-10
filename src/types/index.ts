@@ -31,6 +31,7 @@ export interface IUser {
   timezone?: string
   language?: string
   isActive: boolean
+  isDeleted: boolean
   createdAt: string
   updatedAt: string
   roles: string[]

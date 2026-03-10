@@ -48,6 +48,7 @@ import { capitalize } from '@/lib/helpers'
 import { useDeleteWithConfirm } from '@/hooks/useDeleteWithConfirm'
 import { useAppSelector } from '@/hooks/useRedux'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
+import { deleteUser, restoreUser } from './../api'
 
 /* ---------------------------------- */
 /* Columns Definition */
@@ -58,20 +59,24 @@ const getAllColumns = ({
   fetchDetail,
   handleEditClick,
   confirmDelete,
+  confirmRestore,
   authRoles,
   showDetail = true,
   showEdit = true,
-  showDelete = true
+  showDelete = true,
+  showRestore = true
 }: {
   pageIndex: number
   pageSize: number
   fetchDetail: (item: IUser) => void
   handleEditClick: (item: IUser) => void
   confirmDelete: (id: string) => void
+  confirmRestore: (id: string) => void
   authRoles: string[]
   showDetail?: boolean
   showEdit?: boolean
   showDelete?: boolean
+  showRestore?: boolean
 }): ColumnDef<IUser>[] => [
   {
     header: 'SL',
@@ -84,17 +89,23 @@ const getAllColumns = ({
   {
     header: 'Action',
     id: 'action',
-    cell: ({ row }) => (
-      <RowActions
-        row={row.original}
-        onDetail={() => fetchDetail(row.original)}
-        onEdit={() => handleEditClick(row.original)}
-        onDelete={() => confirmDelete(row.original.id)}
-        showDetail={showDetail}
-        showEdit={showEdit}
-        showDelete={showDelete && !(row.original as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')}
-      />
-    ),
+    cell: ({ row }) => {
+      const isDeleted = row.original.isDeleted;
+      
+      return (
+        <RowActions
+          row={row.original}
+          onDetail={() => fetchDetail(row.original)}
+          onEdit={!isDeleted ? () => handleEditClick(row.original) : undefined}
+          onDelete={!isDeleted ? () => confirmDelete(row.original.id) : undefined}
+          onRestore={isDeleted ? () => confirmRestore(row.original.id) : undefined}
+          showDetail={showDetail}
+          showEdit={showEdit && !isDeleted}
+          showDelete={showDelete && !isDeleted && !(row.original as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')}
+          showRestore={showRestore && isDeleted}
+        />
+      )
+    },
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
   },
   {
@@ -125,9 +136,6 @@ const getAllColumns = ({
     },
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
   },
-  /* ---------------------------------- */
-  /* QR Code Column - auto generate image */
-  /* ---------------------------------- */
   {
     header: 'QR Code',
     accessorKey: 'qrCode',
@@ -186,8 +194,34 @@ const getAllColumns = ({
         </>
       ) : '-',
   },
-  { header: 'Email Verification', accessorKey: 'emailVerifiedAt', cell: ({ getValue }) => getValue() ? <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-700 dark:text-gray-200">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-red-500 font-semibold">Not Verified</span> },
-  { header: 'Active', accessorKey: 'isActive', cell: ({ getValue }) => getValue() ? 'Yes' : <span className="text-red-500">No</span> },
+  { 
+    header: 'Email Verification', 
+    accessorKey: 'emailVerifiedAt', 
+    cell: ({ getValue }) => getValue() ? <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-700 dark:text-gray-200">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-red-500 font-semibold">Not Verified</span> 
+  },
+  { 
+    header: 'Active', 
+    accessorKey: 'isActive', 
+    cell: ({ getValue }) => getValue() ? 'Yes' : <span className="text-red-500">No</span> 
+  },
+  { 
+    header: 'Deleted', 
+    accessorKey: 'isDeleted', 
+    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : 'No',
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' }
+  },
+  { 
+    header: 'Deleted At', 
+    accessorKey: 'deletedAt', 
+    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-',
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' }
+  },
+  { 
+    header: 'Deleted By', 
+    accessorKey: 'deletedByName', 
+    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span>,
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' }
+  },
   { header: 'Roles', accessorKey: 'roles', cell: ({ getValue }) => (getValue() as string[] | undefined)?.join(', ') || <span className="text-gray-400">-</span> },
   { header: 'Permissions', accessorKey: 'permissions', cell: ({ getValue }) => { const perms = getValue() as string[] | undefined; return perms?.length ? <ExpandableText text={perms.join(', ')} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span> }, meta: { customClassName: 'text-left min-w-[300px]' } },
   { header: 'Address', accessorKey: 'address', cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, meta: { customClassName: 'text-left min-w-[300px]' } },
@@ -226,9 +260,15 @@ export default function Users() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showAddButton, setShowAddButton] = useState(false)
 
+  // Restore dialog state
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
+  const [restoreId, setRestoreId] = useState<string | null>(null)
+  const [restoreLoading, setRestoreLoading] = useState(false)
+
   const showDetail = true
   const showEdit = can(['read-admin-dashboard'])
   const showDelete = can(['read-admin-dashboard'])
+  const showRestore = can(['read-admin-dashboard'])
 
   const {
     isOpen: isEditSheetOpen,
@@ -238,7 +278,6 @@ export default function Users() {
   } = useEditSheet<IUser>()
 
   /* ---------------- Stable Fetcher ---------------- */
-
   const stableFetcher = useCallback(
     async ({
       q = '',
@@ -257,17 +296,13 @@ export default function Users() {
       total: number
       grandTotalCount: number
     }> => {
-      // Clean filters to remove empty arrays and convert empty strings to null
       const cleanFilters = Object.entries(filters).reduce((acc, [key, value]) => {
-        // Convert empty strings to null for date fields
         if ((key === 'from' || key === 'to') && value === '') {
           acc[key] = null
         }
-        // Skip empty arrays
         else if (Array.isArray(value) && value.length === 0) {
           // Skip
         }
-        // Keep other values
         else {
           acc[key] = value
         }
@@ -293,7 +328,6 @@ export default function Users() {
   )
 
   /* ---------------- Table Hook ---------------- */
-
   const {
     data,
     totalCount,
@@ -315,7 +349,7 @@ export default function Users() {
   })
 
   /* ---------------- Delete Hook ---------------- */
-
+  // Moved AFTER fetchData is defined
   const {
     dialogOpen,
     confirmDelete,
@@ -323,12 +357,41 @@ export default function Users() {
     handleDelete,
     deleteLoading
   } = useDeleteWithConfirm({
-    endpoint: '/users',
-    onSuccess: fetchData
+    deleteFunction: async (id: string) => deleteUser(id, true),
+    onSuccess: fetchData,
+    successMessage: 'User deleted successfully',
+    errorMessage: 'Failed to delete user',
+    inactiveMessage: 'User cannot be deleted'
   })
 
-  /* ---------------- Stable Columns ---------------- */
+  /* ---------------- Restore Handler ---------------- */
+  const confirmRestore = useCallback((id: string) => {
+    setRestoreId(id)
+    setRestoreDialogOpen(true)
+  }, [])
 
+  const cancelRestore = useCallback(() => {
+    setRestoreDialogOpen(false)
+    setRestoreId(null)
+  }, [])
+
+  const handleRestore = useCallback(async () => {
+    if (!restoreId) return
+    
+    setRestoreLoading(true)
+    try {
+      await restoreUser(restoreId)
+      setRestoreDialogOpen(false)
+      setRestoreId(null)
+      fetchData() // Refresh the data
+    } catch (error) {
+      console.error('Failed to restore user:', error)
+    } finally {
+      setRestoreLoading(false)
+    }
+  }, [restoreId, fetchData])
+
+  /* ---------------- Stable Columns ---------------- */
   const allColumnsRef = useRef<ColumnDef<IUser>[]>([])
 
   if (!allColumnsRef.current.length) {
@@ -339,22 +402,22 @@ export default function Users() {
       handleEditClick,
       authRoles: authroles,
       confirmDelete,
+      confirmRestore,
       showDetail,
       showEdit,
-      showDelete
+      showDelete,
+      showRestore
     })
   }
 
   const allColumns = allColumnsRef.current
 
   /* ---------------- Add Button Permission ---------------- */
-
   useEffect(() => {
     setShowAddButton(can(['read-admin-dashboard']))
   }, [])
 
   /* ---------------- Load Column Settings ---------------- */
-
   useEffect(() => {
     if (!userId) return
 
@@ -384,7 +447,6 @@ export default function Users() {
   }, [userId, allColumns])
 
   /* ---------------- Initial Fetch ---------------- */
-
   useEffect(() => {
     if (!hasFetchedRef.current) {
       fetchData()
@@ -393,24 +455,19 @@ export default function Users() {
   }, [fetchData])
 
   /* ---------------- Filters Fetch ---------------- */
-
   useEffect(() => {
-    // Skip initial fetch
     if (!hasFetchedRef.current) return
     
-    // Skip if filters haven't changed
     if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
       return
     }
 
-    console.log('Filters changed, fetching data...', filters)
     fetchData()
     prevFiltersRef.current = filters
     
   }, [filters, fetchData])
 
   /* ---------------- Visible Column IDs ---------------- */
-
   const visibleIds = useMemo(
     () => visible.map(c => c.id ?? ((c as any).accessorKey ?? '')),
     [visible]
@@ -425,7 +482,6 @@ export default function Users() {
   )
 
   /* ---------------- Table Instance ---------------- */
-
   const table = useReactTable({
     data,
     columns: visible,
@@ -446,12 +502,10 @@ export default function Users() {
   })
 
   /* ---------------- Empty State ---------------- */
-
   const showEmptyState = !loading && !error && data.length === 0
   const showErrorState = !loading && error
 
   /* ---------------- UI ---------------- */
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -616,11 +670,7 @@ export default function Users() {
         open={filterModalOpen}
         onClose={() => setFilterModalOpen(false)}
         onApply={newFilters => {
-          console.log('Applying filters:', newFilters)
-          
-          // Clean the filters before setting
           const cleanedFilters = Object.entries(newFilters).reduce((acc, [key, value]) => {
-            // Convert empty strings to null for date fields
             if ((key === 'from' || key === 'to') && value === '') {
               acc[key] = null
             } else {
@@ -629,7 +679,6 @@ export default function Users() {
             return acc
           }, {} as Record<string, any>)
           
-          // Reset to page 0 (first page) and update filters
           setPageIndex(0)
           setFilters(cleanedFilters)
           setFilterModalOpen(false)
@@ -657,20 +706,34 @@ export default function Users() {
         </FormHolderSheet>
       )}
 
-      {/* DELETE */}
+      {/* DELETE CONFIRMATION */}
       {showDelete && (
         <ConfirmDialog
           open={dialogOpen}
           onCancel={cancelDelete}
           onConfirm={handleDelete}
           title="Confirm Deletion"
-          description="Are you sure you want to delete"
-          confirmLabel={deleteLoading ? 'Deleting' : 'Delete'}
+          description="Are you sure you want to delete this user"
+          confirmLabel={deleteLoading ? 'Deleting...' : 'Delete'}
           loading={deleteLoading}
         />
       )}
 
-      {/* EDIT */}
+      {/* RESTORE CONFIRMATION */}
+      {showRestore && (
+        <ConfirmDialog
+          open={restoreDialogOpen}
+          onCancel={cancelRestore}
+          onConfirm={handleRestore}
+          title="Confirm Restore"
+          description="Are you sure you want to restore this user"
+          confirmLabel={restoreLoading ? 'Restoring...' : 'Restore'}
+          loading={restoreLoading}
+          variant='success'
+        />
+      )}
+
+      {/* EDIT USER */}
       {showEdit && (
         <FormHolderSheet
           open={isEditSheetOpen}
@@ -682,9 +745,7 @@ export default function Users() {
             <Edit
               userId={userToEdit.id as string}
               onClose={closeEditSheet}
-              fetchData={async () => {
-                fetchData()
-              }}
+              fetchData={fetchData}
             />
           )}
         </FormHolderSheet>

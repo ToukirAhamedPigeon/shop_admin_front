@@ -54,7 +54,7 @@ export const validateChangeToken = async (token: string) => {
 // Delete user
 export const deleteUser = async (id: string, permanent: boolean = false) => {
   const response = await api.delete(`/users/${id}?permanent=${permanent}`);
-  return response.data;
+  return response;
 };
 
 // Restore user

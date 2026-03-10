@@ -20,6 +20,7 @@ import {
   TablePaginationFooter,
   RowActions,
   IndexCell,
+  EmptyState,
 } from '@/components/custom/Table'
 import { getCustomDateTime } from '@/lib/formatDate'
 import api from '@/lib/axios'
@@ -49,57 +50,119 @@ const getAllColumns = ({
   fetchDetail: (itemOrId: IUserLog | string) => void
   showDetail?: boolean
 }): ColumnDef<IUserLog>[] => [
-  { header: 'SL', id: 'sl', cell: ({ row }) => <IndexCell rowIndex={row.index} pageIndex={pageIndex} pageSize={pageSize} />, meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'Action', id: 'action', cell: ({ row }) => <RowActions
-    row={row.original}
-    onDetail={() => fetchDetail(row.original)}
-    showDetail={showDetail}
-    // detailPermissions={["read-user"]}
-    // editPermissions={["update-user"]}
-    // deletePermissions={["delete-user"]}
-      />,
-    meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'Detail', id: 'detail', accessorKey: 'detail', meta: { customClassName: 'text-center min-w-[200px] ', tdClassName: 'text-center min-w-[200px] ' } },
-  { header: 'Collection Name', id: 'modelName', accessorKey: 'modelName', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'Action Type', id: 'actionType', accessorKey: 'actionType', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'Object ID', id: 'modelId', accessorKey: 'modelId', meta: { customClassName: 'text-center min-w-[150px] ', tdClassName: 'text-center min-w-[150px] ' } },
-  { header: 'Created By', id: 'createdByName', accessorKey: 'createdByName', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'Created At', accessorKey: 'createdAt', id: 'createdAt', cell: ({ getValue }) => getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss'), meta: { customClassName: 'text-center w-[200px]', tdClassName: 'text-center w-[200px]' } },
-  { header: 'IP Address', id: 'ipAddress', accessorKey: 'ipAddress', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'Browser', id: 'browser', accessorKey: 'browser', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'Device', id: 'device', accessorKey: 'device', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'OS', id: 'operatingSystem', accessorKey: 'operatingSystem', meta: { customClassName: 'text-center', tdClassName: 'text-center' } },
-  { header: 'User Agent', id: 'userAgent', accessorKey: 'userAgent', meta: { customClassName: 'text-center min-w-[300px] ', tdClassName: 'text-center min-w-[300px] ' } },
+  { 
+    header: 'SL', 
+    id: 'sl', 
+    cell: ({ row }) => <IndexCell rowIndex={row.index} pageIndex={pageIndex} pageSize={pageSize} />, 
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
+  },
+  { 
+    header: 'Action', 
+    id: 'action', 
+    cell: ({ row }) => <RowActions
+      row={row.original}
+      onDetail={() => fetchDetail(row.original)}
+      showDetail={showDetail}
+    />,
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
+  },
+  { 
+    header: 'Detail', 
+    id: 'detail', 
+    accessorKey: 'detail', 
+    meta: { customClassName: 'text-center min-w-[200px]', tdClassName: 'text-center min-w-[200px]' } 
+  },
+  { 
+    header: 'Collection Name', 
+    id: 'modelName', 
+    accessorKey: 'modelName', 
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
+  },
+  { 
+    header: 'Action Type', 
+    id: 'actionType', 
+    accessorKey: 'actionType', 
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
+  },
+  { 
+    header: 'Object ID', 
+    id: 'modelId', 
+    accessorKey: 'modelId', 
+    meta: { customClassName: 'text-center min-w-[150px]', tdClassName: 'text-center min-w-[150px]' } 
+  },
+  { 
+    header: 'Created By', 
+    id: 'createdByName', 
+    accessorKey: 'createdByName', 
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
+  },
+  { 
+    header: 'Created At', 
+    accessorKey: 'createdAt', 
+    id: 'createdAt', 
+    cell: ({ getValue }) => getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss'), 
+    meta: { customClassName: 'text-center w-[200px]', tdClassName: 'text-center w-[200px]' } 
+  },
+  { 
+    header: 'IP Address', 
+    id: 'ipAddress', 
+    accessorKey: 'ipAddress', 
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
+  },
+  { 
+    header: 'Browser', 
+    id: 'browser', 
+    accessorKey: 'browser', 
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
+  },
+  { 
+    header: 'Device', 
+    id: 'device', 
+    accessorKey: 'device', 
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
+  },
+  { 
+    header: 'OS', 
+    id: 'operatingSystem', 
+    accessorKey: 'operatingSystem', 
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
+  },
+  { 
+    header: 'User Agent', 
+    id: 'userAgent', 
+    accessorKey: 'userAgent', 
+    meta: { customClassName: 'text-center min-w-[300px]', tdClassName: 'text-center min-w-[300px]' } 
+  },
   {
-  header: "Changes",
-  id: "changes",
-  accessorKey: "changes",
-  cell: ({ getValue }) => {
-    const raw = getValue();
+    header: "Changes",
+    id: "changes",
+    accessorKey: "changes",
+    cell: ({ getValue }) => {
+      const raw = getValue();
 
-    if (!raw) {
-      return <span className="text-gray-400">-</span>;
-    }
+      if (!raw) {
+        return <span className="text-gray-400">-</span>;
+      }
 
-    const parsed = JSON.stringify(
-      parseChanges(raw as string),
-      null,
-      2
-    );
+      const parsed = JSON.stringify(
+        parseChanges(raw as string),
+        null,
+        2
+      );
 
-    return (
-      <ExpandableText
-        text={parsed}
-        wordLimit={10}
-        className="max-w-[300px] whitespace-pre-wrap break-all"
-      />
-    );
-  },
-  meta: {
-    customClassName: "text-left min-w-[300px]",
-    tdClassName: "align-top",
-  },
-}
+      return (
+        <ExpandableText
+          text={parsed}
+          wordLimit={10}
+          className="max-w-[300px] whitespace-pre-wrap break-all"
+        />
+      );
+    },
+    meta: {
+      customClassName: "text-left min-w-[300px]",
+      tdClassName: "align-top",
+    },
+  }
 ]
 
 // Initial filter state
@@ -116,6 +179,14 @@ export default function LogListTable() {
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [showColumnModal, setShowColumnModal] = useState(false)
   const [visible, setVisible] = useState<ColumnDef<IUserLog>[]>([])
+
+  // Refs to track state changes and prevent infinite loops
+  const hasFetchedRef = useRef(false)
+  const prevFiltersRef = useRef<LogFilters>(initialFilters)
+  const prevPageIndexRef = useRef(0)
+  const prevPageSizeRef = useRef(10)
+  const prevGlobalFilterRef = useRef('')
+  const prevSortingRef = useRef<SortingState>([])
 
   const showDetail = true
   const { isModalOpen, selectedItem, fetchDetail, closeModal, detailLoading } = useDetailModal<IUserLog>('/logs')
@@ -137,15 +208,15 @@ export default function LogListTable() {
           sortOrder: sortOrder || 'desc',
           ...(filters.createdAtFrom && { createdAtFrom: filters.createdAtFrom }),
           ...(filters.createdAtTo && { createdAtTo: filters.createdAtTo }),
-          ...(filters.collectionName && { collectionName: filters.collectionName }),
-          ...(filters.actionType && { actionType: filters.actionType }),
-          ...(filters.createdBy.length > 0 && { createdBy: filters.createdBy }),
+          ...(filters.collectionName?.length && { collectionName: filters.collectionName }),
+          ...(filters.actionType?.length && { actionType: filters.actionType }),
+          ...(filters.createdBy?.length && { createdBy: filters.createdBy }),
         },
         { withCredentials: true }
       )
       return { data: res.data.logs, total: res.data.totalCount, grandTotalCount: res.data.grandTotalCount }
     },
-    [filters] // only changes when filters change
+    [filters]
   )
 
   const {
@@ -153,6 +224,7 @@ export default function LogListTable() {
     totalCount,
     grandTotalCount,
     loading,
+    error,
     globalFilter,
     setGlobalFilter,
     sorting,
@@ -168,29 +240,39 @@ export default function LogListTable() {
     defaultSort: 'createdAt',
   })
 
-  const allColumns = useMemo(
-    () =>
-      getAllColumns({
-        pageIndex,
-        pageSize,
-        fetchDetail: (itemOrId: IUserLog | string) => fetchDetailRef.current(itemOrId),
-        showDetail,
-      }),
-    [pageIndex, pageSize, showDetail]
-  )
+  // Stabilize allColumns with useRef to prevent unnecessary recalculations
+  const allColumnsRef = useRef<ColumnDef<IUserLog>[]>([])
+
+  if (!allColumnsRef.current.length) {
+    allColumnsRef.current = getAllColumns({
+      pageIndex,
+      pageSize,
+      fetchDetail: (itemOrId: IUserLog | string) => fetchDetailRef.current(itemOrId),
+      showDetail,
+    })
+  }
+
+  const allColumns = allColumnsRef.current
 
   // Refresh columns only on userId
   useEffect(() => {
     if (!userId) return
+    
     let mounted = true
-    ;(async () => {
+    
+    const loadColumnSettings = async () => {
       try {
         const { visibleColumns } = await refreshColumnSettings<IUserLog>('logTable', userId, allColumns)
-        if (mounted) setVisible(visibleColumns.length ? visibleColumns : allColumns)
+        if (mounted) {
+          setVisible(visibleColumns.length ? visibleColumns : allColumns)
+        }
       } catch (err) {
-        console.error(err)
+        console.error('Error loading column settings:', err)
       }
-    })()
+    }
+
+    loadColumnSettings()
+
     return () => {
       mounted = false
     }
@@ -201,26 +283,70 @@ export default function LogListTable() {
     setPageIndex(0)
   }, [filters, setPageIndex])
 
-  // Fetch table data whenever filters, pagination, sorting, or globalFilter change
+  // Main fetch effect with change detection to prevent infinite loops
   useEffect(() => {
-    const controller = new AbortController()
-    fetchData().catch(err => {
-      if (err instanceof Error && err.name === 'AbortError') return
-      console.error(err)
-    })
-    localStorage.setItem('logFilters', JSON.stringify(filters))
-    return () => controller.abort()
-  }, [fetchData]) // ✅ stable, depends only on stable fetchData
+    // Skip if no userId
+    if (!userId) return
 
-  const visibleIds = visible.map(col => col.id ?? ((col as any).accessorKey ?? ''))
-  const isFilterActive = Object.entries(filters).some(([_, value]) =>
-    Array.isArray(value) ? value.length > 0 : value !== ''
+    const shouldFetch = () => {
+      // Initial fetch
+      if (!hasFetchedRef.current) return true
+      
+      // Check if any relevant state has changed
+      if (JSON.stringify(prevFiltersRef.current) !== JSON.stringify(filters)) return true
+      if (prevPageIndexRef.current !== pageIndex) return true
+      if (prevPageSizeRef.current !== pageSize) return true
+      if (prevGlobalFilterRef.current !== globalFilter) return true
+      if (JSON.stringify(prevSortingRef.current) !== JSON.stringify(sorting)) return true
+      
+      return false
+    }
+
+    if (shouldFetch()) {
+      const controller = new AbortController()
+      
+      fetchData().catch(err => {
+        if (err instanceof Error && err.name === 'AbortError') return
+        console.error('Error fetching data:', err)
+      })
+      
+      // Update refs after fetch
+      hasFetchedRef.current = true
+      prevFiltersRef.current = filters
+      prevPageIndexRef.current = pageIndex
+      prevPageSizeRef.current = pageSize
+      prevGlobalFilterRef.current = globalFilter
+      prevSortingRef.current = sorting
+      
+      // Save filters to localStorage
+      localStorage.setItem('logFilters', JSON.stringify(filters))
+      
+      return () => controller.abort()
+    }
+  }, [filters, pageIndex, pageSize, globalFilter, sorting, fetchData, userId])
+
+  const visibleIds = useMemo(
+    () => visible.map(col => col.id ?? ((col as any).accessorKey ?? '')),
+    [visible]
   )
+
+  const isFilterActive = useMemo(
+    () => Object.entries(filters).some(([_, value]) =>
+      Array.isArray(value) ? value.length > 0 : Boolean(value)
+    ),
+    [filters]
+  )
+
+  const showEmptyState = !loading && !error && data.length === 0
+  const showErrorState = !loading && error
 
   const table = useReactTable({
     data,
     columns: visible,
-    state: { sorting, pagination: { pageIndex, pageSize } },
+    state: { 
+      sorting, 
+      pagination: { pageIndex, pageSize } 
+    },
     onSortingChange: setSorting as OnChangeFn<SortingState>,
     manualPagination: true,
     manualSorting: true,
@@ -229,6 +355,13 @@ export default function LogListTable() {
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   })
+
+  const handleApplyFilters = useCallback((newFilters: LogFilters) => {
+    // Reset to first page when applying new filters
+    setPageIndex(0)
+    setFilters(newFilters)
+    setFilterModalOpen(false)
+  }, [setPageIndex])
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
@@ -258,65 +391,83 @@ export default function LogListTable() {
                 <TableLoader loading />
               </div>
             )}
-            <table className="table-auto w-full text-left border border-collapse">
-              <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id} className={`p-2 border ${header.column.columnDef.meta?.customClassName || ''}`}>
-                        <div
-                          className="flex justify-between items-center w-full cursor-pointer"
-                          onClick={header.column.getToggleSortingHandler()}
+
+            {showErrorState && (
+              <EmptyState
+                message="Error loading logs"
+                suggestion="Please try again or contact support"
+              />
+            )}
+
+            {showEmptyState && (
+              <EmptyState
+                message="No logs found"
+                suggestion="Try adjusting your filters"
+              />
+            )}
+
+            {!showEmptyState && !showErrorState && (
+              <table className="table-auto w-full text-left border border-collapse">
+                <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+                  {table.getHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map(header => (
+                        <th key={header.id} className={`p-2 border ${header.column.columnDef.meta?.customClassName || ''}`}>
+                          <div
+                            className="flex justify-between items-center w-full cursor-pointer"
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                            <span className="ml-2">
+                              {header.column.getIsSorted() === 'asc' ? (
+                                <FaSortUp size={12} />
+                              ) : header.column.getIsSorted() === 'desc' ? (
+                                <FaSortDown size={12} />
+                              ) : (
+                                <FaSort size={12} />
+                              )}
+                            </span>
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <motion.tbody
+                  key={pageIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                >
+                  {table.getRowModel().rows.map(row => (
+                    <tr key={row.id} className="border-b dark:border-gray-700">
+                      {row.getVisibleCells().map(cell => (
+                        <td
+                          key={cell.id}
+                          className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
                         >
-                          <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                          <span className="ml-2">
-                            {header.column.getIsSorted() === 'asc' ? (
-                              <FaSortUp size={12} />
-                            ) : header.column.getIsSorted() === 'desc' ? (
-                              <FaSortDown size={12} />
-                            ) : (
-                              <FaSort size={12} />
-                            )}
-                          </span>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <motion.tbody
-                key={pageIndex} // 🔥 forces animation on page change
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              >
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="border-b dark:border-gray-700">
-                    {row.getVisibleCells().map(cell => (
-                      <td
-                        key={cell.id}
-                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </motion.tbody>
-            </table>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </motion.tbody>
+              </table>
+            )}
           </div>
         </div>
 
-        <TablePaginationFooter
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          grandTotalCount={grandTotalCount}
-          setPendingPage={setPageIndex}
-          setPageIndex={setPageIndex}
-          setPageSize={setPageSize}
-        />
+        {!showEmptyState && !showErrorState && totalCount > 0 && (
+          <TablePaginationFooter
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            grandTotalCount={grandTotalCount}
+            setPageIndex={setPageIndex}
+            setPageSize={setPageSize}
+          />
+        )}
       </div>
 
       {showDetail && (
@@ -359,13 +510,15 @@ export default function LogListTable() {
         title="Filter Logs"
         open={filterModalOpen}
         onClose={() => setFilterModalOpen(false)}
-        onApply={newFilters => {
-          setFilters(newFilters)
-          setFilterModalOpen(false)
-        }}
+        onApply={handleApplyFilters}
         initialFilters={filters}
         renderForm={(filterValues, setFilterValues, resetRef) => (
-          <LogFilterForm filterValues={filterValues} setFilterValues={setFilterValues} onClose={() => setFilterModalOpen(false)} onResetRef={resetRef} />
+          <LogFilterForm 
+            filterValues={filterValues} 
+            setFilterValues={setFilterValues} 
+            onClose={() => setFilterModalOpen(false)} 
+            onResetRef={resetRef} 
+          />
         )}
       />
     </motion.div>
