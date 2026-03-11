@@ -149,6 +149,16 @@ interface TableHeaderActionsProps {
   showPrintButton?: boolean
   showExportButton?: boolean
   showColumnSettingsButton?: boolean
+  trashButton?: {
+    onClick: () => void
+    label?: string
+    show?: boolean
+  }
+  storeButton?: {  
+    onClick: () => void
+    label?: string
+    show?: boolean
+  }
 }
 
 export function TableHeaderActions({
@@ -167,6 +177,8 @@ export function TableHeaderActions({
   showPrintButton = true,
   showExportButton = true,
   showColumnSettingsButton = true,
+  trashButton,
+  storeButton,
 }: TableHeaderActionsProps) {
   const { t } = useTranslations();
   return (
@@ -192,6 +204,7 @@ export function TableHeaderActions({
           </Button>
         )}
 
+        
         {showFilterButton && onFilter && (
           <Button
             onClick={onFilter}
@@ -242,6 +255,35 @@ export function TableHeaderActions({
           >
             <FaFileExcel />
             <span className="hidden lg:block ml-1">{t('Excel')}</span>
+          </Button>
+        )}
+        {/* Trash Button - shown when not in trash view */}
+        {trashButton?.show && trashButton.onClick && (
+          <Button
+            onClick={trashButton.onClick}
+            aria-label="View deleted items"
+            variant="destructive"
+            className="flex items-center whitespace-nowrap bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-600"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span className="hidden sm:inline">{trashButton.label || t('Trash')}</span>
+          </Button>
+        )}
+
+        {/* Store Button - shown when in trash view - updated from Active */}
+        {storeButton?.show && storeButton.onClick && (
+          <Button
+            onClick={storeButton.onClick}
+            aria-label="View active items"
+            variant="success"
+            className="flex items-center whitespace-nowrap bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span className="hidden sm:inline">{storeButton.label || t('Store')}</span>
           </Button>
         )}
       </div>
@@ -479,3 +521,56 @@ export const EmptyState = ({ message, suggestion }: { message?: string; suggesti
     )}
   </div>
 )
+
+// components/custom/TrashViewIndicator.tsx
+interface ViewIndicatorConfig {
+  type: 'trash' | 'store'
+  message: string
+}
+
+// components/custom/TrashViewIndicator.tsx
+interface TrashViewIndicatorProps {
+  type: 'trash' | 'store'
+  className?: string
+}
+
+export function TrashViewIndicator({ 
+  type,
+  className = ''
+}: TrashViewIndicatorProps) {
+  const isTrash = type === 'trash'
+  
+  const config = {
+    trash: {
+      bg: 'bg-orange-100 dark:bg-orange-900/30',
+      text: 'text-orange-800 dark:text-orange-200',
+      border: 'border-orange-300 dark:border-orange-700',
+      label: 'Trash View',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      )
+    },
+    store: {
+      bg: 'bg-blue-100 dark:bg-blue-900/30',
+      text: 'text-blue-800 dark:text-blue-200',
+      border: 'border-blue-300 dark:border-blue-700',
+      label: 'Store View',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+      )
+    }
+  }
+
+  const style = isTrash ? config.trash : config.store
+
+  return (
+    <div className={`px-2 py-1 ${style.bg} border ${style.border} rounded-md ${style.text} inline-flex items-center text-xs font-medium ${className}`}>
+      {style.icon}
+      <span className="ml-1">{style.label}</span>
+    </div>
+  )
+}

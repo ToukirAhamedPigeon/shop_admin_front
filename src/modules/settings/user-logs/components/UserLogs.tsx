@@ -417,7 +417,7 @@ export default function LogListTable() {
                             className="flex justify-between items-center w-full cursor-pointer"
                             onClick={header.column.getToggleSortingHandler()}
                           >
-                            <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                            <span className="flex-1 text-center">{flexRender(header.column.columnDef.header, header.getContext())}</span>
                             <span className="ml-2">
                               {header.column.getIsSorted() === 'asc' ? (
                                 <FaSortUp size={12} />

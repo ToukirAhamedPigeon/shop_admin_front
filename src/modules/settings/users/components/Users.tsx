@@ -22,6 +22,7 @@ import {
   RowActions,
   IndexCell,
   EmptyState,
+  TrashViewIndicator 
 } from '@/components/custom/Table'
 import Modal from '@/components/custom/Modal'
 import { ColumnVisibilityManager } from '@/components/custom/ColumnVisibilityManager'
@@ -284,13 +285,15 @@ export default function Users() {
       page,
       limit,
       sortBy = 'createdAt',
-      sortOrder = 'asc'
+      sortOrder = 'asc',
+      showTrash = false
     }: {
       q?: string
       page: number
       limit: number
       sortBy?: string
       sortOrder?: string
+      showTrash?: boolean
     }): Promise<{
       data: IUser[]
       total: number
@@ -309,13 +312,19 @@ export default function Users() {
         return acc
       }, {} as Record<string, any>)
 
+      const finalFilters = {
+        ...cleanFilters,
+        isDeletedStr: showTrash ? 'true' : 'false'
+      }
+
+
       const res = await api.post('/users', {
         q,
         page,
         limit,
         sortBy,
         sortOrder,
-        ...cleanFilters
+        ...finalFilters
       })
 
       return {
@@ -342,10 +351,15 @@ export default function Users() {
     setPageSize,
     fetchData,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    showTrash,
+    handleTrashClick,
+    handleStoreClick,
+    viewIndicator
   } = useTable<IUser>({
     fetcher: stableFetcher,
-    defaultSort: 'createdAt'
+    defaultSort: 'createdAt',
+    enableTrashView: true
   })
 
   /* ---------------- Delete Hook ---------------- */
@@ -512,11 +526,28 @@ export default function Users() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      <div className="flex justify-start mb-2">
+        {viewIndicator && <TrashViewIndicator type={viewIndicator.type} />}
+      </div>
       <TableHeaderActions
         searchValue={globalFilter}
         onSearchChange={setGlobalFilter}
         onAddNew={() => setIsSheetOpen(true)}
         showAddButton={showAddButton}
+        trashButton={
+        !showTrash ? {
+          onClick: handleTrashClick,
+          label: 'Trash',
+          show: true
+        } : undefined
+      }
+      storeButton={
+        showTrash ? {
+          onClick: handleStoreClick,
+          label: 'Store',
+          show: true
+        } : undefined
+      }
         onColumnSettings={() => setShowColumnModal(true)}
         onPrint={() => printTableById('printable-user-table', 'Users')}
         onExport={() =>
@@ -530,7 +561,6 @@ export default function Users() {
         onFilter={() => setFilterModalOpen(true)}
         isFilterActive={isFilterActive}
       />
-
       {/* TABLE */}
       <div
         className="relative rounded-sm shadow overflow-hidden bg-white dark:bg-gray-800"
@@ -565,14 +595,13 @@ export default function Users() {
                     {headerGroup.headers.map(header => (
                       <th
                         key={header.id}
-                        className={`p-2 border ${header.column.columnDef.meta?.customClassName || ''
-                          }`}
+                        className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
                       >
                         <div
                           className="flex justify-between items-center w-full cursor-pointer"
                           onClick={header.column.getToggleSortingHandler()}
                         >
-                          <span>
+                          <span className="flex-1 text-center">
                             {flexRender(
                               header.column.columnDef.header,
                               header.getContext()

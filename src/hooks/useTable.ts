@@ -1,10 +1,24 @@
 import { useState, useCallback, useEffect } from 'react'
 import type { ColumnDef, SortingState, OnChangeFn } from '@tanstack/react-table'
 
+// Define the view indicator type
+type ViewIndicatorType = 'trash' | 'store'
+
+interface ViewIndicatorConfig {
+  show: boolean
+  type: ViewIndicatorType
+  message: string
+  iconType: ViewIndicatorType
+  bgColor: string
+  borderColor: string
+  textColor: string
+}
+
 export function useTable<T>({
   fetcher,
   initialColumns = [],
   defaultSort = 'createdAt',
+  enableTrashView = false,
 }: {
   fetcher: (params: {
     q: string
@@ -12,9 +26,11 @@ export function useTable<T>({
     limit: number
     sortBy: string
     sortOrder: string
+    showTrash?: boolean
   }) => Promise<{ data: T[]; total: number; grandTotalCount: number }>
   initialColumns?: ColumnDef<T, any>[]
   defaultSort?: string
+  enableTrashView?: boolean
 }) {
   const [data, setData] = useState<T[]>([])
   const [loading, setLoading] = useState(false)
@@ -26,6 +42,7 @@ export function useTable<T>({
   const [sorting, setSorting] = useState<SortingState>([])
   const [pendingPage, setPendingPage] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showTrash, setShowTrash] = useState(false)
 
   const fetchData = useCallback(async (targetPage?: number) => {
     setLoading(true)
@@ -34,7 +51,6 @@ export function useTable<T>({
     const sortBy = sorting.length ? sorting[0].id : defaultSort
     const sortOrder = sorting.length && !sorting[0].desc ? 'asc' : 'desc'
     
-    // Use target page if provided, otherwise use current pageIndex
     const pageToFetch = targetPage !== undefined ? targetPage + 1 : pageIndex + 1
 
     try {
@@ -44,13 +60,13 @@ export function useTable<T>({
         limit: pageSize,
         sortBy,
         sortOrder,
+        ...(enableTrashView && { showTrash }),
       })
       
       setData(res.data)
       setTotalCount(res.total)
       setGrandTotalCount(res.grandTotalCount)
       
-      // Update page index after successful fetch if target page was provided
       if (targetPage !== undefined) {
         setPageIndex(targetPage)
         setPendingPage(null)
@@ -61,19 +77,17 @@ export function useTable<T>({
     } finally {
       setLoading(false)
     }
-  }, [fetcher, globalFilter, pageIndex, pageSize, sorting, defaultSort])
+  }, [fetcher, globalFilter, pageIndex, pageSize, sorting, defaultSort, enableTrashView, showTrash])
 
-  // Handle pending page changes
   useEffect(() => {
     if (pendingPage !== null && pendingPage !== pageIndex) {
       fetchData(pendingPage)
     }
   }, [pendingPage, pageIndex, fetchData])
 
-  // Auto-fetch on mount and when dependencies change
   useEffect(() => {
     fetchData()
-  }, [globalFilter, pageSize, sorting, defaultSort]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [globalFilter, pageSize, sorting, defaultSort, showTrash])
 
   const handlePageChange = useCallback((newPage: number) => {
     setPendingPage(newPage)
@@ -81,9 +95,35 @@ export function useTable<T>({
 
   const handlePageSizeChange = useCallback((newSize: number) => {
     setPageSize(newSize)
-    setPageIndex(0) // Reset to first page when changing page size
+    setPageIndex(0)
     setPendingPage(0)
   }, [])
+
+  const handleTrashClick = useCallback(() => {
+    setShowTrash(true)
+    setPageIndex(0)
+  }, [])
+
+  const handleStoreClick = useCallback(() => {
+    setShowTrash(false)
+    setPageIndex(0)
+  }, [])
+
+  const toggleTrashView = useCallback(() => {
+    setShowTrash(prev => !prev)
+    setPageIndex(0)
+  }, [])
+
+  // Return properly typed view indicator
+  const viewIndicator: ViewIndicatorConfig | null = enableTrashView ? {
+    show: true,
+    type: showTrash ? 'trash' : 'store',
+    message: showTrash ? 'Showing deleted records' : 'Showing store records',
+    iconType: showTrash ? 'trash' : 'store',
+    bgColor: showTrash ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-blue-100 dark:bg-blue-900/30',
+    borderColor: showTrash ? 'border-orange-300 dark:border-orange-700' : 'border-blue-300 dark:border-blue-700',
+    textColor: showTrash ? 'text-orange-800 dark:text-orange-200' : 'text-blue-800 dark:text-blue-200'
+  } : null
 
   return {
     data,
@@ -95,11 +135,17 @@ export function useTable<T>({
     pageSize,
     globalFilter,
     sorting,
+    showTrash,
     setPageIndex: handlePageChange,
     setPageSize: handlePageSizeChange,
     setGlobalFilter,
     setSorting: setSorting as OnChangeFn<SortingState>,
     fetchData: () => fetchData(),
     refresh: () => fetchData(pageIndex),
+    handleTrashClick,
+    handleStoreClick,
+    toggleTrashView,
+    setShowTrash,
+    viewIndicator,
   }
 }
