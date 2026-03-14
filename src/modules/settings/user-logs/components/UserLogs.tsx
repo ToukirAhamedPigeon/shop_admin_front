@@ -21,6 +21,7 @@ import {
   RowActions,
   IndexCell,
   EmptyState,
+  TableWithLoader,
 } from '@/components/custom/Table'
 import { getCustomDateTime } from '@/lib/formatDate'
 import api from '@/lib/axios'
@@ -238,6 +239,7 @@ export default function LogListTable() {
     fetcher: stableFetcher,
     initialColumns: [],
     defaultSort: 'createdAt',
+    minLoadingTime: 1000,
   })
 
   // Stabilize allColumns with useRef to prevent unnecessary recalculations
@@ -337,8 +339,9 @@ export default function LogListTable() {
     [filters]
   )
 
-  const showEmptyState = !loading && !error && data.length === 0
-  const showErrorState = !loading && error
+  // Don't show empty state on initial load or when loading
+  const showEmptyState = !error && data.length === 0 && hasFetchedRef.current && !loading
+  const showErrorState = !!error && !loading
 
   const table = useReactTable({
     data,
@@ -384,62 +387,77 @@ export default function LogListTable() {
           isFilterActive={isFilterActive}
         />
 
-        <div className="relative rounded-sm shadow overflow-hidden bg-white dark:bg-gray-800" id="printable-user-table">
-          <div className="max-h-[600px] min-h-[200px] overflow-y-auto">
-            {loading && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-opacity-70 mt-20">
-                <TableLoader loading />
-              </div>
-            )}
-
-            {showErrorState && (
-              <EmptyState
-                message="Error loading logs"
-                suggestion="Please try again or contact support"
-              />
-            )}
-
-            {showEmptyState && (
-              <EmptyState
-                message="No logs found"
-                suggestion="Try adjusting your filters"
-              />
-            )}
-
-            {!showEmptyState && !showErrorState && (
-              <table className="table-auto w-full text-left border border-collapse">
-                <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-                  {table.getHeaderGroups().map(headerGroup => (
-                    <tr key={headerGroup.id}>
-                      {headerGroup.headers.map(header => (
-                        <th key={header.id} className={`p-2 border ${header.column.columnDef.meta?.customClassName || ''}`}>
-                          <div
-                            className="flex justify-between items-center w-full cursor-pointer"
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            <span className="flex-1 text-center">{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                            <span className="ml-2">
-                              {header.column.getIsSorted() === 'asc' ? (
-                                <FaSortUp size={12} />
-                              ) : header.column.getIsSorted() === 'desc' ? (
-                                <FaSortDown size={12} />
-                              ) : (
-                                <FaSort size={12} />
-                              )}
-                            </span>
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
+        <TableWithLoader 
+          loading={loading}
+          id="printable-user-table"
+        >
+          {/* Always show the complete table structure */}
+          <table className="table-auto w-full text-left border border-collapse">
+            <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th 
+                      key={header.id} 
+                      className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
+                    >
+                      <div
+                        className="flex justify-between items-center w-full cursor-pointer"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        <span className="flex-1 text-center">
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                        </span>
+                        <span className="ml-2">
+                          {header.column.getIsSorted() === 'asc' ? (
+                            <FaSortUp size={12} />
+                          ) : header.column.getIsSorted() === 'desc' ? (
+                            <FaSortDown size={12} />
+                          ) : (
+                            <FaSort size={12} />
+                          )}
+                        </span>
+                      </div>
+                    </th>
                   ))}
-                </thead>
-                <motion.tbody
-                  key={pageIndex}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                >
+                </tr>
+              ))}
+            </thead>
+            
+            <motion.tbody
+              key={pageIndex}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              {/* Error State Row - only show when not loading */}
+              {showErrorState && (
+                <tr>
+                  <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
+                    <EmptyState
+                      message="Error loading logs"
+                      suggestion="Please try again or contact support"
+                    />
+                  </td>
+                </tr>
+              )}
+
+              {/* Empty State Row - only show when not loading and after initial fetch */}
+              {!showErrorState && showEmptyState && (
+                <tr>
+                  <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
+                    <EmptyState
+                      message="No logs found"
+                      suggestion="Try adjusting your filters"
+                    />
+                  </td>
+                </tr>
+              )}
+
+              {/* Data Rows - show when we have data and no error */}
+              {!showErrorState && !showEmptyState && data.length > 0 && (
+                <>
                   {table.getRowModel().rows.map(row => (
                     <tr key={row.id} className="border-b dark:border-gray-700">
                       {row.getVisibleCells().map(cell => (
@@ -452,13 +470,20 @@ export default function LogListTable() {
                       ))}
                     </tr>
                   ))}
-                </motion.tbody>
-              </table>
-            )}
-          </div>
-        </div>
+                </>
+              )}
 
-        {!showEmptyState && !showErrorState && totalCount > 0 && (
+              {/* Show empty tbody when loading or no data but haven't reached empty state yet */}
+              {!showErrorState && !showEmptyState && data.length === 0 && (
+                <tr>
+                  <td colSpan={table.getVisibleFlatColumns().length} className="h-32"></td>
+                </tr>
+              )}
+            </motion.tbody>
+          </table>
+        </TableWithLoader>
+
+        {!showErrorState && !showEmptyState && totalCount > 0 && (
           <TablePaginationFooter
             pageIndex={pageIndex}
             pageSize={pageSize}

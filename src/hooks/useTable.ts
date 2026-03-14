@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ColumnDef, SortingState, OnChangeFn } from '@tanstack/react-table'
 
 // Define the view indicator type
@@ -19,6 +19,7 @@ export function useTable<T>({
   initialColumns = [],
   defaultSort = 'createdAt',
   enableTrashView = false,
+  minLoadingTime = 500, // Add minimum loading time (default 500ms)
 }: {
   fetcher: (params: {
     q: string
@@ -31,6 +32,7 @@ export function useTable<T>({
   initialColumns?: ColumnDef<T, any>[]
   defaultSort?: string
   enableTrashView?: boolean
+  minLoadingTime?: number // Add this
 }) {
   const [data, setData] = useState<T[]>([])
   const [loading, setLoading] = useState(false)
@@ -43,10 +45,21 @@ export function useTable<T>({
   const [pendingPage, setPendingPage] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showTrash, setShowTrash] = useState(false)
+  
+  // Refs for managing loading state
+  const loadingStartTime = useRef<number | null>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const pendingData = useRef<{ 
+    data: T[]; 
+    total: number; 
+    grandTotalCount: number;
+    targetPage?: number;
+  } | null>(null)
 
   const fetchData = useCallback(async (targetPage?: number) => {
     setLoading(true)
     setError(null)
+    loadingStartTime.current = Date.now()
     
     const sortBy = sorting.length ? sorting[0].id : defaultSort
     const sortOrder = sorting.length && !sorting[0].desc ? 'asc' : 'desc'
@@ -63,21 +76,68 @@ export function useTable<T>({
         ...(enableTrashView && { showTrash }),
       })
       
-      setData(res.data)
-      setTotalCount(res.total)
-      setGrandTotalCount(res.grandTotalCount)
+      // Store the data temporarily
+      pendingData.current = {
+        data: res.data,
+        total: res.total,
+        grandTotalCount: res.grandTotalCount,
+        targetPage
+      }
       
       if (targetPage !== undefined) {
-        setPageIndex(targetPage)
         setPendingPage(null)
+      }
+
+      // Calculate elapsed time
+      const elapsedTime = Date.now() - (loadingStartTime.current || 0)
+      const remainingTime = Math.max(0, minLoadingTime - elapsedTime)
+
+      if (remainingTime > 0) {
+        // Wait for remaining time to meet minimum loading duration
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current)
+        }
+        
+        timeoutRef.current = setTimeout(() => {
+          if (pendingData.current) {
+            setData(pendingData.current.data)
+            setTotalCount(pendingData.current.total)
+            setGrandTotalCount(pendingData.current.grandTotalCount)
+            
+            if (pendingData.current.targetPage !== undefined) {
+              setPageIndex(pendingData.current.targetPage)
+            }
+            
+            setTimeout(() => {
+              setLoading(false)
+            }, minLoadingTime)
+            pendingData.current = null
+            timeoutRef.current = undefined
+          }
+        }, remainingTime)
+      } else {
+        // Already exceeded minimum time, update immediately
+        setData(res.data)
+        setTotalCount(res.total)
+        setGrandTotalCount(res.grandTotalCount)
+        
+        if (targetPage !== undefined) {
+          setPageIndex(targetPage)
+        }
+        
+        setTimeout(() => {
+          setLoading(false)
+        }, minLoadingTime)
+        pendingData.current = null
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data')
       console.error('Error fetching data:', err)
-    } finally {
       setLoading(false)
+      pendingData.current = null
+      loadingStartTime.current = null
     }
-  }, [fetcher, globalFilter, pageIndex, pageSize, sorting, defaultSort, enableTrashView, showTrash])
+  }, [fetcher, globalFilter, pageIndex, pageSize, sorting, defaultSort, enableTrashView, showTrash, minLoadingTime])
 
   useEffect(() => {
     if (pendingPage !== null && pendingPage !== pageIndex) {
@@ -88,6 +148,15 @@ export function useTable<T>({
   useEffect(() => {
     fetchData()
   }, [globalFilter, pageSize, sorting, defaultSort, showTrash])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
 
   const handlePageChange = useCallback((newPage: number) => {
     setPendingPage(newPage)

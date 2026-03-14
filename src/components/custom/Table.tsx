@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, type ReactNode } from "react"
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FaEye, FaEdit, FaTrash, FaPlus, FaPrint, FaFileExcel, FaSlidersH, FaFilter } from 'react-icons/fa'
@@ -571,6 +571,41 @@ export function TrashViewIndicator({
     <div className={`px-2 py-1 ${style.bg} border ${style.border} rounded-md ${style.text} inline-flex items-center text-xs font-medium ${className}`}>
       {style.icon}
       <span className="ml-1">{style.label}</span>
+    </div>
+  )
+}
+
+interface TableWithLoaderProps {
+  loading: boolean
+  children: ReactNode
+  className?: string
+  id?: string
+  containerClassName?: string
+}
+
+export function TableWithLoader({ 
+  loading, 
+  children, 
+  className = '',
+  id,
+  containerClassName = 'max-h-[600px] min-h-[200px] overflow-y-auto relative'
+}: TableWithLoaderProps) {
+  return (
+    <div 
+      className={`relative rounded-sm shadow overflow-hidden bg-white dark:bg-gray-800 ${className}`}
+      id={id}
+    >
+      <div className={containerClassName}>
+        {/* Loader - overlays on top of content when loading */}
+        {loading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/10 dark:bg-gray-900/10">
+            <TableLoader loading={true} />
+          </div>
+        )}
+
+        {/* Content - always rendered, may be covered by loader */}
+        {children}
+      </div>
     </div>
   )
 }

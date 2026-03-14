@@ -22,7 +22,8 @@ import {
   RowActions,
   IndexCell,
   EmptyState,
-  TrashViewIndicator 
+  TrashViewIndicator, 
+  TableWithLoader
 } from '@/components/custom/Table'
 import Modal from '@/components/custom/Modal'
 import { ColumnVisibilityManager } from '@/components/custom/ColumnVisibilityManager'
@@ -115,7 +116,7 @@ const getAllColumns = ({
     cell: ({ row, getValue }) => {
       const user = row.original
       const src = getValue()
-        ? import.meta.env.VITE_API_BASE_URL + (getValue() as string)
+        ? import.meta.env.VITE_API_ASSET_URL + (getValue() as string)
         : '/human.png'
 
       return (
@@ -359,7 +360,8 @@ export default function Users() {
   } = useTable<IUser>({
     fetcher: stableFetcher,
     defaultSort: 'createdAt',
-    enableTrashView: true
+    enableTrashView: true,
+    minLoadingTime: 1000
   })
 
   /* ---------------- Delete Hook ---------------- */
@@ -519,6 +521,44 @@ export default function Users() {
   const showEmptyState = !loading && !error && data.length === 0
   const showErrorState = !loading && error
 
+  const tableHeader = (
+    <table className="table-auto w-full text-left border border-collapse">
+      <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+        {table.getHeaderGroups().map(headerGroup => (
+          <tr key={headerGroup.id}>
+            {headerGroup.headers.map(header => (
+              <th
+                key={header.id}
+                className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
+              >
+                <div
+                  className="flex justify-between items-center w-full cursor-pointer"
+                  onClick={header.column.getToggleSortingHandler()}
+                >
+                  <span className="flex-1 text-center">
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </span>
+                  <span className="ml-2">
+                    {header.column.getIsSorted() === 'asc' ? (
+                      <FaSortUp size={12} />
+                    ) : header.column.getIsSorted() === 'desc' ? (
+                      <FaSortDown size={12} />
+                    ) : (
+                      <FaSort size={12} />
+                    )}
+                  </span>
+                </div>
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+    </table>
+  )
+
   /* ---------------- UI ---------------- */
   return (
     <motion.div
@@ -562,84 +602,89 @@ export default function Users() {
         isFilterActive={isFilterActive}
       />
       {/* TABLE */}
-      <div
-        className="relative rounded-sm shadow overflow-hidden bg-white dark:bg-gray-800"
+      <TableWithLoader 
+        loading={loading}
         id="printable-user-table"
       >
-        <div className="max-h-[600px] min-h-[200px] overflow-y-auto">
-          {loading && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-opacity-70 mt-20">
-              <TableLoader loading />
-            </div>
-          )}
-
-          {showErrorState && (
-            <EmptyState
-              message="Error loading users"
-              suggestion="Please try again or contact support"
-            />
-          )}
-
-          {showEmptyState && (
-            <EmptyState
-              message="No users found"
-              suggestion="Try adjusting your filters or add a new user"
-            />
-          )}
-
-          {!showEmptyState && !showErrorState && (
-            <table className="table-auto w-full text-left border border-collapse">
-              <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th
-                        key={header.id}
-                        className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-                      >
-                        <div
-                          className="flex justify-between items-center w-full cursor-pointer"
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          <span className="flex-1 text-center">
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                          </span>
-                          <span className="ml-2">
-                            {header.column.getIsSorted() === 'asc' ? (
-                              <FaSortUp size={12} />
-                            ) : header.column.getIsSorted() === 'desc' ? (
-                              <FaSortDown size={12} />
-                            ) : (
-                              <FaSort size={12} />
-                            )}
-                          </span>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
+        {/* Always show the complete table structure */}
+        <table className="table-auto w-full text-left border border-collapse">
+          <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+            {table.getHeaderGroups().map(headerGroup => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map(header => (
+                  <th
+                    key={header.id}
+                    className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
+                  >
+                    <div
+                      className="flex justify-between items-center w-full cursor-pointer"
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      <span className="flex-1 text-center">
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </span>
+                      <span className="ml-2">
+                        {header.column.getIsSorted() === 'asc' ? (
+                          <FaSortUp size={12} />
+                        ) : header.column.getIsSorted() === 'desc' ? (
+                          <FaSortDown size={12} />
+                        ) : (
+                          <FaSort size={12} />
+                        )}
+                      </span>
+                    </div>
+                  </th>
                 ))}
-              </thead>
+              </tr>
+            ))}
+          </thead>
 
-              <motion.tbody
-                key={pageIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{
-                  duration: 0.5,
-                  ease: 'easeOut'
-                }}
-              >
+          <motion.tbody
+            key={pageIndex}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{
+              duration: 0.5,
+              ease: 'easeOut'
+            }}
+          >
+            {/* Error State Row */}
+            {showErrorState && (
+              <tr>
+                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
+                  <EmptyState
+                    message="Error loading users"
+                    suggestion="Please try again or contact support"
+                  />
+                </td>
+              </tr>
+            )}
+
+            {/* Empty State Row */}
+            {!showErrorState && showEmptyState && (
+              <tr>
+                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
+                  <EmptyState
+                    message="No users found"
+                    suggestion="Try adjusting your filters or add a new user"
+                  />
+                </td>
+              </tr>
+            )}
+
+            {/* Data Rows */}
+            {!showErrorState && !showEmptyState && (
+              <>
                 {table.getRowModel().rows.map(row => (
                   <tr key={row.id} className="border-b dark:border-gray-700">
                     {row.getVisibleCells().map(cell => (
                       <td
                         key={cell.id}
-                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''
-                          }`}
+                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -649,11 +694,11 @@ export default function Users() {
                     ))}
                   </tr>
                 ))}
-              </motion.tbody>
-            </table>
-          )}
-        </div>
-      </div>
+              </>
+            )}
+          </motion.tbody>
+        </table>
+      </TableWithLoader>
 
       {/* PAGINATION */}
       {!showEmptyState && !showErrorState && totalCount > 0 && (

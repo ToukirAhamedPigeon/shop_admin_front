@@ -23,6 +23,7 @@ import Fancybox from "@/components/custom/FancyBox"
 import { generateQRImage } from "@/lib/generateQRImage"
 import { Loader2, QrCode } from "lucide-react"
 import { capitalize } from "@/lib/helpers"
+import Loader from "@/components/custom/Loader" // Import Loader
 
 // Schema for Profile Edit - only personal fields
 export const profileEditSchema = z.object({
@@ -150,7 +151,7 @@ export default function ProfileEdit() {
         })
 
         if (user.profileImage && isMounted) {
-          setValue("profile_image", import.meta.env.VITE_API_BASE_URL + user.profileImage, { shouldValidate: false })
+          setValue("profile_image", import.meta.env.VITE_API_ASSET_URL + user.profileImage, { shouldValidate: false })
         }
         
         // Mark as loaded
@@ -279,7 +280,13 @@ export default function ProfileEdit() {
     setValue(field as any, value || undefined)
   }
 
-  if (loading) return <div>{t("Loading...")}</div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <Loader type="circular" size={48} />
+      </div>
+    )
+  }
 
   return (
     <motion.div

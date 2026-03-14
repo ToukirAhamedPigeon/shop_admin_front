@@ -48,7 +48,7 @@ export default function UserDropdown() {
         >
           <Avatar className="h-8 w-8 ring-2 ring-transparent group-hover:ring-blue-400/50 transition-all">
             <AvatarImage 
-              src={user?.profileImage ? import.meta.env.VITE_API_BASE_URL + user.profileImage : undefined} 
+              src={user?.profileImage ? import.meta.env.VITE_API_ASSET_URL + user.profileImage : undefined} 
               alt={user.name} 
               className="object-cover"
             />
@@ -100,7 +100,7 @@ export default function UserDropdown() {
           <div className="flex items-start gap-3">
             <Avatar className="h-14 w-14 ring-2 ring-white dark:ring-gray-800 shadow-md">
               <AvatarImage 
-                src={user?.profileImage ? import.meta.env.VITE_API_BASE_URL + user.profileImage : undefined} 
+                src={user?.profileImage ? import.meta.env.VITE_API_ASSET_URL + user.profileImage : undefined} 
                 alt={user.name}
                 className="object-cover"
               />

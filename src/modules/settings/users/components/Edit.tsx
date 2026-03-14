@@ -14,6 +14,7 @@ import {
 import { BOOLEAN_OPTIONS } from "@/constants"
 import { useProfilePicture } from "@/hooks/useProfilePicture"
 import { useTranslations } from "@/hooks/useTranslations"
+import Loader from "@/components/custom/Loader" // Import Loader
 import z from "zod"
 
 interface Props {
@@ -123,7 +124,7 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
         })
 
         if (user.profileImage) {
-          setValue("profile_image", import.meta.env.VITE_API_BASE_URL + user.profileImage, { shouldValidate: false })
+          setValue("profile_image", import.meta.env.VITE_API_ASSET_URL + user.profileImage, { shouldValidate: false })
         }
       } catch(e) {
         console.log(e)
@@ -207,7 +208,13 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
 
   const handleReset = () => reset()
 
-  if (loading) return <div>{t("Loading...")}</div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader type="circular" size={48} />
+      </div>
+    )
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -26,7 +26,7 @@ export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?:
     [
       'Profile Image',
       <Fancybox
-        src={(user?.profileImage)?import.meta.env.VITE_API_BASE_URL + user.profileImage || '/human.png': '/human.png'}
+        src={(user?.profileImage)?import.meta.env.VITE_API_ASSET_URL + user.profileImage || '/human.png': '/human.png'}
         alt="Profile Image"
         title={user.name}
         description={`${user.email}\n${user.mobileNo ?? ''}`}
