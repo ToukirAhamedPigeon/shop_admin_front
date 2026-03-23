@@ -10,7 +10,9 @@ import {
   SlidersHorizontal, 
   Users,
   User,
-  Lock
+  Lock,
+  Shield,
+  Key
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
@@ -79,6 +81,26 @@ const menuItems: MenuItem[] = [
         defaultLabel: "Change Password",
         icon: <Lock size={18} className="mr-2" />,
         basePath: "/settings/change-password",
+        permissions: [
+          // "read-admin-user-logs"
+          "read-admin-dashboard"
+        ],
+      },
+      {
+        label: "common.roles.title",
+        defaultLabel: "Roles",
+        icon: <Shield size={18} className="mr-2" />,
+        basePath: "/settings/roles",
+        permissions: [
+          // "read-admin-user-logs"
+          "read-admin-dashboard"
+        ],
+      },
+      {
+        label: "common.permissions.title",
+        defaultLabel: "Permissions",
+        icon: <Key size={18} className="mr-2" />,
+        basePath: "/settings/permissions",
         permissions: [
           // "read-admin-user-logs"
           "read-admin-dashboard"

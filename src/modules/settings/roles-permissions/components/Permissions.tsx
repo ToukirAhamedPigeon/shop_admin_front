@@ -12,7 +12,6 @@ import {
 import { motion } from 'framer-motion'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
 
-import api from '@/lib/axios'
 import { useTable } from '@/hooks/useTable'
 import { useDetailModal } from '@/hooks/useDetailModal'
 import {
@@ -22,7 +21,7 @@ import {
   RowActions,
   IndexCell,
   EmptyState,
-  TrashViewIndicator, 
+  TrashViewIndicator,
   TableWithLoader
 } from '@/components/custom/Table'
 import Modal from '@/components/custom/Modal'
@@ -30,27 +29,23 @@ import { ColumnVisibilityManager } from '@/components/custom/ColumnVisibilityMan
 import { refreshColumnSettings } from '@/lib/refreshColumnSettings'
 import { exportVisibleTableToExcel } from '@/lib/exportTable'
 import { printTableById } from '@/lib/printTable'
-import { getCustomDateTime, getPassedTime } from '@/lib/formatDate'
+import { getCustomDateTime } from '@/lib/formatDate'
 import { ExpandableText } from '@/components/custom/ExpandableText'
 import { FilterModal } from '@/components/custom/FilterModal'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/redux/store'
 
-import UserDetail from './UserDetail'
-import type { IUser } from '@/types'
-import { UserFilterForm } from './UserFilterForm'
-import Fancybox from '@/components/custom/FancyBox'
-import { generateQRImage } from '@/lib/generateQRImage'
+import PermissionDetail from './PermissionDetail'
+import type { IPermission } from '@/types/role-permission'
+import { PermissionFilterForm } from './PermissionFilterForm'
 import { can } from '@/lib/authCheck'
 import FormHolderSheet from '@/components/custom/FormHolderSheet'
-import Add from './Add'
-import Edit from './Edit'
+import AddPermission from './AddPermission'
+import EditPermission from './EditPermission'
 import { useEditSheet } from '@/hooks/useEditSheet'
-import { capitalize } from '@/lib/helpers'
 import { useDeleteWithConfirm } from '@/hooks/useDeleteWithConfirm'
-import { useAppSelector } from '@/hooks/useRedux'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
-import { deleteUser, restoreUser } from './../api'
+import { deletePermission, restorePermission, getPermissions } from '../api'
 
 /* ---------------------------------- */
 /* Columns Definition */
@@ -62,7 +57,6 @@ const getAllColumns = ({
   handleEditClick,
   confirmDelete,
   confirmRestore,
-  authRoles,
   showDetail = true,
   showEdit = true,
   showDelete = true,
@@ -70,16 +64,15 @@ const getAllColumns = ({
 }: {
   pageIndex: number
   pageSize: number
-  fetchDetail: (item: IUser) => void
-  handleEditClick: (item: IUser) => void
+  fetchDetail: (item: IPermission) => void
+  handleEditClick: (item: IPermission) => void
   confirmDelete: (id: string) => void
   confirmRestore: (id: string) => void
-  authRoles: string[]
   showDetail?: boolean
   showEdit?: boolean
   showDelete?: boolean
   showRestore?: boolean
-}): ColumnDef<IUser>[] => [
+}): ColumnDef<IPermission>[] => [
   {
     header: 'SL',
     id: 'sl',
@@ -103,7 +96,7 @@ const getAllColumns = ({
           onRestore={isDeleted ? () => confirmRestore(row.original.id) : undefined}
           showDetail={showDetail}
           showEdit={showEdit && !isDeleted}
-          showDelete={showDelete && !isDeleted && !(row.original as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')}
+          showDelete={showDelete && !isDeleted}
           showRestore={showRestore && isDeleted}
         />
       )
@@ -111,137 +104,54 @@ const getAllColumns = ({
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
   },
   {
-    header: 'Profile Image',
-    accessorKey: 'profileImage',
-    cell: ({ row, getValue }) => {
-      const user = row.original
-      const src = getValue()
-        ? import.meta.env.VITE_API_ASSET_URL + (getValue() as string)
-        : '/human.png'
-
-      return (
-        <div className="flex justify-center">
-          <Fancybox
-            src={src}
-            title={user.name}
-            description={
-              <>
-                <div>{user.email}</div>
-                {user.mobileNo && <div>{user.mobileNo}</div>}
-              </>
-            }
-            alt="Profile Image"
-            className="w-10 h-10 rounded-full object-cover"
-          />
-        </div>
-      )
-    },
-    meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    header: 'Name',
+    accessorKey: 'name',
+    cell: ({ getValue }) => <span className="font-medium">{getValue() as string}</span>
   },
   {
-    header: 'QR Code',
-    accessorKey: 'qrCode',
-    cell: ({ row, getValue }) => {
-      const user = row.original
-      const qr = getValue() as string | null
-      const [qrImg, setQrImg] = useState<string | null>(null)
-
-      useEffect(() => {
-        if (qr) generateQRImage(qr).then(setQrImg)
-      }, [qr])
-
-      if (!qr || !qrImg) return <span className="text-gray-400">-</span>
-
-      return (
-        <div className="flex flex-col items-center gap-1">
-          <Fancybox
-            src={qrImg}
-            title={user.name}
-            description={
-              <>
-                <div>{user.email}</div>
-                {user.mobileNo && <div>{user.mobileNo}</div>}
-              </>
-            }
-            alt="QR Code"
-            isQRCode
-            className="w-20 h-20"
-          />
-        </div>
-      )
-    },
-    meta: { customClassName: 'text-center', tdClassName: 'text-center min-w-[120px]' },
-  },
-  { header: 'Name', accessorKey: 'name' },
-  { header: 'Username', accessorKey: 'username' },
-  { header: 'Email', accessorKey: 'email' },
-  { header: 'Mobile', accessorKey: 'mobileNo' },
-  { header: 'NID', accessorKey: 'nid' },
-  { 
-    header: 'Gender', 
-    accessorKey: 'gender', 
-    cell: ({ getValue }) => getValue() ? capitalize(getValue() as string) : '-',
-    meta: { customClassName: 'text-center', tdClassName: 'text-center' }
+    header: 'Guard Name',
+    accessorKey: 'guardName',
   },
   {
-    header: 'Date of Birth',
-    accessorKey: 'dateOfBirth',
-    cell: ({ getValue }) =>
-      getValue() ? (
-        <>
-          {getCustomDateTime(getValue() as string, 'YYYY-MM-DD')}
-          <br />
-          <small>
-            ({getPassedTime(getCustomDateTime(getValue() as string, 'YYYY-MM-DD') as string, 'yearsOnly')})
-          </small>
-        </>
-      ) : '-',
+    header: 'Roles',
+    accessorKey: 'roles',
+    cell: ({ getValue }) => {
+      const roles = getValue() as string[] | undefined;
+      return roles?.length ? (
+        <ExpandableText text={roles.join(', ')} wordLimit={5} className="max-w-[300px] whitespace-pre-wrap break-all" />
+      ) : <span className="text-gray-400">-</span>
+    },
+    meta: { customClassName: 'text-left min-w-[300px]' }
   },
-  { 
-    header: 'Email Verification', 
-    accessorKey: 'emailVerifiedAt', 
-    cell: ({ getValue }) => getValue() ? <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-700 dark:text-gray-200">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-red-500 font-semibold">Not Verified</span> 
-  },
-  { 
-    header: 'Active', 
-    accessorKey: 'isActive', 
+  {
+    header: 'Active',
+    accessorKey: 'isActive',
     cell: ({ getValue }) => getValue() ? 'Yes' : <span className="text-red-500">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
-  { 
-    header: 'Deleted', 
-    accessorKey: 'isDeleted', 
+  {
+    header: 'Deleted',
+    accessorKey: 'isDeleted',
     cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : 'No',
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
-  { 
-    header: 'Deleted At', 
-    accessorKey: 'deletedAt', 
-    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-',
-    meta: { customClassName: 'text-center', tdClassName: 'text-center' }
+  {
+    header: 'Created At',
+    accessorKey: 'createdAt',
+    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-'
   },
-  { 
-    header: 'Deleted By', 
-    accessorKey: 'deletedByName', 
-    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span>,
-    meta: { customClassName: 'text-center', tdClassName: 'text-center' }
+  {
+    header: 'Updated At',
+    accessorKey: 'updatedAt',
+    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-'
   },
-  { header: 'Roles', accessorKey: 'roles', cell: ({ getValue }) => (getValue() as string[] | undefined)?.join(', ') || <span className="text-gray-400">-</span> },
-  { header: 'Permissions', accessorKey: 'permissions', cell: ({ getValue }) => { const perms = getValue() as string[] | undefined; return perms?.length ? <ExpandableText text={perms.join(', ')} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span> }, meta: { customClassName: 'text-left min-w-[300px]' } },
-  { header: 'Address', accessorKey: 'address', cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, meta: { customClassName: 'text-left min-w-[300px]' } },
-  { header: 'Bio', accessorKey: 'bio', cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, meta: { customClassName: 'text-left min-w-[300px]' } },
-  { header: 'Last Updated At', accessorKey: 'updatedAt', cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { header: 'Created At', accessorKey: 'createdAt', cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { header: 'Created By', accessorKey: 'createdByName', cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> },
-  { header: 'Updated By', accessorKey: 'updatedByName', cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> },
 ]
 
 /* ---------------------------------- */
-/* Users Component */
+/* Permissions Component */
 /* ---------------------------------- */
-export default function Users() {
+export default function Permissions() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '')
-  const authroles = useAppSelector((state) => state.auth.user?.roles || [])
 
   const {
     isModalOpen,
@@ -249,15 +159,9 @@ export default function Users() {
     fetchDetail,
     closeModal,
     detailLoading
-  } = useDetailModal<IUser>('/users')
+  } = useDetailModal<IPermission>('/permissions')
 
-  const fetchDetailRef = useRef(fetchDetail)
-  fetchDetailRef.current = fetchDetail
-
-  const hasFetchedRef = useRef(false)
-  const prevFiltersRef = useRef<Record<string, any>>({})
-
-  const [visible, setVisible] = useState<ColumnDef<IUser>[]>([])
+  const [visible, setVisible] = useState<ColumnDef<IPermission>[]>([])
   const [showColumnModal, setShowColumnModal] = useState(false)
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [filters, setFilters] = useState<Record<string, any>>({})
@@ -276,10 +180,14 @@ export default function Users() {
 
   const {
     isOpen: isEditSheetOpen,
-    itemToEdit: userToEdit,
+    itemToEdit: permissionToEdit,
     openEdit: handleEditClick,
     closeEdit: closeEditSheet
-  } = useEditSheet<IUser>()
+  } = useEditSheet<IPermission>()
+
+  // Use ref to track if initial fetch has been done (like Users component)
+  const hasFetchedRef = useRef(false)
+  const prevFiltersRef = useRef<Record<string, any>>({})
 
   /* ---------------- Stable Fetcher ---------------- */
   const stableFetcher = useCallback(
@@ -298,7 +206,7 @@ export default function Users() {
       sortOrder?: string
       showTrash?: boolean
     }): Promise<{
-      data: IUser[]
+      data: IPermission[]
       total: number
       grandTotalCount: number
     }> => {
@@ -320,8 +228,7 @@ export default function Users() {
         isDeletedStr: showTrash ? 'true' : 'false'
       }
 
-
-      const res = await api.post('/users', {
+      const res = await getPermissions({
         q,
         page,
         limit,
@@ -331,9 +238,9 @@ export default function Users() {
       })
 
       return {
-        data: res.data.users as IUser[],
-        total: res.data.totalCount,
-        grandTotalCount: res.data.grandTotalCount
+        data: res.permissions as IPermission[],
+        total: res.totalCount,
+        grandTotalCount: res.grandTotalCount
       }
     },
     [filters]
@@ -359,7 +266,7 @@ export default function Users() {
     handleTrashClick,
     handleStoreClick,
     viewIndicator
-  } = useTable<IUser>({
+  } = useTable<IPermission>({
     fetcher: stableFetcher,
     defaultSort: 'createdAt',
     enableTrashView: true,
@@ -367,7 +274,6 @@ export default function Users() {
   })
 
   /* ---------------- Delete Hook ---------------- */
-  // Moved AFTER fetchData is defined
   const {
     dialogOpen,
     confirmDelete,
@@ -375,11 +281,11 @@ export default function Users() {
     handleDelete,
     deleteLoading
   } = useDeleteWithConfirm({
-    deleteFunction: async (id: string) => deleteUser(id, true),
+    deleteFunction: async (id: string) => deletePermission(id, true),
     onSuccess: fetchData,
-    successMessage: 'User deleted successfully',
-    errorMessage: 'Failed to delete user',
-    inactiveMessage: 'User cannot be deleted'
+    successMessage: 'Permission deleted successfully',
+    errorMessage: 'Failed to delete permission',
+    inactiveMessage: 'Permission cannot be deleted'
   })
 
   /* ---------------- Restore Handler ---------------- */
@@ -398,19 +304,19 @@ export default function Users() {
     
     setRestoreLoading(true)
     try {
-      await restoreUser(restoreId)
+      await restorePermission(restoreId)
       setRestoreDialogOpen(false)
       setRestoreId(null)
-      fetchData() // Refresh the data
+      fetchData()
     } catch (error) {
-      console.error('Failed to restore user:', error)
+      console.error('Failed to restore permission:', error)
     } finally {
       setRestoreLoading(false)
     }
   }, [restoreId, fetchData])
 
   /* ---------------- Stable Columns ---------------- */
-  const allColumnsRef = useRef<ColumnDef<IUser>[]>([])
+  const allColumnsRef = useRef<ColumnDef<IPermission>[]>([])
 
   if (!allColumnsRef.current.length) {
     allColumnsRef.current = getAllColumns({
@@ -418,7 +324,6 @@ export default function Users() {
       pageSize,
       fetchDetail,
       handleEditClick,
-      authRoles: authroles,
       confirmDelete,
       confirmRestore,
       showDetail,
@@ -443,8 +348,8 @@ export default function Users() {
 
     const loadColumnSettings = async () => {
       try {
-        const { visibleColumns } = await refreshColumnSettings<IUser>(
-          'userTable',
+        const { visibleColumns } = await refreshColumnSettings<IPermission>(
+          'permissionTable',
           userId,
           allColumns
         )
@@ -523,44 +428,6 @@ export default function Users() {
   const showEmptyState = !loading && !error && data.length === 0
   const showErrorState = !loading && error
 
-  const tableHeader = (
-    <table className="table-auto w-full text-left border border-collapse">
-      <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-        {table.getHeaderGroups().map(headerGroup => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map(header => (
-              <th
-                key={header.id}
-                className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-              >
-                <div
-                  className="flex justify-between items-center w-full cursor-pointer"
-                  onClick={header.column.getToggleSortingHandler()}
-                >
-                  <span className="flex-1 text-center">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </span>
-                  <span className="ml-2">
-                    {header.column.getIsSorted() === 'asc' ? (
-                      <FaSortUp size={12} />
-                    ) : header.column.getIsSorted() === 'desc' ? (
-                      <FaSortDown size={12} />
-                    ) : (
-                      <FaSort size={12} />
-                    )}
-                  </span>
-                </div>
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-    </table>
-  )
-
   /* ---------------- UI ---------------- */
   return (
     <motion.div
@@ -577,38 +444,35 @@ export default function Users() {
         onAddNew={() => setIsSheetOpen(true)}
         showAddButton={showAddButton}
         trashButton={
-        !showTrash ? {
-          onClick: handleTrashClick,
-          label: 'Trash',
-          show: true
-        } : undefined
-      }
-      storeButton={
-        showTrash ? {
-          onClick: handleStoreClick,
-          label: 'Store',
-          show: true
-        } : undefined
-      }
+          !showTrash ? {
+            onClick: handleTrashClick,
+            label: 'Trash',
+            show: true
+          } : undefined
+        }
+        storeButton={
+          showTrash ? {
+            onClick: handleStoreClick,
+            label: 'Store',
+            show: true
+          } : undefined
+        }
         onColumnSettings={() => setShowColumnModal(true)}
-        onPrint={() => printTableById('printable-user-table', 'Users')}
+        onPrint={() => printTableById('printable-permission-table', 'Permissions')}
         onExport={() =>
           exportVisibleTableToExcel({
             data,
             columns: allColumns,
             visibleColumnIds: visibleIds,
-            fileName: 'Users'
+            fileName: 'Permissions'
           })
         }
         onFilter={() => setFilterModalOpen(true)}
         isFilterActive={isFilterActive}
       />
+      
       {/* TABLE */}
-      <TableWithLoader 
-        loading={loading}
-        id="printable-user-table"
-      >
-        {/* Always show the complete table structure */}
+      <TableWithLoader loading={loading} id="printable-permission-table">
         <table className="table-auto w-full text-left border border-collapse">
           <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
             {table.getHeaderGroups().map(headerGroup => (
@@ -659,7 +523,7 @@ export default function Users() {
               <tr>
                 <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
                   <EmptyState
-                    message="Error loading users"
+                    message="Error loading permissions"
                     suggestion="Please try again or contact support"
                   />
                 </td>
@@ -671,8 +535,8 @@ export default function Users() {
               <tr>
                 <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
                   <EmptyState
-                    message="No users found"
-                    suggestion="Try adjusting your filters or add a new user"
+                    message="No permissions found"
+                    suggestion="Try adjusting your filters or add a new permission"
                   />
                 </td>
               </tr>
@@ -714,24 +578,24 @@ export default function Users() {
         />
       )}
 
-      {/* USER DETAIL */}
+      {/* PERMISSION DETAIL */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title="User Details"
-        widthPercent={70}
+        title="Permission Details"
+        widthPercent={60}
       >
         {detailLoading || !selectedItem ? (
           <TableLoader loading />
         ) : (
-          <UserDetail user={selectedItem} onUpdated={fetchData} />
+          <PermissionDetail permission={selectedItem} onUpdated={fetchData} />
         )}
       </Modal>
 
       {/* COLUMN MANAGER */}
       {showColumnModal && (
-        <ColumnVisibilityManager<IUser>
-          tableId="userTable"
+        <ColumnVisibilityManager<IPermission>
+          tableId="permissionTable"
           open={showColumnModal}
           onClose={() => setShowColumnModal(false)}
           initialColumns={allColumns}
@@ -741,8 +605,8 @@ export default function Users() {
 
       {/* FILTER MODAL */}
       <FilterModal
-        tableId="userTable"
-        title="Filter Users"
+        tableId="permissionTable"
+        title="Filter Permissions"
         open={filterModalOpen}
         onClose={() => setFilterModalOpen(false)}
         onApply={newFilters => {
@@ -761,24 +625,24 @@ export default function Users() {
         }}
         initialFilters={filters}
         renderForm={(filterValues, setFilterValues, resetRef) => (
-          <UserFilterForm
+          <PermissionFilterForm
             filterValues={filterValues}
             setFilterValues={setFilterValues}
-            onClose={() => setFilterModalOpen(false)}
             onResetRef={resetRef}
+            onClose={() => setFilterModalOpen(false)}
           />
         )}
       />
 
-      {/* ADD USER */}
+      {/* ADD PERMISSION */}
       {showAddButton && (
         <FormHolderSheet
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
-          title="Add New User"
+          title="Add New Permission"
           titleDivClassName="success-gradient"
         >
-          <Add fetchData={fetchData} />
+          <AddPermission fetchData={fetchData} onClose={() => setIsSheetOpen(false)} />
         </FormHolderSheet>
       )}
 
@@ -789,7 +653,7 @@ export default function Users() {
           onCancel={cancelDelete}
           onConfirm={handleDelete}
           title="Confirm Deletion"
-          description="Are you sure you want to delete this user"
+          description="Are you sure you want to delete this permission?"
           confirmLabel={deleteLoading ? 'Deleting...' : 'Delete'}
           loading={deleteLoading}
         />
@@ -802,24 +666,24 @@ export default function Users() {
           onCancel={cancelRestore}
           onConfirm={handleRestore}
           title="Confirm Restore"
-          description="Are you sure you want to restore this user"
+          description="Are you sure you want to restore this permission?"
           confirmLabel={restoreLoading ? 'Restoring...' : 'Restore'}
           loading={restoreLoading}
           variant='success'
         />
       )}
 
-      {/* EDIT USER */}
+      {/* EDIT PERMISSION */}
       {showEdit && (
         <FormHolderSheet
           open={isEditSheetOpen}
           onOpenChange={closeEditSheet}
-          title="Edit User"
+          title="Edit Permission"
           titleDivClassName="warning-gradient"
         >
-          {userToEdit && (
-            <Edit
-              userId={userToEdit.id as string}
+          {permissionToEdit && (
+            <EditPermission
+              permissionId={permissionToEdit.id}
               onClose={closeEditSheet}
               fetchData={fetchData}
             />

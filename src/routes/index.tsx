@@ -17,6 +17,8 @@ import ChangePasswordPage from "@/modules/settings/users/pages/ChangePasswordPag
 
 import ProfileEditPage from "@/modules/settings/users/pages/ProfileEditPage";
 import VerifyPasswordChangePage from "@/modules/settings/users/pages/VerifyPasswordChangePage";
+import RolesPage from "@/modules/settings/roles-permissions/pages/RolesPage";
+import PermissionsPage from "@/modules/settings/roles-permissions/pages/PermissionsPage";
 
 
 export default function AppRoutes() {
@@ -87,6 +89,22 @@ export default function AppRoutes() {
           element={
             <PermissionRoute anyOf={["read-admin-dashboard"]}>
               <VerifyPasswordChangePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="settings/roles"
+          element={
+            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+              <RolesPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="settings/permissions"
+          element={
+            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+              <PermissionsPage />
             </PermissionRoute>
           }
         />
