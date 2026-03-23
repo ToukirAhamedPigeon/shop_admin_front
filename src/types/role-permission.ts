@@ -28,6 +28,7 @@ export interface RoleFilterRequest {
   sortOrder?: string;
   isActiveStr?: string;
   isDeletedStr?: string;
+  permissions?: string[];
 }
 
 export interface PermissionFilterRequest {
@@ -38,6 +39,7 @@ export interface PermissionFilterRequest {
   sortOrder?: string;
   isActiveStr?: string;
   isDeletedStr?: string;
+  roles?: string[];
 }
 
 export interface CreateRoleRequest {

@@ -8,6 +8,7 @@ const LOCAL_STORAGE_KEY = 'roleFilters';
 export interface RoleFilters {
   isActiveStr?: string;
   isDeletedStr?: string;
+  permissions?: string[];
 }
 
 interface RoleFilterFormProps {
@@ -17,7 +18,7 @@ interface RoleFilterFormProps {
   onClose?: () => void;
 }
 
-export function RoleFilterForm({
+export default function RoleFilterForm({
   filterValues,
   setFilterValues,
   onResetRef,
@@ -28,18 +29,17 @@ export function RoleFilterForm({
   const isResetting = useRef(false);
 
   const DEFAULT_ROLE_FILTERS: RoleFilters = {
-    isActiveStr: 'all',  // Default to "All" instead of "true"
+    isActiveStr: 'all',
     isDeletedStr: 'false',
+    permissions: [],
   };
 
-  // Options for isActive with "All" option
   const ACTIVE_OPTIONS = [
     { label: 'All', value: 'all' },
     { label: 'Yes', value: 'true' },
     { label: 'No', value: 'false' }
   ];
 
-  // Options for isDeleted (only Yes/No since we don't need "All" for deleted filter)
   const DELETED_OPTIONS = [
     { label: 'No', value: 'false' },
     { label: 'Yes', value: 'true' }
@@ -101,6 +101,7 @@ export function RoleFilterForm({
       const cleaned: RoleFilters = {
         isActiveStr: values.isActiveStr || 'all',
         isDeletedStr: values.isDeletedStr || 'false',
+        permissions: values.permissions?.filter((v): v is string => typeof v === 'string') || [],
       };
 
       setFilterValues((prev) => {
@@ -144,6 +145,22 @@ export function RoleFilterForm({
           model="Role"
           value={watch('isDeletedStr') || 'false'}
           placeholder={t('Select Deleted Status')}
+        />
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4">
+        <CustomSelect<RoleFilters>
+          id="permissions"
+          label="Permissions"
+          name="permissions"
+          apiUrl="/Options/permissions"
+          optionValueKey="value"
+          optionLabelKeys={['label']}
+          multiple
+          setValue={setValue}
+          model="Role"
+          value={watch('permissions')}
+          placeholder={t('Select Permission(s)')}
         />
       </div>
     </form>

@@ -8,6 +8,7 @@ const LOCAL_STORAGE_KEY = 'permissionFilters';
 export interface PermissionFilters {
   isActiveStr?: string;
   isDeletedStr?: string;
+  roles?: string[];
 }
 
 interface PermissionFilterFormProps {
@@ -17,7 +18,7 @@ interface PermissionFilterFormProps {
   onClose?: () => void;
 }
 
-export function PermissionFilterForm({
+export default function PermissionFilterForm({
   filterValues,
   setFilterValues,
   onResetRef,
@@ -28,18 +29,17 @@ export function PermissionFilterForm({
   const isResetting = useRef(false);
 
   const DEFAULT_PERMISSION_FILTERS: PermissionFilters = {
-    isActiveStr: 'all',  // Default to "All"
+    isActiveStr: 'all',
     isDeletedStr: 'false',
+    roles: [],
   };
 
-  // Options for isActive with "All" option
   const ACTIVE_OPTIONS = [
     { label: 'All', value: 'all' },
     { label: 'Yes', value: 'true' },
     { label: 'No', value: 'false' }
   ];
 
-  // Options for isDeleted (only Yes/No)
   const DELETED_OPTIONS = [
     { label: 'No', value: 'false' },
     { label: 'Yes', value: 'true' }
@@ -101,6 +101,7 @@ export function PermissionFilterForm({
       const cleaned: PermissionFilters = {
         isActiveStr: values.isActiveStr || 'all',
         isDeletedStr: values.isDeletedStr || 'false',
+        roles: values.roles?.filter((v): v is string => typeof v === 'string') || [],
       };
 
       setFilterValues((prev) => {
@@ -144,6 +145,22 @@ export function PermissionFilterForm({
           model="Permission"
           value={watch('isDeletedStr') || 'false'}
           placeholder={t('Select Deleted Status')}
+        />
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4">
+        <CustomSelect<PermissionFilters>
+          id="roles"
+          label="Roles"
+          name="roles"
+          apiUrl="/Options/roles"
+          optionValueKey="value"
+          optionLabelKeys={['label']}
+          multiple
+          setValue={setValue}
+          model="Permission"
+          value={watch('roles')}
+          placeholder={t('Select Role(s)')}
         />
       </div>
     </form>

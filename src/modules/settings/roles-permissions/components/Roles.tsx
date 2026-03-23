@@ -37,14 +37,13 @@ import type { RootState } from '@/redux/store'
 
 import RoleDetail from './RoleDetail'
 import type { IRole } from '@/types/role-permission'
-import { RoleFilterForm } from './RoleFilterForm'
+import RoleFilterForm from './RoleFilterForm'
 import { can } from '@/lib/authCheck'
 import FormHolderSheet from '@/components/custom/FormHolderSheet'
 import AddRole from './AddRole'
 import EditRole from './EditRole'
 import { useEditSheet } from '@/hooks/useEditSheet'
 import { useDeleteWithConfirm } from '@/hooks/useDeleteWithConfirm'
-import { useAppSelector } from '@/hooks/useRedux'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
 import { deleteRole, restoreRole, getRoles } from '../api'
 
@@ -186,7 +185,7 @@ export default function Roles() {
     closeEdit: closeEditSheet
   } = useEditSheet<IRole>()
 
-  // Use ref to track if initial fetch has been done (like Users component)
+  // Use ref to track if initial fetch has been done
   const hasFetchedRef = useRef(false)
   const prevFiltersRef = useRef<Record<string, any>>({})
 
@@ -273,6 +272,17 @@ export default function Roles() {
     enableTrashView: true,
     minLoadingTime: 1000
   })
+
+  /* ---------------- Sync isDeletedStr with showTrash ---------------- */
+  useEffect(() => {
+    const newIsDeletedStr = showTrash ? 'true' : 'false'
+    if (filters.isDeletedStr !== newIsDeletedStr) {
+      setFilters(prev => ({
+        ...prev,
+        isDeletedStr: newIsDeletedStr
+      }))
+    }
+  }, [showTrash])
 
   /* ---------------- Delete Hook ---------------- */
   const {

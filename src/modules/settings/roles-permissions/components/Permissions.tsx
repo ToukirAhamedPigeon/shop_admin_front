@@ -37,7 +37,7 @@ import type { RootState } from '@/redux/store'
 
 import PermissionDetail from './PermissionDetail'
 import type { IPermission } from '@/types/role-permission'
-import { PermissionFilterForm } from './PermissionFilterForm'
+import PermissionFilterForm from './PermissionFilterForm'
 import { can } from '@/lib/authCheck'
 import FormHolderSheet from '@/components/custom/FormHolderSheet'
 import AddPermission from './AddPermission'
@@ -185,7 +185,7 @@ export default function Permissions() {
     closeEdit: closeEditSheet
   } = useEditSheet<IPermission>()
 
-  // Use ref to track if initial fetch has been done (like Users component)
+  // Use ref to track if initial fetch has been done
   const hasFetchedRef = useRef(false)
   const prevFiltersRef = useRef<Record<string, any>>({})
 
@@ -272,6 +272,17 @@ export default function Permissions() {
     enableTrashView: true,
     minLoadingTime: 1000
   })
+
+  /* ---------------- Sync isDeletedStr with showTrash ---------------- */
+  useEffect(() => {
+    const newIsDeletedStr = showTrash ? 'true' : 'false'
+    if (filters.isDeletedStr !== newIsDeletedStr) {
+      setFilters(prev => ({
+        ...prev,
+        isDeletedStr: newIsDeletedStr
+      }))
+    }
+  }, [showTrash])
 
   /* ---------------- Delete Hook ---------------- */
   const {
@@ -504,7 +515,7 @@ export default function Permissions() {
                     </div>
                   </th>
                 ))}
-              </tr>
+               </tr>
             ))}
           </thead>
 
