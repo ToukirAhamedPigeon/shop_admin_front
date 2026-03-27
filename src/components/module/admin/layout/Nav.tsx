@@ -42,8 +42,13 @@ const menuItems: MenuItem[] = [
     icon: <Settings size={22} className="mr-2" />,
     basePath: "/settings",
     permissions: [
-      // "read-admin-settings"
-      "read-admin-dashboard"
+      "read-admin-settings",
+      "read-admin-users",
+      "read-admin-profile",
+      "change-admin-password",
+      "read-admin-roles",
+      "read-admin-permissions",
+      "read-admin-user-logs"
     ],
     children: [
       {
@@ -52,8 +57,7 @@ const menuItems: MenuItem[] = [
         icon: <SlidersHorizontal size={18} className="mr-2" />,
         basePath: "/settings/app-settings",
         permissions: [
-          // "read-admin-user-logs"
-          "read-admin-dashboard"
+          "read-admin-settings"
         ],
       },
       {
@@ -62,8 +66,7 @@ const menuItems: MenuItem[] = [
         icon: <Users size={18} className="mr-2" />,
         basePath: "/settings/users",
         permissions: [
-          // "read-admin-user-logs"
-          "read-admin-dashboard"
+          "read-admin-users"
         ],
       },
       {
@@ -72,8 +75,7 @@ const menuItems: MenuItem[] = [
         icon: <User size={18} className="mr-2" />,
         basePath: "/settings/profile",
         permissions: [
-          // "read-admin-user-logs"
-          "read-admin-dashboard"
+          "read-admin-profile"
         ],
       },
       {
@@ -82,8 +84,7 @@ const menuItems: MenuItem[] = [
         icon: <Lock size={18} className="mr-2" />,
         basePath: "/settings/change-password",
         permissions: [
-          // "read-admin-user-logs"
-          "read-admin-dashboard"
+          "change-admin-password"
         ],
       },
       {
@@ -92,8 +93,7 @@ const menuItems: MenuItem[] = [
         icon: <Shield size={18} className="mr-2" />,
         basePath: "/settings/roles",
         permissions: [
-          // "read-admin-user-logs"
-          "read-admin-dashboard"
+          "read-admin-roles"
         ],
       },
       {
@@ -102,8 +102,7 @@ const menuItems: MenuItem[] = [
         icon: <Key size={18} className="mr-2" />,
         basePath: "/settings/permissions",
         permissions: [
-          // "read-admin-user-logs"
-          "read-admin-dashboard"
+          "read-admin-permissions"
         ],
       },
       {
@@ -112,8 +111,7 @@ const menuItems: MenuItem[] = [
         icon: <History size={18} className="mr-2" />,
         basePath: "/settings/user-logs",
         permissions: [
-          // "read-admin-user-logs"
-          "read-admin-dashboard"
+          "read-admin-user-logs"
         ],
       },
     ],

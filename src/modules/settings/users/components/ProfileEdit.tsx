@@ -297,49 +297,50 @@ export default function ProfileEdit() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
         {userData && (
             <Card className="p-3 bg-slate-50 dark:bg-slate-800/50 mb-4">
-                <div className="flex items-start justify-between gap-4">
-                {/* Left Section - User Info */}
-                <div className="flex-1 grid grid-rows-1 sm:grid-rows-2 gap-3">
-                    <div className="flex flex-row justify-start items-center gap-10">
-                        {/* Username */}
-                        <div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400 block">
-                            {t("Username")}
-                        </span>
-                        <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                            @{userData.username}
-                        </span>
-                        </div>
+              <div className="flex items-start justify-between gap-4">
+                  {/* Left Section - User Info */}
+                  <div className="flex-1">
+                      {/* Username & Roles Row */}
+                      <div className="flex flex-row flex-wrap items-start gap-6 mb-2">
+                          {/* Username */}
+                          <div>
+                              <span className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  {t("Username")}
+                              </span>
+                              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                  @{userData.username}
+                              </span>
+                          </div>
 
-                        {/* Roles */}
-                        <div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400 block">
-                            {t("Roles")}
-                        </span>
-                        <div className="flex flex-wrap gap-1 mt-0.5">
-                            {userData.roles?.map((role) => (
-                            <Badge key={role} variant="secondary" className="text-xs">
-                                {capitalize(role)}
-                            </Badge>
-                            ))}
-                        </div>
-                        </div>
-                    </div>
+                          {/* Roles */}
+                          <div>
+                              <span className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  {t("Roles")}
+                              </span>
+                              <div className="flex flex-wrap gap-1 mt-0.5">
+                                  {userData.roles?.map((role) => (
+                                      <Badge key={role} variant="secondary" className="text-xs">
+                                          {capitalize(role)}
+                                      </Badge>
+                                  ))}
+                              </div>
+                          </div>
+                      </div>
 
-                    {/* Permissions */}
-                    <div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 block">
-                        {t("Permissions")}
-                    </span>
-                    <div className="flex flex-wrap gap-1 mt-0.5">
-                        {userData.permissions?.map((permission) => (
-                        <Badge key={permission} variant="outline" className="text-xs">
-                            {permission}
-                        </Badge>
-                        ))}
-                    </div>
-                    </div>
-                </div>
+                      {/* Permissions Row */}
+                      <div>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 block">
+                              {t("Permissions")}
+                          </span>
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                              {userData.permissions?.map((permission) => (
+                                  <Badge key={permission} variant="outline" className="text-xs">
+                                      {permission}
+                                  </Badge>
+                              ))}
+                          </div>
+                      </div>
+                  </div>
 
                 {/* Right Section - QR Code only (no text) */}
                 <div className="flex-col items-center justify-center space-y-2">

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { useTranslations } from "@/hooks/useTranslations";
 import { dispatchHideLoader, dispatchLogoutUser, dispatchLogoutUserAll, dispatchLogoutUserOther, dispatchShowLoader, dispatchShowToast } from "@/lib/dispatch";
+import { Can } from "@/components/custom/Can";
 
 const LogoutButton: React.FC = () => {
   const { t } = useTranslations();
@@ -86,15 +87,21 @@ const LogoutButton: React.FC = () => {
           </DialogHeader>
 
           <div className="flex flex-col gap-3 py-4">
+            <Can anyOf={['logout-admin-auth']}>
             <Button variant="destructive" onClick={handleLogout} className="w-full">
               {t("common.logout", "Logout")}
             </Button>
+            </Can>
+            <Can anyOf={['logout-all-admin-auth']}>
             <Button variant="destructive" onClick={handleLogoutAll} className="w-full">
               {t("common.logoutAll", "Logout from All Devices")}
             </Button>
+            </Can>
+            <Can anyOf={['logout-others-admin-auth']}>
             <Button variant="destructive" onClick={handleLogoutOther} className="w-full">
               {t("common.logoutOther", "Logout from Other Devices")}
             </Button>
+            </Can>
           </div>
 
           <DialogFooter>

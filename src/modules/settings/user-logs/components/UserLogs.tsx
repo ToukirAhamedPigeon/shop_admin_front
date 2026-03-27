@@ -38,6 +38,7 @@ import { parseChanges } from '@/lib/helpers'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/redux/store'
 import { ExpandableText } from '@/components/custom/ExpandableText'
+import { can } from '@/lib/authCheck' 
 
 // Column definitions
 const getAllColumns = ({
@@ -195,29 +196,41 @@ export default function LogListTable() {
   fetchDetailRef.current = fetchDetail
 
   const userId = useSelector((state: RootState) => state.auth.user?.id ?? '')
+  
+  // Check if user has permission to read all logs
+  const hasReadAllPermission = can(['read-admin-all-user-logs'])
 
   // Stabilize fetcher using useCallback
   const stableFetcher = useCallback(
     async ({ q, page, limit, sortBy, sortOrder }: { q?: string; page: number; limit: number; sortBy?: string; sortOrder?: string }) => {
+      const payload: any = {
+        q,
+        page,
+        limit,
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc',
+        ...(filters.createdAtFrom && { createdAtFrom: filters.createdAtFrom }),
+        ...(filters.createdAtTo && { createdAtTo: filters.createdAtTo }),
+        ...(filters.collectionName?.length && { collectionName: filters.collectionName }),
+        ...(filters.actionType?.length && { actionType: filters.actionType }),
+      }
+      
+      // If user doesn't have read-all-logs permission, only show their own logs
+      if (!hasReadAllPermission && userId) {
+        payload.createdBy = [userId]
+      } else if (hasReadAllPermission && filters.createdBy?.length) {
+        // If user has permission and filters are applied, use the selected users
+        payload.createdBy = filters.createdBy
+      }
+      
       const res = await api.post(
         '/UserLog',
-        {
-          q,
-          page,
-          limit,
-          sortBy: sortBy || 'createdAt',
-          sortOrder: sortOrder || 'desc',
-          ...(filters.createdAtFrom && { createdAtFrom: filters.createdAtFrom }),
-          ...(filters.createdAtTo && { createdAtTo: filters.createdAtTo }),
-          ...(filters.collectionName?.length && { collectionName: filters.collectionName }),
-          ...(filters.actionType?.length && { actionType: filters.actionType }),
-          ...(filters.createdBy?.length && { createdBy: filters.createdBy }),
-        },
+        payload,
         { withCredentials: true }
       )
       return { data: res.data.logs, total: res.data.totalCount, grandTotalCount: res.data.grandTotalCount }
     },
-    [filters]
+    [filters, hasReadAllPermission, userId]
   )
 
   const {
@@ -420,7 +433,7 @@ export default function LogListTable() {
                       </div>
                     </th>
                   ))}
-                </tr>
+                 </tr>
               ))}
             </thead>
             

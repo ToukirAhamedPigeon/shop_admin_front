@@ -7,6 +7,7 @@ import Loader from "@/components/custom/Loader";
 import { formatNumber } from "@/lib/helpers";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
+// import { useDebounce } from '@/hooks/useDebounce'
 import { Can } from "./Can";
 
 /** --- RowActions Component --- **/
@@ -145,6 +146,7 @@ interface TableHeaderActionsProps {
   addButtonLabel?: string
   showSearch?: boolean
   showAddButton?: boolean
+  showTrashButton?: boolean
   showFilterButton?: boolean
   showPrintButton?: boolean
   showExportButton?: boolean
@@ -173,6 +175,7 @@ export function TableHeaderActions({
   addButtonLabel = 'Add New',
   showSearch = true,
   showAddButton = true,
+  showTrashButton = true,
   showFilterButton = true,
   showPrintButton = true,
   showExportButton = true,
@@ -181,6 +184,7 @@ export function TableHeaderActions({
   storeButton,
 }: TableHeaderActionsProps) {
   const { t } = useTranslations();
+  // const debouncedSearchValue = useDebounce(searchValue, 500)
   return (
     <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-3 mb-4 dark:text-gray-200">
       {showSearch &&
@@ -258,7 +262,7 @@ export function TableHeaderActions({
           </Button>
         )}
         {/* Trash Button - shown when not in trash view */}
-        {trashButton?.show && trashButton.onClick && (
+        {showTrashButton && trashButton?.show && trashButton.onClick && (
           <Button
             onClick={trashButton.onClick}
             aria-label="View deleted items"

@@ -8,13 +8,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronDown, ChevronUp, User, Settings, KeyRound, LogOut, Shield, Mail, Lock } from "lucide-react";
+import { ChevronDown, ChevronUp, User, Settings, KeyRound, LogOut, Shield, Mail, Lock, SlidersHorizontal } from "lucide-react";
 import LogoutButton from "@/modules/auth/components/LogoutButton";
 import { useState } from "react";
 import { useAppSelector } from "@/hooks/useRedux";
 import { capitalize } from "@/lib/helpers";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Link } from "react-router-dom";
+import { Can } from "@/components/custom/Can";
 
 export default function UserDropdown() {
   const {t} = useTranslations();
@@ -141,7 +142,8 @@ export default function UserDropdown() {
 
         {/* Menu Items */}
         <div className="py-1">
-          <DropdownMenuItem asChild className="focus:bg-gray-100 dark:focus:bg-gray-800 rounded-lg cursor-pointer">
+          <Can anyOf={['read-admin-profile','update-admin-profile']}>
+            <DropdownMenuItem asChild className="focus:bg-gray-100 dark:focus:bg-gray-800 rounded-lg cursor-pointer">
             <Link to="/settings/profile" className="flex items-center gap-3 px-3 py-2.5 text-sm">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
                 <User className="w-4 h-4" />
@@ -156,24 +158,26 @@ export default function UserDropdown() {
               </div>
             </Link>
           </DropdownMenuItem>
-
-          <DropdownMenuItem asChild className="focus:bg-gray-100 dark:focus:bg-gray-800 rounded-lg cursor-pointer">
-            <Link to="/settings/app" className="flex items-center gap-3 px-3 py-2.5 text-sm">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
-                <Settings className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {t("common.app.title", "Application")}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  App preferences and settings
-                </span>
-              </div>
-            </Link>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem asChild className="focus:bg-gray-100 dark:focus:bg-gray-800 rounded-lg cursor-pointer">
+          </Can>
+          <Can anyOf={['read-admin-settings']}>
+              <DropdownMenuItem asChild className="focus:bg-gray-100 dark:focus:bg-gray-800 rounded-lg cursor-pointer">
+              <Link to="/settings/app" className="flex items-center gap-3 px-3 py-2.5 text-sm">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
+                  <SlidersHorizontal className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {t("common.app.title", "App Settings")}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    App preferences and settings
+                  </span>
+                </div>
+              </Link>
+            </DropdownMenuItem>
+          </Can>
+          <Can anyOf={['change-admin-password']}>
+            <DropdownMenuItem asChild className="focus:bg-gray-100 dark:focus:bg-gray-800 rounded-lg cursor-pointer">
             <Link to="/settings/change-password" className="flex items-center gap-3 px-3 py-2.5 text-sm">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
                 <Lock className="w-4 h-4" />
@@ -188,21 +192,24 @@ export default function UserDropdown() {
               </div>
             </Link>
           </DropdownMenuItem>
+          </Can>
         </div>
 
         <DropdownMenuSeparator className="my-1 bg-gray-200 dark:bg-gray-700" />
 
         {/* Logout Section */}
-        <div className="py-1">
-          <DropdownMenuItem 
-            className="focus:bg-red-50 dark:focus:bg-red-900/20 rounded-lg cursor-pointer p-0"
-            onSelect={(e) => e.preventDefault()}
-          >
-            <div className="w-full">
-              <LogoutButton />
-            </div>
-          </DropdownMenuItem>
-        </div>
+        <Can anyOf={['logout-admin-auth','logout-all-admin-auth','logout-others-admin-auth']}>
+          <div className="py-1">
+            <DropdownMenuItem 
+              className="focus:bg-red-50 dark:focus:bg-red-900/20 rounded-lg cursor-pointer p-0"
+              onSelect={(e) => e.preventDefault()}
+            >
+              <div className="w-full">
+                <LogoutButton />
+              </div>
+            </DropdownMenuItem>
+          </div>
+        </Can>
 
         {/* Footer Note */}
         <div className="px-3 py-2 mt-1">

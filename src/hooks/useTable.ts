@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ColumnDef, SortingState, OnChangeFn } from '@tanstack/react-table'
 
-// Define the view indicator type
 type ViewIndicatorType = 'trash' | 'store'
 
 interface ViewIndicatorConfig {
@@ -19,7 +18,7 @@ export function useTable<T>({
   initialColumns = [],
   defaultSort = 'createdAt',
   enableTrashView = false,
-  minLoadingTime = 500, // Add minimum loading time (default 500ms)
+  minLoadingTime = 500,
 }: {
   fetcher: (params: {
     q: string
@@ -32,7 +31,7 @@ export function useTable<T>({
   initialColumns?: ColumnDef<T, any>[]
   defaultSort?: string
   enableTrashView?: boolean
-  minLoadingTime?: number // Add this
+  minLoadingTime?: number
 }) {
   const [data, setData] = useState<T[]>([])
   const [loading, setLoading] = useState(false)
@@ -45,6 +44,12 @@ export function useTable<T>({
   const [pendingPage, setPendingPage] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showTrash, setShowTrash] = useState(false)
+  
+  // Refs for tracking previous values to detect changes
+  const prevGlobalFilterRef = useRef(globalFilter)
+  const prevShowTrashRef = useRef(showTrash)
+  const prevPageSizeRef = useRef(pageSize)
+  const prevSortingRef = useRef(sorting)
   
   // Refs for managing loading state
   const loadingStartTime = useRef<number | null>(null)
@@ -93,7 +98,6 @@ export function useTable<T>({
       const remainingTime = Math.max(0, minLoadingTime - elapsedTime)
 
       if (remainingTime > 0) {
-        // Wait for remaining time to meet minimum loading duration
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current)
         }
@@ -116,7 +120,6 @@ export function useTable<T>({
           }
         }, remainingTime)
       } else {
-        // Already exceeded minimum time, update immediately
         setData(res.data)
         setTotalCount(res.total)
         setGrandTotalCount(res.grandTotalCount)
@@ -138,6 +141,27 @@ export function useTable<T>({
       loadingStartTime.current = null
     }
   }, [fetcher, globalFilter, pageIndex, pageSize, sorting, defaultSort, enableTrashView, showTrash, minLoadingTime])
+
+  // Reset page index when filter-related values change
+  useEffect(() => {
+    // Check if any filter value changed (excluding pageIndex)
+    const globalFilterChanged = prevGlobalFilterRef.current !== globalFilter
+    const showTrashChanged = prevShowTrashRef.current !== showTrash
+    const pageSizeChanged = prevPageSizeRef.current !== pageSize
+    const sortingChanged = JSON.stringify(prevSortingRef.current) !== JSON.stringify(sorting)
+    
+    if (globalFilterChanged || showTrashChanged || pageSizeChanged || sortingChanged) {
+      // Reset page index to 0
+      setPageIndex(0)
+      setPendingPage(0)
+      
+      // Update refs
+      prevGlobalFilterRef.current = globalFilter
+      prevShowTrashRef.current = showTrash
+      prevPageSizeRef.current = pageSize
+      prevSortingRef.current = sorting
+    }
+  }, [globalFilter, showTrash, pageSize, sorting])
 
   useEffect(() => {
     if (pendingPage !== null && pendingPage !== pageIndex) {
@@ -164,26 +188,24 @@ export function useTable<T>({
 
   const handlePageSizeChange = useCallback((newSize: number) => {
     setPageSize(newSize)
-    setPageIndex(0)
-    setPendingPage(0)
+    // pageIndex will be reset by the useEffect above
   }, [])
 
   const handleTrashClick = useCallback(() => {
     setShowTrash(true)
-    setPageIndex(0)
+    // pageIndex will be reset by the useEffect above
   }, [])
 
   const handleStoreClick = useCallback(() => {
     setShowTrash(false)
-    setPageIndex(0)
+    // pageIndex will be reset by the useEffect above
   }, [])
 
   const toggleTrashView = useCallback(() => {
     setShowTrash(prev => !prev)
-    setPageIndex(0)
+    // pageIndex will be reset by the useEffect above
   }, [])
 
-  // Return properly typed view indicator
   const viewIndicator: ViewIndicatorConfig | null = enableTrashView ? {
     show: true,
     type: showTrash ? 'trash' : 'store',

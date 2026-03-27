@@ -56,7 +56,7 @@ export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?:
         )}
 
         {/* 🔥 NEW BUTTON */}
-        {can(['read-admin-dashboard']) && (
+        {can(['update-admin-users']) && (
           <button
             disabled={qrLoading}
             onClick={async () => {
@@ -103,7 +103,7 @@ export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?:
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <span className="text-red-500 font-semibold">Not Verified</span>
 
-          {can(['read-admin-dashboard']) && (
+          {can(['update-admin-users']) && (
             <button
               disabled={loading}
               onClick={async () => {

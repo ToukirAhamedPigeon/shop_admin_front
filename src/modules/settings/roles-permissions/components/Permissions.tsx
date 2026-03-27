@@ -167,6 +167,7 @@ export default function Permissions() {
   const [filters, setFilters] = useState<Record<string, any>>({})
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showAddButton, setShowAddButton] = useState(false)
+  const [showTrashButton, setShowTrashButton] = useState(false)
 
   // Restore dialog state
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
@@ -174,9 +175,9 @@ export default function Permissions() {
   const [restoreLoading, setRestoreLoading] = useState(false)
 
   const showDetail = true
-  const showEdit = can(['read-admin-dashboard'])
-  const showDelete = can(['read-admin-dashboard'])
-  const showRestore = can(['read-admin-dashboard'])
+  const showEdit = can(['update-admin-permissions'])
+  const showDelete = can(['delete-admin-permissions'])
+  const showRestore = can(['restore-admin-permissions'])
 
   const {
     isOpen: isEditSheetOpen,
@@ -348,7 +349,8 @@ export default function Permissions() {
 
   /* ---------------- Add Button Permission ---------------- */
   useEffect(() => {
-    setShowAddButton(can(['read-admin-dashboard']))
+    setShowAddButton(can(['create-admin-permissions']))
+    setShowTrashButton(can(['restore-admin-permissions']))
   }, [])
 
   /* ---------------- Load Column Settings ---------------- */
@@ -395,7 +397,7 @@ export default function Permissions() {
     if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
       return
     }
-
+    setPageIndex(0)
     fetchData()
     prevFiltersRef.current = filters
     
@@ -454,6 +456,7 @@ export default function Permissions() {
         onSearchChange={setGlobalFilter}
         onAddNew={() => setIsSheetOpen(true)}
         showAddButton={showAddButton}
+        showTrashButton={showTrashButton}
         trashButton={
           !showTrash ? {
             onClick: handleTrashClick,

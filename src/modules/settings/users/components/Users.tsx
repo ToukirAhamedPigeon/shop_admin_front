@@ -263,6 +263,7 @@ export default function Users() {
   const [filters, setFilters] = useState<Record<string, any>>({})
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showAddButton, setShowAddButton] = useState(false)
+  const [showTrashButton, setShowTrashButton] = useState(false)
 
   // Restore dialog state
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
@@ -270,9 +271,9 @@ export default function Users() {
   const [restoreLoading, setRestoreLoading] = useState(false)
 
   const showDetail = true
-  const showEdit = can(['read-admin-dashboard'])
-  const showDelete = can(['read-admin-dashboard'])
-  const showRestore = can(['read-admin-dashboard'])
+  const showEdit = can(['update-admin-users'])
+  const showDelete = can(['delete-admin-users'])
+  const showRestore = can(['restore-admin-users'])
 
   const {
     isOpen: isEditSheetOpen,
@@ -432,7 +433,8 @@ export default function Users() {
 
   /* ---------------- Add Button Permission ---------------- */
   useEffect(() => {
-    setShowAddButton(can(['read-admin-dashboard']))
+    setShowAddButton(can(['create-admin-users']))
+    setShowTrashButton(can(['restore-admin-users']))
   }, [])
 
   /* ---------------- Load Column Settings ---------------- */
@@ -479,7 +481,7 @@ export default function Users() {
     if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
       return
     }
-
+    setPageIndex(0)
     fetchData()
     prevFiltersRef.current = filters
     
@@ -576,6 +578,7 @@ export default function Users() {
         onSearchChange={setGlobalFilter}
         onAddNew={() => setIsSheetOpen(true)}
         showAddButton={showAddButton}
+        showTrashButton={showTrashButton}
         trashButton={
         !showTrash ? {
           onClick: handleTrashClick,

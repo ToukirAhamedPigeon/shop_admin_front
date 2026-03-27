@@ -62,7 +62,7 @@ export default function AppRoutes() {
         <Route
           path="settings/users"
           element={
-            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+            <PermissionRoute anyOf={["read-admin-users"]}>
               <UsersPage />
             </PermissionRoute>
           }
@@ -70,7 +70,7 @@ export default function AppRoutes() {
         <Route
           path="settings/profile"
           element={
-            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+            <PermissionRoute anyOf={["update-admin-profile"]}>
               <ProfileEditPage />
             </PermissionRoute>
           }
@@ -78,7 +78,7 @@ export default function AppRoutes() {
         <Route
           path="settings/change-password"
           element={
-            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+            <PermissionRoute anyOf={["change-admin-password"]}>
               <ChangePasswordPage />
             </PermissionRoute>
           }
@@ -87,7 +87,7 @@ export default function AppRoutes() {
         <Route
           path="verify-password-change/:token"
           element={
-            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+            <PermissionRoute anyOf={["change-admin-password"]}>
               <VerifyPasswordChangePage />
             </PermissionRoute>
           }
@@ -95,7 +95,7 @@ export default function AppRoutes() {
         <Route
           path="settings/roles"
           element={
-            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+            <PermissionRoute anyOf={["read-admin-roles"]}>
               <RolesPage />
             </PermissionRoute>
           }
@@ -103,7 +103,7 @@ export default function AppRoutes() {
         <Route
           path="settings/permissions"
           element={
-            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+            <PermissionRoute anyOf={["read-admin-permissions"]}>
               <PermissionsPage />
             </PermissionRoute>
           }
@@ -113,7 +113,7 @@ export default function AppRoutes() {
         <Route
           path="settings/user-logs"
           element={
-            <PermissionRoute anyOf={["read-admin-dashboard"]}>
+            <PermissionRoute anyOf={["read-admin-user-logs"]}>
               <UserLogsPage />
             </PermissionRoute>
           }

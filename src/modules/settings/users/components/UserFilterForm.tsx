@@ -35,7 +35,7 @@ export function UserFilterForm({
 }: UserFilterFormProps) {
   const initialized = useRef(false);
   const user = useAppSelector((state) => state.auth.user);
-  const hasReadAllPermission = can(['read-admin-dashboard']);
+  const hasReadAllPermission = can(['read-admin-users']);
   const { t } = useTranslations();
   const isResetting = useRef(false);
 

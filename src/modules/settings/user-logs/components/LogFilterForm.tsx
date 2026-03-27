@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import DateTimeInput, { CustomSelect } from '@/components/custom/FormInputs';
@@ -33,7 +32,7 @@ export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: Log
     createdAtTo: null,
   };
 
-  const hasReadAllPermission = can(['read-all-logs']);
+  const hasReadAllPermission = can(['read-admin-all-user-logs']);
   const initialized = useRef(false);
   const user = useAppSelector((state) => state.auth.user);
   const { t } = useTranslations();
@@ -42,15 +41,16 @@ export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: Log
   const { watch, reset, setValue, formState: { errors } } = useForm<LogFilters>({
     defaultValues: {
       ...filterValues,
-      createdAtFrom: filterValues.createdAtFrom ?? new Date(),
+      createdAtFrom: filterValues.createdAtFrom ?? new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
       createdAtTo: filterValues.createdAtTo ?? new Date(),
+      // If user doesn't have read-all-logs permission, always set createdBy to their own ID
       createdBy: hasReadAllPermission
         ? filterValues.createdBy
         : [user?.id ?? ''],
     },
   });
 
- /* ----------------------------------------
+  /* ----------------------------------------
    * Expose handleReset to modal via resetRef
    * -------------------------------------- */
   const handleReset = () => {
@@ -58,15 +58,14 @@ export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: Log
 
     localStorage.removeItem(LOCAL_STORAGE_KEY);
 
-    reset({
+    const resetValues = {
       ...DEFAULT_LOG_FILTERS,
+      // If user doesn't have permission, always reset to their own ID
       createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
-    });
+    };
 
-    setFilterValues({
-      ...DEFAULT_LOG_FILTERS,
-      createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
-    });
+    reset(resetValues);
+    setFilterValues(resetValues);
 
     setTimeout(() => {
       isResetting.current = false;
@@ -74,11 +73,14 @@ export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: Log
   };
 
   useEffect(() => {
-    if (onResetRef) { // 🔹 assign form's handleReset to resetRef
+    if (onResetRef) {
       onResetRef.current = handleReset;
     }
   }, [onResetRef]);
 
+  /* ----------------------------------------
+   * Load from localStorage (once)
+   * -------------------------------------- */
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -87,24 +89,46 @@ export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: Log
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
         const savedValues = JSON.parse(saved) as LogFilters;
+        
         const merged: LogFilters = {
           ...filterValues,
           ...savedValues,
-          createdAtFrom: savedValues.createdAtFrom ? new Date(savedValues.createdAtFrom) : new Date(),
+          createdAtFrom: savedValues.createdAtFrom ? new Date(savedValues.createdAtFrom) : new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
           createdAtTo: savedValues.createdAtTo ? new Date(savedValues.createdAtTo) : new Date(),
-          createdBy: hasReadAllPermission ? savedValues.createdBy : [user?.id ?? ''],
+          // If user doesn't have read-all-logs permission, always use their own ID
+          createdBy: hasReadAllPermission 
+            ? (savedValues.createdBy || [])
+            : [user?.id ?? ''],
         };
+        
         reset(merged);
         setFilterValues(merged);
-      } else reset();
+      } else {
+        // Initialize with default values
+        const defaultValues = {
+          ...DEFAULT_LOG_FILTERS,
+          createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
+        };
+        reset(defaultValues);
+        setFilterValues(defaultValues);
+      }
     } catch (err) {
       console.error('Failed to load filter values from localStorage:', err);
+      const defaultValues = {
+        ...DEFAULT_LOG_FILTERS,
+        createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
+      };
+      reset(defaultValues);
+      setFilterValues(defaultValues);
     }
   }, [filterValues, reset, setFilterValues, user, hasReadAllPermission]);
 
+  /* ----------------------------------------
+   * Sync on change
+   * -------------------------------------- */
   useEffect(() => {
     const subscription = watch((values) => {
-      if (isResetting.current) return; // 🔑 IMPORTANT
+      if (isResetting.current) return;
 
       const cleaned: LogFilters = {
         ...values,
@@ -114,6 +138,11 @@ export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: Log
           (v): v is string => typeof v === 'string'
         ),
       };
+
+      // If user doesn't have permission, ensure createdBy always contains their ID
+      if (!hasReadAllPermission && user?.id) {
+        cleaned.createdBy = [user.id];
+      }
 
       setFilterValues((prev) => {
         if (JSON.stringify(prev) !== JSON.stringify(cleaned)) {
@@ -125,8 +154,8 @@ export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: Log
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, setFilterValues]);
-
+  }, [watch, setFilterValues, hasReadAllPermission, user]);
+  console.log(hasReadAllPermission)
   return (
     <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
       <div className="flex flex-col md:flex-row gap-4">
@@ -156,39 +185,26 @@ export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: Log
           value={watch("actionType")}
           placeholder={t('Select Action(s)')}
         />
-        <CustomSelect<LogFilters>
-          id="createdBy"
-          label="Created By"
-          name="createdBy"
-          apiUrl="/Options/userLogCreators"
-          optionValueKey="value"
-          optionLabelKeys={["label"]}
-          multiple
-          setValue={setValue}
-          model="Log"
-          value={watch("createdBy")}
-          placeholder={t('Select User(s)')}
-        />
       </div>
 
+      {/* Only show Created By filter if user has read-all-logs permission */}
       {hasReadAllPermission && (
-        <CustomSelect<LogFilters>
-          id="createdBy"
-          label="Created By"
-          name="createdBy"
-          setValue={setValue}
-          model="User"
-          apiUrl="/get-options"
-          collection="User"
-          labelFields={['name']}
-          valueFields={['_id']}
-          sortOrder="asc"
-          isRequired={false}
-          placeholder="Select User(s)"
-          multiple
-          value={watch('createdBy')}
-          error={errors.createdBy?.[0]}
-        />
+        <div className="flex flex-col md:flex-row gap-4">
+          <CustomSelect<LogFilters>
+            id="createdBy"
+            label="Created By"
+            name="createdBy"
+            apiUrl="/Options/userLogCreators"
+            optionValueKey="value"
+            optionLabelKeys={["label"]}
+            multiple
+            setValue={setValue}
+            model="Log"
+            value={watch("createdBy")}
+            placeholder={t('Select User(s)')}
+            error={errors.createdBy?.[0]}
+          />
+        </div>
       )}
 
       <div className="flex flex-col md:flex-row gap-4">
@@ -196,7 +212,7 @@ export function LogFilterForm({ filterValues, setFilterValues, onResetRef }: Log
           id="createdAtFrom"
           label="From Date"
           name="createdAtFrom"
-          value={watch('createdAtFrom') ?? new Date()}
+          value={watch('createdAtFrom') ?? new Date(new Date().setFullYear(new Date().getFullYear() - 1))}
           setValue={(field, value) => setValue(field as keyof LogFilters, value)}
           error={errors.createdAtFrom}
           placeholder="Select start date"
