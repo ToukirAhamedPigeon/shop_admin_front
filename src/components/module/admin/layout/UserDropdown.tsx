@@ -12,7 +12,7 @@ import { ChevronDown, ChevronUp, User, Settings, KeyRound, LogOut, Shield, Mail,
 import LogoutButton from "@/modules/auth/components/LogoutButton";
 import { useState } from "react";
 import { useAppSelector } from "@/hooks/useRedux";
-import { capitalize } from "@/lib/helpers";
+import { capitalize, truncateText } from "@/lib/helpers";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Link } from "react-router-dom";
 import { Can } from "@/components/custom/Can";
@@ -36,6 +36,20 @@ export default function UserDropdown() {
       .substring(0, 2);
   };
 
+
+  // Get display name (prefer name, fallback to username or email)
+  const getDisplayName = () => {
+    if (user.name && user.name.trim()) return user.name;
+    if (user.username) return user.username;
+    if (user.email) return user.email.split('@')[0];
+    return "User";
+  };
+
+  const displayName = getDisplayName();
+  const truncatedName = capitalize(truncateText(displayName, 20));
+  const firstName = displayName.split(" ")[0];
+  const truncatedFirstName = capitalize(truncateText(firstName, 15));
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
       <DropdownMenuTrigger asChild>
@@ -50,7 +64,7 @@ export default function UserDropdown() {
           <Avatar className="h-8 w-8 ring-2 ring-transparent group-hover:ring-blue-400/50 transition-all">
             <AvatarImage 
               src={user?.profileImage ? import.meta.env.VITE_API_ASSET_URL + user.profileImage : undefined} 
-              alt={user.name} 
+              alt={displayName} 
               className="object-cover"
             />
             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-medium">
@@ -59,8 +73,8 @@ export default function UserDropdown() {
           </Avatar>
           
           <div className="hidden lg:flex flex-col items-start">
-            <span className="text-sm font-medium text-white leading-tight">
-              {user.name?.split(" ")[0] ?? "User"}
+            <span className="text-sm font-medium text-white leading-tight" title={displayName}>
+              {truncatedFirstName}
             </span>
             <span className="text-xs text-white/70 leading-tight">
               {user.roles?.[0] ? capitalize(user.roles[0]) : "User"}
@@ -102,7 +116,7 @@ export default function UserDropdown() {
             <Avatar className="h-14 w-14 ring-2 ring-white dark:ring-gray-800 shadow-md">
               <AvatarImage 
                 src={user?.profileImage ? import.meta.env.VITE_API_ASSET_URL + user.profileImage : undefined} 
-                alt={user.name}
+                alt={displayName}
                 className="object-cover"
               />
               <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-lg font-semibold">
@@ -111,8 +125,8 @@ export default function UserDropdown() {
             </Avatar>
             
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                {user.name}
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate" title={displayName}>
+                {truncatedName}
               </h4>
               <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                 <Mail className="w-3 h-3 flex-shrink-0" />
@@ -214,7 +228,7 @@ export default function UserDropdown() {
         {/* Footer Note */}
         <div className="px-3 py-2 mt-1">
           <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-            Signed in as <span className="font-medium text-gray-700 dark:text-gray-300">{user.username || user.email}</span>
+            Signed in as <span className="font-medium text-gray-700 dark:text-gray-300">{truncatedName}</span>
           </p>
         </div>
       </DropdownMenuContent>

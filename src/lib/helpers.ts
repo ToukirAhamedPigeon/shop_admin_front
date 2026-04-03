@@ -28,6 +28,11 @@ export const labelFormatter = (input: string): string => {
 };
 export const twoDigitRandomNumber = Math.floor(Math.random() * 90) + 10;
 
+export const truncateText = (text: string, maxLength: number = 20): string => {
+  if (!text) return '';
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+};
+
  export function omitFields<T extends Record<string, any>>(obj: T, fields: string[]): Partial<T> {
     const result = { ...obj }
     for (const field of fields) {

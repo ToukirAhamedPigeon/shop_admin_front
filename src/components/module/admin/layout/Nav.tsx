@@ -12,11 +12,13 @@ import {
   User,
   Lock,
   Shield,
-  Key
+  Key,
+  FileCode
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
 import { useTranslations } from "@/hooks/useTranslations";
+import { API_BASE_URL } from "@/constants/index";
 
 interface MenuItem {
   label: string;
@@ -25,6 +27,7 @@ interface MenuItem {
   basePath: string;
   permissions: string[];
   children?: MenuItem[];
+  external?: boolean;
 }
 
 // Menu Structure
@@ -48,7 +51,8 @@ const menuItems: MenuItem[] = [
       "change-admin-password",
       "read-admin-roles",
       "read-admin-permissions",
-      "read-admin-user-logs"
+      "read-admin-user-logs",
+      "read-admin-api-docs"
     ],
     children: [
       {
@@ -114,6 +118,14 @@ const menuItems: MenuItem[] = [
           "read-admin-user-logs"
         ],
       },
+      {
+        label: "common.api_docs.title",
+        defaultLabel: "API Documentation",
+        icon: <FileCode size={18} className="mr-2" />,
+        basePath: `${API_BASE_URL}/swagger/index.html`,
+        permissions: ["read-admin-api-docs"],
+        external: true,
+      },
     ],
   },
 ];
@@ -149,22 +161,22 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
 
   const renderMenu = (items: MenuItem[], level = 0) => (
     <div className={level > 0 ? "ml-4" : ""}>
-      {items.map(({ label, defaultLabel, icon, basePath, children, permissions }) => {
+      {items.map(({ label, defaultLabel, icon, basePath, children, permissions, external }) => {
         const alwaysOpen = isActiveMenu(basePath);
         const isOpen = openMenus.includes(label) || alwaysOpen;
 
         return (
           <Can anyOf={permissions} key={label}>
-            <div  className="space-y-1">
+            <div className="space-y-1">
               {children && children.length > 0 ? (
                 <button
-                    className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all rounded cursor-pointer
-                      ${getLevelClasses(level, alwaysOpen)}`}
-                    onClick={() => toggleMenu(label)}
-                  >
+                  className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all rounded cursor-pointer
+                    ${getLevelClasses(level, alwaysOpen)}`}
+                  onClick={() => toggleMenu(label)}
+                >
                   <span>
                     <div className="flex flex-row text-sm items-center cursor-pointer">
-                      {icon} {t(label,defaultLabel)}
+                      {icon} {t(label, defaultLabel)}
                     </div>
                   </span>
                   <span className="cursor-pointer">
@@ -175,20 +187,38 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
                     )}
                   </span>
                 </button>
-              ) : (
-                <Link
-                    to={basePath}
-                    onClick={onLinkClick}
-                    className={`block px-4 py-2 text-sm rounded transition-all border-l-2 cursor-pointer
-                      ${
-                        isActiveSubmenu(basePath)
-                          ? "text-primary font-semibold bg-white/70 dark:bg-black/20 border-primary"
-                          : "text-gray-50 dark:text-gray-200 hover:bg-white/20 dark:hover:bg-black/20 border-transparent"
-                      }`}
-                  >
+              ) : external ? (
+                <a
+                  href={basePath}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onLinkClick}
+                  className={`block px-4 py-2 text-sm rounded transition-all border-l-2 cursor-pointer
+                    ${
+                      location.pathname === basePath
+                        ? "text-primary font-semibold bg-white/70 dark:bg-black/20 border-primary"
+                        : "text-gray-50 dark:text-gray-200 hover:bg-white/20 dark:hover:bg-black/20 border-transparent"
+                    }`}
+                >
                   <span className="flex items-center gap-2 cursor-pointer">
                     {icon}
-                    {t(label,defaultLabel)}
+                    {t(label, defaultLabel)}
+                  </span>
+                </a>
+              ) : (
+                <Link
+                  to={basePath}
+                  onClick={onLinkClick}
+                  className={`block px-4 py-2 text-sm rounded transition-all border-l-2 cursor-pointer
+                    ${
+                      isActiveSubmenu(basePath)
+                        ? "text-primary font-semibold bg-white/70 dark:bg-black/20 border-primary"
+                        : "text-gray-50 dark:text-gray-200 hover:bg-white/20 dark:hover:bg-black/20 border-transparent"
+                    }`}
+                >
+                  <span className="flex items-center gap-2 cursor-pointer">
+                    {icon}
+                    {t(label, defaultLabel)}
                   </span>
                 </Link>
               )}
