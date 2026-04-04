@@ -151,6 +151,18 @@ export const logoutUserOther = createAsyncThunk<void, void, { rejectValue: strin
   }
 );
 
+export const refreshUserProfile = createAsyncThunk<User, void, { rejectValue: string }>(
+  "auth/refreshUserProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/users/profile');
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || "Failed to refresh user profile");
+    }
+  }
+);
+
 // =========================
 // Slice
 // =========================
@@ -232,6 +244,13 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(logoutUserOther.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+      .addCase(refreshUserProfile.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(refreshUserProfile.rejected, (state, action) => {
         state.error = action.payload as string;
       });
   },

@@ -11,11 +11,13 @@ import {
   SingleImageInput,
   UniqueInput
 } from "@/components/custom/FormInputs"
+import { useRefreshAuth } from '@/hooks/useRefreshAuth';
 import { BOOLEAN_OPTIONS } from "@/constants"
 import { useProfilePicture } from "@/hooks/useProfilePicture"
 import { useTranslations } from "@/hooks/useTranslations"
 import Loader from "@/components/custom/Loader" // Import Loader
 import z from "zod"
+import { useAppSelector } from "@/hooks/useRedux"
 
 interface Props {
   userId: string
@@ -63,6 +65,7 @@ export type EditUserFormValues = z.infer<typeof editSchema>
 
 export default function Edit({ userId, fetchData, onClose }: Props) {
   const { t } = useTranslations()
+  const { refreshUser } = useRefreshAuth()
   const [loading, setLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)
   const model = "User"
@@ -191,6 +194,11 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
       }
     
       await updateUser(userId, formData)
+
+      const currentUserId = useAppSelector((state) => state.auth.user?.id)
+      if (currentUserId === userId) {
+        await refreshUser()
+      }
 
       dispatchShowToast({ type: "success", message: t("User updated successfully") })
 

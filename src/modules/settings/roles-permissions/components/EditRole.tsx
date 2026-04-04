@@ -10,6 +10,8 @@ import { dispatchShowToast } from '@/lib/dispatch'
 import Loader from '@/components/custom/Loader'
 import { getRoleForEdit, updateRole } from '../api'
 import type { IRole } from '@/types/role-permission'
+import { useRefreshAuth } from '@/hooks/useRefreshAuth';
+import { useAppSelector } from '@/hooks/useRedux';
 
 const schema = z.object({
   name: z.string().min(1, 'Role name is required'),
@@ -28,6 +30,8 @@ interface EditRoleProps {
 
 export default function EditRole({ roleId, fetchData, onClose }: EditRoleProps) {
   const { t } = useTranslations()
+  const { refreshUser } = useRefreshAuth()
+  const currentUser = useAppSelector((state) => state.auth.user)
   const [loading, setLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)
   const hasLoaded = useRef(false) // Track if data has been loaded
@@ -102,6 +106,13 @@ export default function EditRole({ roleId, fetchData, onClose }: EditRoleProps) 
         isActive: data.isActive
       })
 
+      const currentUserRoles = currentUser?.roles || []
+      const roleName = data.name
+      
+      if (currentUserRoles.includes(roleName)) {
+        await refreshUser()
+      }
+      
       dispatchShowToast({
         type: 'success',
         message: t('Role updated successfully')

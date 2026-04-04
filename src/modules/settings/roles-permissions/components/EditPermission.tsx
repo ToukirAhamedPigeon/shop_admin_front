@@ -10,6 +10,8 @@ import { dispatchShowToast } from '@/lib/dispatch'
 import Loader from '@/components/custom/Loader'
 import { getPermissionForEdit, updatePermission } from '../api'
 import type { IPermission } from '@/types/role-permission'
+import { useRefreshAuth } from '@/hooks/useRefreshAuth';
+import { useAppSelector } from '@/hooks/useRedux';
 
 const schema = z.object({
   name: z.string().min(1, 'Permission name is required'),
@@ -28,6 +30,8 @@ interface EditPermissionProps {
 
 export default function EditPermission({ permissionId, fetchData, onClose }: EditPermissionProps) {
   const { t } = useTranslations()
+  const { refreshUser } = useRefreshAuth()
+  const currentUser = useAppSelector((state) => state.auth.user)
   const [loading, setLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)
   const hasLoaded = useRef(false) // Track if data has been loaded
@@ -101,6 +105,13 @@ export default function EditPermission({ permissionId, fetchData, onClose }: Edi
         roles: data.roles || [],
         isActive: data.isActive
       })
+
+      const currentUserPermissions = currentUser?.permissions || []
+      const permissionName = data.name
+      
+      if (currentUserPermissions.includes(permissionName)) {
+        await refreshUser()
+      }
 
       dispatchShowToast({
         type: 'success',

@@ -122,7 +122,7 @@ const menuItems: MenuItem[] = [
         label: "common.api_docs.title",
         defaultLabel: "API Documentation",
         icon: <FileCode size={18} className="mr-2" />,
-        basePath: `${API_BASE_URL}/swagger/index.html`,
+        basePath: `${API_BASE_URL}/swagger`,
         permissions: ["read-admin-api-docs"],
         external: true,
       },

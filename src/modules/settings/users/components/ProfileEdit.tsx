@@ -23,7 +23,9 @@ import Fancybox from "@/components/custom/FancyBox"
 import { generateQRImage } from "@/lib/generateQRImage"
 import { Loader2, QrCode } from "lucide-react"
 import { capitalize } from "@/lib/helpers"
-import Loader from "@/components/custom/Loader" // Import Loader
+import Loader from "@/components/custom/Loader"
+import { useRefreshAuth } from '@/hooks/useRefreshAuth';
+import { useDispatch } from 'react-redux'; // Import Loader
 
 // Schema for Profile Edit - only personal fields
 export const profileEditSchema = z.object({
@@ -63,6 +65,8 @@ interface UserProfileData {
 
 export default function ProfileEdit() {
   const { t } = useTranslations()
+  const dispatch = useDispatch()
+  const { refreshUser } = useRefreshAuth()
   const [loading, setLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)
   const [qrLoading, setQrLoading] = useState(false)
@@ -227,7 +231,7 @@ export default function ProfileEdit() {
       }
       
       await updateProfile(formData)
-
+      await refreshUser()
       dispatchShowToast({ 
         type: "success", 
         message: t("Profile updated successfully") 
