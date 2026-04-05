@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Textarea } from "../ui/textarea";
 import { type DropzoneOptions, useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from "@/components/ui/checkbox";
 
 //Basic Input
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -317,26 +318,6 @@ export const SingleImageInput: React.FC<SingleImageInputProps> = ({
   );
 };
 
-//DateTimeInput
-
-type DateTimeProps = {
-  id: string;
-  label: string;
-  name: string;
-  value: Date | null;
-  setValue: (field: string, value: any, options?: object) => void;
-  placeholder?: string;
-  isRequired?: boolean;
-  showTime?: boolean;
-  error?: any;
-  disabled?: boolean;
-  readOnly?: boolean;
-  allowTyping?: boolean;
-  showResetButton?: boolean;   // <-- new prop
-  className?: string;
-  model: string;
-};
-
 export interface CustomSelectProps<T extends Record<string, any>> {
   id: string;
   label: string;
@@ -436,7 +417,6 @@ export function CustomSelect<T extends Record<string, any>>({
         const existingValues = new Set(prev.map((opt) => opt.value));
         const missing = valObjects.filter((vo) => !existingValues.has(vo.value));
   
-        // Safely map to OptionType
         const normalized = missing.map((vo) => ({
           ...vo,
           label: vo.label,
@@ -455,21 +435,21 @@ export function CustomSelect<T extends Record<string, any>>({
     ? [value]
     : [];
 
-    const objectValueOptions = valueOptions.filter(
-      (vo): vo is { value: string; label: string } =>
-        typeof vo === 'object' && vo !== null && 'value' in vo && 'label' in vo
-    );
-    
-    const allOptions = apiUrl
-      ? [
-          ...objectValueOptions,
-          ...fetchedOptions.filter(
-            (fo) => !objectValueOptions.some((vo) => vo.value === fo.value)
-          ),
-        ]
-      : defaultOption
-      ? [defaultOption, ...options]
-      : options;
+  const objectValueOptions = valueOptions.filter(
+    (vo): vo is { value: string; label: string } =>
+      typeof vo === 'object' && vo !== null && 'value' in vo && 'label' in vo
+  );
+  
+  const allOptions = apiUrl
+    ? [
+        ...objectValueOptions,
+        ...fetchedOptions.filter(
+          (fo) => !objectValueOptions.some((vo) => vo.value === fo.value)
+        ),
+      ]
+    : defaultOption
+    ? [defaultOption, ...options]
+    : options;
 
   // 🧱 Normalize selected value(s)
   const normalizedValue = multiple
@@ -494,21 +474,42 @@ export function CustomSelect<T extends Record<string, any>>({
       ? (normalizedValue as string[]).includes(val)
       : normalizedValue === val;
 
-    const handleChange = (val: string) => {
-      if (multiple) {
-        const prev = Array.isArray(normalizedValue) ? normalizedValue : [];
-        const exists = prev.includes(val);
-        const updated = exists ? prev.filter((v) => v !== val) : [...prev, val];
-        setValue(name, updated as PathValue<T, typeof name>);
-      } else {
-        setValue(name, val as PathValue<T, typeof name>);
-        setOpen(false);
-      }
-    };
+  const handleChange = (val: string, e?: React.MouseEvent) => {
+    // Prevent event from bubbling up and causing unwanted behavior
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (multiple) {
+      const prev = Array.isArray(normalizedValue) ? normalizedValue : [];
+      const exists = prev.includes(val);
+      const updated = exists ? prev.filter((v) => v !== val) : [...prev, val];
+      setValue(name, updated as PathValue<T, typeof name>);
+      // Don't close the dropdown for multi-select
+    } else {
+      setValue(name, val as PathValue<T, typeof name>);
+      setOpen(false);
+    }
+  };
+
+  const handleCheckboxClick = (e: React.MouseEvent, val: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleChange(val, e);
+  };
+
+  const handleItemClick = (e: React.MouseEvent, val: string) => {
+    if (multiple) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleChange(val, e);
+    }
+  };
 
   return (
     <div className="space-y-1 w-full">
-      <label htmlFor={id}  className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-200">
         {t(label, label)}{" "}
         {isRequired && <span className="text-red-500">*</span>}
       </label>
@@ -521,7 +522,7 @@ export function CustomSelect<T extends Record<string, any>>({
               ref={inputRef}
               className="text-left cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 dark:text-white pr-10 border border-gray-500 dark:border-slate-600"
               value={displayValue}
-              placeholder={t(placeholder, placeholder )}
+              placeholder={t(placeholder, placeholder)}
               onClick={() => setOpen(true)}
             />
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 w-4 h-4 pointer-events-none" />
@@ -529,7 +530,7 @@ export function CustomSelect<T extends Record<string, any>>({
         </PopoverTrigger>
 
         <PopoverContent
-          className="p-0 mt-[-4px] w-full max-h-[300px] overflow-auto bg-white dark:bg-slate-800 border dark:border-slate-600"
+          className="p-0 mt-[-4px] w-full bg-white dark:bg-slate-800 border dark:border-slate-600 overflow-hidden"
           style={{ width: inputRef.current?.offsetWidth }}
         >
           <Command className="w-full bg-white dark:bg-slate-800">
@@ -537,11 +538,11 @@ export function CustomSelect<T extends Record<string, any>>({
               placeholder={t("Search","Search") + "..."}
               value={search}
               onValueChange={setSearch}
-              className="w-full"
+              className="w-full border-b border-gray-200 dark:border-slate-700"
             />
-            <CommandList>
+            <CommandList className="max-h-[250px] overflow-auto">
               {loading && (
-                <CommandItem key="loading" disabled>
+                <CommandItem key="loading" disabled className="cursor-default">
                   {t("Loading", "Loading") + "..."}
                 </CommandItem>
               )}
@@ -549,18 +550,51 @@ export function CustomSelect<T extends Record<string, any>>({
                 allOptions.map((opt, i) => (
                   <CommandItem
                     key={opt.value || i}
-                    onSelect={() => handleChange(opt.value)}
+                    onSelect={() => {}} // Empty onSelect to prevent default behavior
+                    onMouseDown={(e) => {
+                      // Use onMouseDown instead of onClick for better control
+                      e.preventDefault();
+                      if (multiple) {
+                        handleChange(opt.value, e);
+                      } else {
+                        handleChange(opt.value, e);
+                      }
+                    }}
                     className={`cursor-pointer hover:bg-blue-100 dark:hover:bg-slate-700 !rounded-none ${
                       isSelected(opt.value)
-                        ? "!bg-blue-500 dark:!bg-slate-600 !text-white"
+                        ? "!bg-slate-500 dark:!bg-slate-600 !text-white"
                         : "dark:text-gray-200"
                     }`}
                   >
-                    {labelFormatter(opt.label)}
+                    <div className="flex items-center gap-2 w-full">
+                      {multiple && (
+                        <div 
+                          className="flex-shrink-0"
+                          onClick={(e) => handleCheckboxClick(e, opt.value)}
+                        >
+                          {isSelected(opt.value) ? (
+                            <Checkbox 
+                              checked 
+                              className="h-4 w-4 border-blue-500 bg-blue-500 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 dark:border-blue-400 dark:bg-blue-400 dark:data-[state=checked]:bg-blue-400 dark:data-[state=checked]:border-blue-400 pointer-events-none" 
+                            />
+                          ) : (
+                            <Checkbox 
+                              className="h-4 w-4 border-gray-400 bg-gray-50 dark:border-gray-600 dark:bg-slate-700 hover:border-blue-400 dark:hover:border-blue-500 transition-colors pointer-events-none" 
+                            />
+                          )}
+                        </div>
+                      )}
+                      <span 
+                        className="flex-1"
+                        onClick={(e) => handleItemClick(e, opt.value)}
+                      >
+                        {labelFormatter(opt.label)}
+                      </span>
+                    </div>
                   </CommandItem>
                 ))}
               {!loading && allOptions.length === 0 && (
-                <CommandItem key="no-options" disabled>
+                <CommandItem key="no-options" disabled className="cursor-default">
                   {t("No options found", "No options found.")}
                 </CommandItem>
               )}
@@ -654,6 +688,26 @@ export const PasswordInput = ({
       {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
     </div>
   );
+};
+
+//DateTimeInput
+
+type DateTimeProps = {
+  id: string;
+  label: string;
+  name: string;
+  value: Date | null;
+  setValue: (field: string, value: any, options?: object) => void;
+  placeholder?: string;
+  isRequired?: boolean;
+  showTime?: boolean;
+  error?: any;
+  disabled?: boolean;
+  readOnly?: boolean;
+  allowTyping?: boolean;
+  showResetButton?: boolean;   // <-- new prop
+  className?: string;
+  model: string;
 };
 
 const DateTimeInput = React.forwardRef<React.ComponentRef<typeof DatePicker>, DateTimeProps>(

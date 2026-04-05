@@ -51,8 +51,8 @@ const DEFAULT_TOAST: Omit<Toast, "id"> = {
   type: "info",
   message: "",
   showClose: true,
-  position: "top-right",
-  animation: "slide-right-in",
+  position: "top-center",
+  animation: "slide-down-in",
   duration: 3000,
 }
 
