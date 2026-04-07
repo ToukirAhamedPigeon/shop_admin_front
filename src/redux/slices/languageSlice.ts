@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
-import { fetchTranslationsApi} from "@/modules/settings/languages/api";
+import { fetchTranslationsApi } from "@/modules/settings/languages/api";
 import type { TranslationMap, FetchTranslationsPayload } from "@/modules/settings/languages/types";
 
 interface TranslationState {
@@ -7,6 +7,7 @@ interface TranslationState {
   translations: TranslationMap;
   loading: boolean;
   error: string | null;
+  lastUpdated: number | null;
 }
 
 const DEFAULT_LANG = "en";
@@ -39,6 +40,7 @@ const initialState: TranslationState = {
   translations: {},
   loading: false,
   error: null,
+  lastUpdated: null,
 };
 
 const languageSlice = createSlice({
@@ -52,6 +54,19 @@ const languageSlice = createSlice({
     clearTranslations(state) {
       state.translations = {};
     },
+    updateTranslationKey(state, action: PayloadAction<{ key: string; value: string }>) {
+      const { key, value } = action.payload;
+      state.translations[key] = value;
+      state.lastUpdated = Date.now();
+    },
+    removeTranslationKey(state, action: PayloadAction<string>) {
+      const key = action.payload;
+      delete state.translations[key];
+      state.lastUpdated = Date.now();
+    },
+    refreshTranslations(state) {
+      state.lastUpdated = Date.now();
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -61,8 +76,9 @@ const languageSlice = createSlice({
       })
       .addCase(fetchTranslations.fulfilled, (state, action) => {
         state.loading = false;
-        state.translations = action.payload; // now only flat key-value object
+        state.translations = action.payload;
         state.error = null;
+        state.lastUpdated = Date.now();
       })
       .addCase(fetchTranslations.rejected, (state, action) => {
         state.loading = false;
@@ -71,5 +87,5 @@ const languageSlice = createSlice({
   },
 });
 
-export const { setLanguage, clearTranslations } = languageSlice.actions;
+export const { setLanguage, clearTranslations, updateTranslationKey, removeTranslationKey, refreshTranslations } = languageSlice.actions;
 export default languageSlice.reducer;

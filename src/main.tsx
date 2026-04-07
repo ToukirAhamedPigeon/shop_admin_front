@@ -20,6 +20,7 @@ import {
 import {
   fetchTranslations,
   setLanguage,
+  refreshTranslations,
 } from "./redux/slices/languageSlice";
 
 // Axios handlers
@@ -60,7 +61,18 @@ window.addEventListener("logout", () => {
 });
 
 // ============================================================
-// STEP 2: Initialize App (CSRF + Language)
+// STEP 2: Add Translation Update Event Listener
+// ============================================================
+
+// Listen for translation update events from child components
+window.addEventListener("translations-updated", () => {
+  const state = store.getState();
+  const currentLang = state.language.currentLang;
+  store.dispatch(fetchTranslations({ lang: currentLang, forceFetch: true }));
+});
+
+// ============================================================
+// STEP 3: Initialize App (CSRF + Language)
 // ============================================================
 
 const initApp = async () => {
@@ -82,7 +94,7 @@ const initApp = async () => {
 };
 
 // ============================================================
-// STEP 3: Render React App
+// STEP 4: Render React App
 // ============================================================
 
 initApp().finally(() => {

@@ -1,11 +1,12 @@
-import React, { useState, useRef, useEffect, type InputHTMLAttributes } from "react";
+import React, { useState, useRef, useEffect, type InputHTMLAttributes, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { ChevronDown, Eye, EyeOff,Search } from 'lucide-react';
 import { useTranslations } from "@/hooks/useTranslations";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { useNavigate } from "react-router-dom";
+import api from "@/lib/axios";
 import { useSelect } from "@/hooks/useSelect";
 import { capitalize, labelFormatter } from "@/lib/helpers";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -360,7 +361,6 @@ export function CustomSelect<T extends Record<string, any>>({
   id,
   label,
   name,
-  collection,
   isRequired = false,
   placeholder = "Select option(s)",
   error,
@@ -371,64 +371,110 @@ export function CustomSelect<T extends Record<string, any>>({
   defaultOption,
   limit = 50,
   filter = {},
-  optionValueKey = "_id",
+  optionValueKey = "name",
   optionLabelKeys = ["name"],
   optionLabelSeparator = " ",
   multiple = false,
 }: CustomSelectProps<T>) {
-  const {t} = useTranslations();
+  const { t } = useTranslations();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [fetchedOptions, setFetchedOptions] = useState<{ value: string; label: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
-  const {
-    options: fetchedOptions,
-    loading,
-    selected,
-    setSelected,
-    getOptionLabel,
-    setOptions,
-  } = useSelect({
-    collection,
-    apiUrl,
-    search,
-    filter,
-    limit,
-    multiple,
-    optionValueKey,
-    optionLabelKeys,
-    optionLabelSeparator,
-    initialValue: value,
-    isOpen:open
-  });
-
-  // 🔁 Ensure passed-in value objects are included in options
+  // Fetch options on component mount (form load)
   useEffect(() => {
-    if (!apiUrl || !value) return;
-  
-    const valArray = Array.isArray(value) ? value : [value];
-    const valObjects: { value: string; label: string }[] = valArray.filter(
-      (v): v is { value: string; label: string } =>
-        typeof v === "object" && "value" in v && "label" in v
-    );
-  
-    if (valObjects.length > 0) {
-      setOptions((prev) => {
-        const existingValues = new Set(prev.map((opt) => opt.value));
-        const missing = valObjects.filter((vo) => !existingValues.has(vo.value));
-  
-        const normalized = missing.map((vo) => ({
-          ...vo,
-          label: vo.label,
-          value: vo.value,
-        }));
-  
-        return [...prev, ...normalized];
-      });
+    if (apiUrl && !hasFetched) {
+      fetchOptions();
     }
-  }, [JSON.stringify(value), apiUrl]);
+  }, [apiUrl]);
 
-  // 🧠 Combine static + dynamic + passed value options
+  const fetchOptions = async () => {
+    if (!apiUrl) return;
+    
+    setLoading(true);
+    try {
+      const response = await api.post(apiUrl, {
+        search: '',
+        limit: limit,
+        where: filter,
+        sortBy: 'name',
+        sortOrder: 'asc',
+      });
+      
+      const data = response.data;
+      
+      console.log('API Response:', data);
+      
+      // Handle different response formats
+      let items = [];
+      
+      if (Array.isArray(data)) {
+        items = data;
+      } else if (data?.data && Array.isArray(data.data)) {
+        items = data.data;
+      } else if (data?.items && Array.isArray(data.items)) {
+        items = data.items;
+      } else if (data?.results && Array.isArray(data.results)) {
+        items = data.results;
+      } else {
+        // Try to extract any array from the response
+        for (const key in data) {
+          if (Array.isArray(data[key])) {
+            items = data[key];
+            break;
+          }
+        }
+      }
+      
+      if (items.length > 0) {
+        const formattedOptions = items.map((item: any) => {
+          // Get value
+          let value = item[optionValueKey] || 
+                      item.value || 
+                      item.id || 
+                      item.name ||
+                      '';
+          
+          // Get label - try each label key
+          let label = '';
+          for (const key of optionLabelKeys) {
+            if (item[key]) {
+              label = item[key];
+              break;
+            }
+          }
+          
+          // Fallback label
+          if (!label) {
+            label = item.label || item.name || item.title || value;
+          }
+          
+          return {
+            value: String(value),
+            label: label,
+          };
+        });
+        
+        console.log('Formatted options:', formattedOptions);
+        setFetchedOptions(formattedOptions);
+      }
+      setHasFetched(true);
+    } catch (error) {
+      console.error('Failed to fetch options:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+  };
+
+  // Combine static + dynamic + passed value options
   const valueOptions = Array.isArray(value)
     ? value.filter((v) => typeof v === "object" && v?.value && v?.label)
     : typeof value === "object" && value?.value && value?.label
@@ -451,7 +497,14 @@ export function CustomSelect<T extends Record<string, any>>({
     ? [defaultOption, ...options]
     : options;
 
-  // 🧱 Normalize selected value(s)
+  // Filter options based on search (client-side filtering)
+  const filteredOptions = search
+    ? allOptions.filter(opt =>
+        opt.label.toLowerCase().includes(search.toLowerCase())
+      )
+    : allOptions;
+
+  // Normalize selected value(s)
   const normalizedValue = multiple
     ? Array.isArray(value)
       ? value.map((v: any) => (typeof v === "string" ? v : v?.value))
@@ -463,7 +516,7 @@ export function CustomSelect<T extends Record<string, any>>({
     : (value as any)?.value || "";
 
   const getLabel = (val: string) =>
-    allOptions.find((opt) => opt.value === val)?.label || '';
+    allOptions.find((opt) => opt.value === val)?.label || val;
 
   const displayValue = multiple
     ? (normalizedValue as string[]).map((val) => labelFormatter(getLabel(val))).join(", ")
@@ -474,38 +527,46 @@ export function CustomSelect<T extends Record<string, any>>({
       ? (normalizedValue as string[]).includes(val)
       : normalizedValue === val;
 
-  const handleChange = (val: string, e?: React.MouseEvent) => {
-    // Prevent event from bubbling up and causing unwanted behavior
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleToggleOption = useCallback((val: string) => {
     if (multiple) {
       const prev = Array.isArray(normalizedValue) ? normalizedValue : [];
       const exists = prev.includes(val);
       const updated = exists ? prev.filter((v) => v !== val) : [...prev, val];
-      setValue(name, updated as PathValue<T, typeof name>);
-      // Don't close the dropdown for multi-select
+      setValue(name, updated as any);
     } else {
-      setValue(name, val as PathValue<T, typeof name>);
+      setValue(name, val as any);
+      setOpen(false);
+    }
+  }, [multiple, normalizedValue, setValue, name]);
+
+  const handleCheckboxChange = (val: string, checked: boolean) => {
+    if (multiple) {
+      const prev = Array.isArray(normalizedValue) ? normalizedValue : [];
+      const updated = checked 
+        ? [...prev, val]
+        : prev.filter((v) => v !== val);
+      setValue(name, updated as any);
+    } else {
+      setValue(name, val as any);
       setOpen(false);
     }
   };
 
-  const handleCheckboxClick = (e: React.MouseEvent, val: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleChange(val, e);
-  };
-
-  const handleItemClick = (e: React.MouseEvent, val: string) => {
-    if (multiple) {
-      e.preventDefault();
-      e.stopPropagation();
-      handleChange(val, e);
+  // Focus search when popover opens
+  useEffect(() => {
+    if (open && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
     }
-  };
+  }, [open]);
+
+  // Reset search when dropdown closes
+  useEffect(() => {
+    if (!open) {
+      setSearch("");
+    }
+  }, [open]);
 
   return (
     <div className="space-y-1 w-full">
@@ -514,7 +575,7 @@ export function CustomSelect<T extends Record<string, any>>({
         {isRequired && <span className="text-red-500">*</span>}
       </label>
 
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <div className="relative w-full bg-white dark:bg-slate-800">
             <Input
@@ -533,73 +594,68 @@ export function CustomSelect<T extends Record<string, any>>({
           className="p-0 mt-[-4px] w-full bg-white dark:bg-slate-800 border dark:border-slate-600 overflow-hidden"
           style={{ width: inputRef.current?.offsetWidth }}
         >
-          <Command className="w-full bg-white dark:bg-slate-800">
-            <CommandInput
-              placeholder={t("Search","Search") + "..."}
-              value={search}
-              onValueChange={setSearch}
-              className="w-full border-b border-gray-200 dark:border-slate-700"
-            />
-            <CommandList className="max-h-[250px] overflow-auto">
-              {loading && (
-                <CommandItem key="loading" disabled className="cursor-default">
-                  {t("Loading", "Loading") + "..."}
-                </CommandItem>
-              )}
-              {!loading &&
-                allOptions.map((opt, i) => (
-                  <CommandItem
-                    key={opt.value || i}
-                    onSelect={() => {}} // Empty onSelect to prevent default behavior
-                    onMouseDown={(e) => {
-                      // Use onMouseDown instead of onClick for better control
-                      e.preventDefault();
-                      if (multiple) {
-                        handleChange(opt.value, e);
-                      } else {
-                        handleChange(opt.value, e);
-                      }
-                    }}
-                    className={`cursor-pointer hover:bg-blue-100 dark:hover:bg-slate-700 !rounded-none ${
-                      isSelected(opt.value)
-                        ? "!bg-slate-500 dark:!bg-slate-600 !text-white"
-                        : "dark:text-gray-200"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      {multiple && (
-                        <div 
-                          className="flex-shrink-0"
-                          onClick={(e) => handleCheckboxClick(e, opt.value)}
-                        >
-                          {isSelected(opt.value) ? (
-                            <Checkbox 
-                              checked 
-                              className="h-4 w-4 border-blue-500 bg-blue-500 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 dark:border-blue-400 dark:bg-blue-400 dark:data-[state=checked]:bg-blue-400 dark:data-[state=checked]:border-blue-400 pointer-events-none" 
-                            />
-                          ) : (
-                            <Checkbox 
-                              className="h-4 w-4 border-gray-400 bg-gray-50 dark:border-gray-600 dark:bg-slate-700 hover:border-blue-400 dark:hover:border-blue-500 transition-colors pointer-events-none" 
-                            />
-                          )}
-                        </div>
-                      )}
-                      <span 
-                        className="flex-1"
-                        onClick={(e) => handleItemClick(e, opt.value)}
-                      >
-                        {labelFormatter(opt.label)}
-                      </span>
-                    </div>
-                  </CommandItem>
-                ))}
-              {!loading && allOptions.length === 0 && (
-                <CommandItem key="no-options" disabled className="cursor-default">
-                  {t("No options found", "No options found.")}
-                </CommandItem>
-              )}
-            </CommandList>
-          </Command>
+          {/* Search Input */}
+          {(multiple || allOptions.length > 10) && (
+            <div className="p-2 border-b border-gray-200 dark:border-slate-700">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder={t("Search", "Search") + "..."}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Options List */}
+          <div className="max-h-[250px] overflow-auto">
+            {loading && (
+              <div className="p-2 text-center text-gray-500 dark:text-gray-400">
+                {t("Loading", "Loading") + "..."}
+              </div>
+            )}
+            
+            {!loading && filteredOptions.length === 0 && (
+              <div className="p-2 text-center text-gray-500 dark:text-gray-400">
+                {t("No options found", "No options found.")}
+              </div>
+            )}
+            
+            {!loading && filteredOptions.map((opt) => {
+              const selected = isSelected(opt.value);
+              
+              return (
+                <div
+                  key={opt.value}
+                  className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${
+                    selected
+                      ? "bg-blue-50 dark:bg-slate-700"
+                      : "hover:bg-gray-100 dark:hover:bg-slate-700"
+                  }`}
+                  onClick={() => handleToggleOption(opt.value)}
+                >
+                  {multiple && (
+                    <Checkbox
+                      checked={selected}
+                      onCheckedChange={(checked) => handleCheckboxChange(opt.value, checked as boolean)}
+                      className="h-4 w-4 border-gray-400 bg-gray-50 dark:border-gray-600 dark:bg-slate-700 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 dark:data-[state=checked]:bg-blue-400 dark:data-[state=checked]:border-blue-400"
+                    />
+                  )}
+                  <span className={`flex-1 text-sm ${
+                    selected
+                      ? "text-blue-700 dark:text-blue-300 font-medium"
+                      : "text-gray-700 dark:text-gray-300"
+                  }`}>
+                    {labelFormatter(opt.label)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </PopoverContent>
       </Popover>
 

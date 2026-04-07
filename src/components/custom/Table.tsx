@@ -602,7 +602,7 @@ export function TableWithLoader({
       <div className={containerClassName}>
         {/* Loader - overlays on top of content when loading */}
         {loading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/10 dark:bg-gray-900/10">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/0 dark:bg-gray-900/0">
             <TableLoader loading={true} />
           </div>
         )}

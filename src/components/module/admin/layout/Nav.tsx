@@ -13,7 +13,8 @@ import {
   Lock,
   Shield,
   Key,
-  FileCode
+  FileCode,
+  Languages
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
@@ -107,6 +108,15 @@ const menuItems: MenuItem[] = [
         basePath: "/settings/permissions",
         permissions: [
           "read-admin-permissions"
+        ],
+      },
+      {
+        label: "common.translations.title",
+        defaultLabel: "Translations",
+        icon: <Languages size={18} className="mr-2" />,
+        basePath: "/settings/translations",
+        permissions: [
+          "read-admin-translations"
         ],
       },
       {
