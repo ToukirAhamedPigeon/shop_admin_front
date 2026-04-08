@@ -102,17 +102,17 @@ export function RecordInfo({ pageIndex, pageSize, totalCount, grandTotalCount }:
       typeof pageSize === 'number' &&
       typeof totalCount === 'number' && (
         <>
-          {t('Showing')}{' '}
+          {t('common.Showing','Showing')}{' '}
           <strong>{totalCount > 0 ? (pageIndex * pageSize + 1) : 0}</strong>{' '}
-          {t('to')}{' '}
+          {t('common.to','To')}{' '}
           <strong>{Math.min((pageIndex + 1) * pageSize, totalCount)}</strong>{' '}
-          {t('of')}{' '}
+          {t('common.of','Of')}{' '}
           <strong>{totalCount}</strong>{' '}
-          {t('filtered results')}
+          {t('filtered results','filtered results')}{' '}
           {typeof grandTotalCount === 'number' && (
             <>
               {' '}
-              ({t('total')} <strong>{grandTotalCount}</strong>)
+              ({t('common.total','Total')} <strong>{grandTotalCount}</strong>)
             </>
           )}
         </>
@@ -393,12 +393,12 @@ export function TablePaginationFooter({
       {/* 🔹 Record Info */}
       {showRecordInfo && (
         <span className="text-gray-700 dark:text-gray-200">
-          {t("Showing")}{" "}
-          {totalCount > 0 ? formatNumber(pageIndex * pageSize + 1, currentLang) : 0} {t("to")}{" "}
+          {t("common.Showing","Showing")}{" "}
+          {totalCount > 0 ? formatNumber(pageIndex * pageSize + 1, currentLang) : 0} {t("common.To","To")}{" "}
           {formatNumber(Math.min((pageIndex + 1) * pageSize, totalCount), currentLang)}{" "}
-          {t("of")} {formatNumber(totalCount, currentLang)} {t("filtered results")}
+          {t("common.Of","Of")} {formatNumber(totalCount, currentLang)} {t("common.filtered_results","filtered results")}{" "}
           {typeof grandTotalCount === "number" && grandTotalCount > 0 && (
-            <> ({t("total")} {formatNumber(grandTotalCount, currentLang)})</>
+            <> ({t("common.total","Total")} {formatNumber(grandTotalCount, currentLang)})</>
           )}
         </span>
       )}
@@ -408,7 +408,7 @@ export function TablePaginationFooter({
         {showRowsPerPage && (
           <>
             <label className="hidden md:block dark:text-gray-300">
-              {t("Rows per page")}:
+              {t("common.Rows_per_page","Rows per page")}:
             </label>
             <select
               value={pageSize}
@@ -433,7 +433,7 @@ export function TablePaginationFooter({
               disabled={pageIndex === 0}
               className="dark:bg-gray-800 dark:hover:bg-gray-700"
             >
-              {t("Previous")}
+              {t("common.Previous","Previous")}
             </Button>
 
             {/* 🔢 Page Numbers */}
@@ -464,7 +464,7 @@ export function TablePaginationFooter({
               disabled={pageIndex >= totalPage - 1}
               className="dark:bg-gray-800 dark:hover:bg-gray-700"
             >
-              {t("Next")}
+              {t("common.Next","Next")}
             </Button>
 
             {/* 🔢 Jump to page */}
@@ -472,7 +472,7 @@ export function TablePaginationFooter({
               type="number"
               min={1}
               max={totalPage}
-              placeholder={t("Page")}
+              placeholder={t("common.Page","Page")}
               className="w-16 px-2 py-1 border rounded text-center dark:bg-gray-800 dark:border-gray-700"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
