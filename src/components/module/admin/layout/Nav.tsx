@@ -14,12 +14,14 @@ import {
   Shield,
   Key,
   FileCode,
-  Languages
+  Languages,
+  ListChecks
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
 import { useTranslations } from "@/hooks/useTranslations";
 import { API_BASE_URL } from "@/constants/index";
+import Options from "@/modules/settings/options/components/Options";
 
 interface MenuItem {
   label: string;
@@ -108,6 +110,15 @@ const menuItems: MenuItem[] = [
         basePath: "/settings/permissions",
         permissions: [
           "read-admin-permissions"
+        ],
+      },
+      {
+        label: "common.options.title",
+        defaultLabel: "Options",
+        icon: <ListChecks size={18} className="mr-2" />,
+        basePath: "/settings/options",
+        permissions: [
+          "read-admin-options"
         ],
       },
       {

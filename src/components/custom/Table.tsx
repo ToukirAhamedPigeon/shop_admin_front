@@ -172,7 +172,7 @@ export function TableHeaderActions({
   onColumnSettings,
   onFilter,
   isFilterActive = false,
-  addButtonLabel = 'Add New',
+  addButtonLabel = 'common.Add New',
   showSearch = true,
   showAddButton = true,
   showTrashButton = true,
@@ -204,7 +204,7 @@ export function TableHeaderActions({
             className="btn-success-gradient flex items-center"
           >
             <FaPlus />
-            <span className="hidden lg:block ml-1">{t(addButtonLabel)}</span>
+            <span className="hidden lg:block ml-1">{t(addButtonLabel,'Add New')}</span>
           </Button>
         )}
 

@@ -20,6 +20,7 @@ import VerifyPasswordChangePage from "@/modules/settings/users/pages/VerifyPassw
 import RolesPage from "@/modules/settings/roles-permissions/pages/RolesPage";
 import PermissionsPage from "@/modules/settings/roles-permissions/pages/PermissionsPage";
 import TranslationsPage from "@/modules/settings/translations/pages/TranslationsPage";
+import OptionsPage from "@/modules/settings/options/pages/OptionsPage";
 
 
 export default function AppRoutes() {
@@ -109,7 +110,14 @@ export default function AppRoutes() {
             </PermissionRoute>
           }
         />
-
+        <Route
+          path="settings/options"
+          element={
+            <PermissionRoute anyOf={["read-admin-options"]}>
+              <OptionsPage />
+            </PermissionRoute>
+          }
+        />
         <Route
           path="settings/translations"
           element={
