@@ -644,6 +644,14 @@ export default function Roles() {
             setFilterValues={setFilterValues}
             onResetRef={resetRef}
             onClose={() => setFilterModalOpen(false)}
+            showTrash={showTrash}
+            onShowTrashChange={(newShowTrash) => {
+              if (newShowTrash && !showTrash) {
+                handleTrashClick();
+              } else if (!newShowTrash && showTrash) {
+                handleStoreClick();
+              }
+            }}
           />
         )}
       />

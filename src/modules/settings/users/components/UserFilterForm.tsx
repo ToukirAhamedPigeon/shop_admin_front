@@ -26,12 +26,17 @@ interface UserFilterFormProps {
   setFilterValues: React.Dispatch<React.SetStateAction<UserFilters>>;
   onResetRef?: React.MutableRefObject<(() => void) | null>;
   onClose?: () => void;
+  showTrash?: boolean;
+  onShowTrashChange?: (showTrash: boolean) => void;
 }
 
 export function UserFilterForm({
   filterValues,
   setFilterValues,
   onResetRef,
+  onClose,
+  showTrash = false,
+  onShowTrashChange,
 }: UserFilterFormProps) {
   const initialized = useRef(false);
   const user = useAppSelector((state) => state.auth.user);
@@ -43,15 +48,19 @@ export function UserFilterForm({
     roles: [],
     permissions: [],
     isActiveStr: 'true',
-    isDeletedStr: 'false',
+    isDeletedStr: showTrash ? 'true' : 'false',
     createdBy: [],
     updatedBy: [],
     gender: [],
     dateType: [],
     from: null,
     to: null,
- };
+  };
 
+  const DELETED_OPTIONS = [
+    { label: 'No (Store)', value: 'false' },
+    { label: 'Yes (Trash)', value: 'true' }
+  ];
 
   const {
     watch,
@@ -69,7 +78,7 @@ export function UserFilterForm({
     },
   });
 
-    /* ----------------------------------------
+  /* ----------------------------------------
    * Expose handleReset to modal via resetRef
    * -------------------------------------- */
   const handleReset = () => {
@@ -77,15 +86,14 @@ export function UserFilterForm({
 
     localStorage.removeItem(LOCAL_STORAGE_KEY);
 
-    reset({
+    const resetValues = {
       ...DEFAULT_USER_FILTERS,
+      isDeletedStr: showTrash ? 'true' : 'false',
       createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
-    });
+    };
+    reset(resetValues);
 
-    setFilterValues({
-      ...DEFAULT_USER_FILTERS,
-      createdBy: hasReadAllPermission ? [] : [user?.id ?? ''],
-    });
+    setFilterValues(resetValues);
 
     setTimeout(() => {
       isResetting.current = false;
@@ -93,10 +101,10 @@ export function UserFilterForm({
   };
 
   useEffect(() => {
-    if (onResetRef) { // 🔹 assign form's handleReset to resetRef
+    if (onResetRef) {
       onResetRef.current = handleReset;
     }
-  }, [onResetRef]);
+  }, [onResetRef, showTrash]);
 
   /* ----------------------------------------
    * Load from localStorage (once)
@@ -111,6 +119,7 @@ export function UserFilterForm({
         const parsed = JSON.parse(saved) as UserFilters;
 
         const merged: UserFilters = {
+          ...DEFAULT_USER_FILTERS,
           ...filterValues,
           ...parsed,
           from: parsed.from
@@ -126,6 +135,13 @@ export function UserFilterForm({
 
         reset(merged);
         setFilterValues(merged);
+        
+        // Sync trash view if needed
+        if (onShowTrashChange && merged.isDeletedStr === 'true') {
+          onShowTrashChange(true);
+        } else if (onShowTrashChange && merged.isDeletedStr === 'false') {
+          onShowTrashChange(false);
+        }
       }
     } catch (err) {
       console.error('Failed to load user filters:', err);
@@ -137,7 +153,7 @@ export function UserFilterForm({
    * -------------------------------------- */
   useEffect(() => {
     const subscription = watch((values) => {
-      if (isResetting.current) return; // 🔑 IMPORTANT
+      if (isResetting.current) return;
 
       const cleaned: UserFilters = {
         ...values,
@@ -150,7 +166,7 @@ export function UserFilterForm({
         isDeletedStr:
           typeof values.isDeletedStr === 'string'
             ? values.isDeletedStr
-            : values.isDeletedStr?.[0] ?? 'false',
+            : values.isDeletedStr?.[0] ?? (showTrash ? 'true' : 'false'),
         gender: values.gender?.filter((v): v is string => typeof v === 'string'),
         dateType: values.dateType?.filter((v): v is string => typeof v === 'string'),
         createdBy: values.createdBy?.filter((v): v is string => typeof v === 'string'),
@@ -164,11 +180,17 @@ export function UserFilterForm({
         }
         return prev;
       });
+      
+      // Sync trash view when filter changes
+      if (onShowTrashChange && cleaned.isDeletedStr === 'true' && !showTrash) {
+        onShowTrashChange(true);
+      } else if (onShowTrashChange && cleaned.isDeletedStr === 'false' && showTrash) {
+        onShowTrashChange(false);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, setFilterValues]);
-
+  }, [watch, setFilterValues, showTrash, onShowTrashChange]);
 
   return (
     <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -209,10 +231,10 @@ export function UserFilterForm({
           options={BOOLEAN_OPTIONS}
           optionValueKey="value"
           optionLabelKeys={['label']}
-          multiple={false} // single-select
+          multiple={false}
           setValue={setValue}
           model="User"
-          value={watch('isActiveStr') || 'true'} // default Yes
+          value={watch('isActiveStr') || 'true'}
           placeholder={t('Is Active?')}
         />
 
@@ -220,14 +242,14 @@ export function UserFilterForm({
           id="isDeleted"
           label="Is Deleted?"
           name="isDeletedStr"
-          options={BOOLEAN_OPTIONS}
+          options={DELETED_OPTIONS}
           optionValueKey="value"
           optionLabelKeys={['label']}
-          multiple={false} // single-select
+          multiple={false}
           setValue={setValue}
           model="User"
-          value={watch('isDeletedStr') || 'false'} // default No
-          placeholder={t('Is Deleted?')}
+          value={watch('isDeletedStr') || (showTrash ? 'true' : 'false')}
+          placeholder={t('Select Deleted Status')}
         />
 
         <CustomSelect<UserFilters>
@@ -237,10 +259,10 @@ export function UserFilterForm({
           options={GENDER_OPTIONS}
           optionValueKey="value"
           optionLabelKeys={['label']}
-          multiple // single-select
+          multiple
           setValue={setValue}
           model="User"
-          value={watch('gender')} // default Male
+          value={watch('gender')}
           placeholder={t('Gender')}
         />
       </div>

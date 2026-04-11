@@ -16,6 +16,8 @@ interface RoleFilterFormProps {
   setFilterValues: React.Dispatch<React.SetStateAction<RoleFilters>>;
   onResetRef?: React.MutableRefObject<(() => void) | null>;
   onClose?: () => void;
+  showTrash?: boolean;
+  onShowTrashChange?: (showTrash: boolean) => void;
 }
 
 export default function RoleFilterForm({
@@ -23,6 +25,8 @@ export default function RoleFilterForm({
   setFilterValues,
   onResetRef,
   onClose,
+  showTrash = false,
+  onShowTrashChange,
 }: RoleFilterFormProps) {
   const initialized = useRef(false);
   const { t } = useTranslations();
@@ -30,7 +34,7 @@ export default function RoleFilterForm({
 
   const DEFAULT_ROLE_FILTERS: RoleFilters = {
     isActiveStr: 'all',
-    isDeletedStr: 'false',
+    isDeletedStr: showTrash ? 'true' : 'false',
     permissions: [],
   };
 
@@ -41,8 +45,8 @@ export default function RoleFilterForm({
   ];
 
   const DELETED_OPTIONS = [
-    { label: 'No', value: 'false' },
-    { label: 'Yes', value: 'true' }
+    { label: 'No (Store)', value: 'false' },
+    { label: 'Yes (Trash)', value: 'true' }
   ];
 
   const {
@@ -58,9 +62,13 @@ export default function RoleFilterForm({
 
     localStorage.removeItem(LOCAL_STORAGE_KEY);
 
-    reset(DEFAULT_ROLE_FILTERS);
+    const resetValues = {
+      ...DEFAULT_ROLE_FILTERS,
+      isDeletedStr: showTrash ? 'true' : 'false',
+    };
+    reset(resetValues);
 
-    setFilterValues(DEFAULT_ROLE_FILTERS);
+    setFilterValues(resetValues);
 
     setTimeout(() => {
       isResetting.current = false;
@@ -71,7 +79,7 @@ export default function RoleFilterForm({
     if (onResetRef) {
       onResetRef.current = handleReset;
     }
-  }, [onResetRef]);
+  }, [onResetRef, showTrash]);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -88,6 +96,13 @@ export default function RoleFilterForm({
         };
         reset(merged);
         setFilterValues(merged);
+        
+        // Sync trash view if needed
+        if (onShowTrashChange && merged.isDeletedStr === 'true') {
+          onShowTrashChange(true);
+        } else if (onShowTrashChange && merged.isDeletedStr === 'false') {
+          onShowTrashChange(false);
+        }
       }
     } catch (err) {
       console.error('Failed to load role filters:', err);
@@ -100,7 +115,7 @@ export default function RoleFilterForm({
 
       const cleaned: RoleFilters = {
         isActiveStr: values.isActiveStr || 'all',
-        isDeletedStr: values.isDeletedStr || 'false',
+        isDeletedStr: values.isDeletedStr || (showTrash ? 'true' : 'false'),
         permissions: values.permissions?.filter((v): v is string => typeof v === 'string') || [],
       };
 
@@ -111,10 +126,17 @@ export default function RoleFilterForm({
         }
         return prev;
       });
+      
+      // Sync trash view when filter changes
+      if (onShowTrashChange && cleaned.isDeletedStr === 'true' && !showTrash) {
+        onShowTrashChange(true);
+      } else if (onShowTrashChange && cleaned.isDeletedStr === 'false' && showTrash) {
+        onShowTrashChange(false);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, setFilterValues]);
+  }, [watch, setFilterValues, showTrash, onShowTrashChange]);
 
   return (
     <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -143,7 +165,7 @@ export default function RoleFilterForm({
           multiple={false}
           setValue={setValue}
           model="Role"
-          value={watch('isDeletedStr') || 'false'}
+          value={watch('isDeletedStr') || (showTrash ? 'true' : 'false')}
           placeholder={t('Select Deleted Status')}
         />
       </div>

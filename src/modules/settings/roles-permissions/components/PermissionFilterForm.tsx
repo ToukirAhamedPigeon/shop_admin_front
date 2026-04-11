@@ -16,6 +16,8 @@ interface PermissionFilterFormProps {
   setFilterValues: React.Dispatch<React.SetStateAction<PermissionFilters>>;
   onResetRef?: React.MutableRefObject<(() => void) | null>;
   onClose?: () => void;
+  showTrash?: boolean;
+  onShowTrashChange?: (showTrash: boolean) => void;
 }
 
 export default function PermissionFilterForm({
@@ -23,6 +25,8 @@ export default function PermissionFilterForm({
   setFilterValues,
   onResetRef,
   onClose,
+  showTrash = false,
+  onShowTrashChange,
 }: PermissionFilterFormProps) {
   const initialized = useRef(false);
   const { t } = useTranslations();
@@ -30,7 +34,7 @@ export default function PermissionFilterForm({
 
   const DEFAULT_PERMISSION_FILTERS: PermissionFilters = {
     isActiveStr: 'all',
-    isDeletedStr: 'false',
+    isDeletedStr: showTrash ? 'true' : 'false',
     roles: [],
   };
 
@@ -41,8 +45,8 @@ export default function PermissionFilterForm({
   ];
 
   const DELETED_OPTIONS = [
-    { label: 'No', value: 'false' },
-    { label: 'Yes', value: 'true' }
+    { label: 'No (Store)', value: 'false' },
+    { label: 'Yes (Trash)', value: 'true' }
   ];
 
   const {
@@ -58,9 +62,13 @@ export default function PermissionFilterForm({
 
     localStorage.removeItem(LOCAL_STORAGE_KEY);
 
-    reset(DEFAULT_PERMISSION_FILTERS);
+    const resetValues = {
+      ...DEFAULT_PERMISSION_FILTERS,
+      isDeletedStr: showTrash ? 'true' : 'false',
+    };
+    reset(resetValues);
 
-    setFilterValues(DEFAULT_PERMISSION_FILTERS);
+    setFilterValues(resetValues);
 
     setTimeout(() => {
       isResetting.current = false;
@@ -71,7 +79,7 @@ export default function PermissionFilterForm({
     if (onResetRef) {
       onResetRef.current = handleReset;
     }
-  }, [onResetRef]);
+  }, [onResetRef, showTrash]);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -88,6 +96,13 @@ export default function PermissionFilterForm({
         };
         reset(merged);
         setFilterValues(merged);
+        
+        // Sync trash view if needed
+        if (onShowTrashChange && merged.isDeletedStr === 'true') {
+          onShowTrashChange(true);
+        } else if (onShowTrashChange && merged.isDeletedStr === 'false') {
+          onShowTrashChange(false);
+        }
       }
     } catch (err) {
       console.error('Failed to load permission filters:', err);
@@ -100,7 +115,7 @@ export default function PermissionFilterForm({
 
       const cleaned: PermissionFilters = {
         isActiveStr: values.isActiveStr || 'all',
-        isDeletedStr: values.isDeletedStr || 'false',
+        isDeletedStr: values.isDeletedStr || (showTrash ? 'true' : 'false'),
         roles: values.roles?.filter((v): v is string => typeof v === 'string') || [],
       };
 
@@ -111,10 +126,17 @@ export default function PermissionFilterForm({
         }
         return prev;
       });
+      
+      // Sync trash view when filter changes
+      if (onShowTrashChange && cleaned.isDeletedStr === 'true' && !showTrash) {
+        onShowTrashChange(true);
+      } else if (onShowTrashChange && cleaned.isDeletedStr === 'false' && showTrash) {
+        onShowTrashChange(false);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, setFilterValues]);
+  }, [watch, setFilterValues, showTrash, onShowTrashChange]);
 
   return (
     <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -143,7 +165,7 @@ export default function PermissionFilterForm({
           multiple={false}
           setValue={setValue}
           model="Permission"
-          value={watch('isDeletedStr') || 'false'}
+          value={watch('isDeletedStr') || (showTrash ? 'true' : 'false')}
           placeholder={t('Select Deleted Status')}
         />
       </div>
