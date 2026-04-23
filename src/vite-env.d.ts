@@ -1,3 +1,4 @@
+// src/vite-env.d.ts
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL: string
   readonly VITE_API_ASSET_URL: string

@@ -1,3 +1,5 @@
+// app/(dashboard)/admin/users/Users.tsx
+
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import {
   flexRender,
@@ -47,13 +49,22 @@ import Add from './Add'
 import Edit from './Edit'
 import { useEditSheet } from '@/hooks/useEditSheet'
 import { capitalize } from '@/lib/helpers'
-import { useDeleteWithConfirm } from '@/hooks/useDeleteWithConfirm'
 import { useAppSelector } from '@/hooks/useRedux'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
-import { deleteUser, restoreUser } from './../api'
+import { deleteUser, restoreUser, getDeleteInfo } from './../api'
+import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle } from 'lucide-react'
+import { dispatchShowToast } from '@/lib/dispatch'
+
+interface DeleteInfoResponse {
+  canBePermanent: boolean
+  message: string
+  hasRelatedRecords?: boolean
+  hasVerifiedEmail?: boolean
+  blockingConstraints?: string[]  
+}
 
 /* ---------------------------------- */
-/* Columns Definition */
+/* Columns Definition - Updated with Permanent Delete */
 /* ---------------------------------- */
 const getAllColumns = ({
   pageIndex,
@@ -62,11 +73,13 @@ const getAllColumns = ({
   handleEditClick,
   confirmDelete,
   confirmRestore,
+  confirmPermanentDelete,
   authRoles,
   showDetail = true,
   showEdit = true,
   showDelete = true,
-  showRestore = true
+  showRestore = true,
+  showPermanentDelete = true
 }: {
   pageIndex: number
   pageSize: number
@@ -74,11 +87,13 @@ const getAllColumns = ({
   handleEditClick: (item: IUser) => void
   confirmDelete: (id: string) => void
   confirmRestore: (id: string) => void
+  confirmPermanentDelete: (id: string) => void
   authRoles: string[]
   showDetail?: boolean
   showEdit?: boolean
   showDelete?: boolean
   showRestore?: boolean
+  showPermanentDelete?: boolean
 }): ColumnDef<IUser>[] => [
   {
     header: 'SL',
@@ -93,18 +108,25 @@ const getAllColumns = ({
     id: 'action',
     cell: ({ row }) => {
       const isDeleted = row.original.isDeleted;
+      const hasDeveloperRole = row.original.roles?.includes('developer') || 
+                                (row.original as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer');
       
       return (
         <RowActions
           row={row.original}
           onDetail={() => fetchDetail(row.original)}
           onEdit={!isDeleted ? () => handleEditClick(row.original) : undefined}
-          onDelete={!isDeleted ? () => confirmDelete(row.original.id) : undefined}
-          onRestore={isDeleted ? () => confirmRestore(row.original.id) : undefined}
+          onDelete={!isDeleted && showDelete && !hasDeveloperRole ? () => confirmDelete(row.original.id) : undefined}
+          onRestore={isDeleted && showRestore ? () => confirmRestore(row.original.id) : undefined}
+          onPermanentDelete={isDeleted && showPermanentDelete ? () => confirmPermanentDelete(row.original.id) : undefined}
           showDetail={showDetail}
           showEdit={showEdit && !isDeleted}
-          showDelete={showDelete && !isDeleted && !(row.original as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')}
+          showDelete={showDelete && !isDeleted && !hasDeveloperRole}
           showRestore={showRestore && isDeleted}
+          showPermanentDelete={showPermanentDelete && isDeleted}
+          deletePermissions={['delete-admin-users']}
+          restorePermissions={['restore-admin-users']}
+          permanentDeletePermissions={['delete-admin-users']}
         />
       )
     },
@@ -265,6 +287,21 @@ export default function Users() {
   const [showAddButton, setShowAddButton] = useState(false)
   const [showTrashButton, setShowTrashButton] = useState(false)
 
+  // Delete dialogs state
+  const [softDeleteDialogOpen, setSoftDeleteDialogOpen] = useState(false)
+  const [permanentDeleteDialogOpen, setPermanentDeleteDialogOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteInfo, setDeleteInfo] = useState<DeleteInfoResponse | null>(null)
+  const [checkingDelete, setCheckingDelete] = useState(false)
+  
+  // Error dialog state
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
+  const [errorDetails, setErrorDetails] = useState<{ 
+    message: string; 
+    blockingTables?: string[] 
+  } | null>(null)
+
   // Restore dialog state
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
   const [restoreId, setRestoreId] = useState<string | null>(null)
@@ -274,6 +311,7 @@ export default function Users() {
   const showEdit = can(['update-admin-users'])
   const showDelete = can(['delete-admin-users'])
   const showRestore = can(['restore-admin-users'])
+  const showPermanentDelete = can(['delete-admin-users'])
 
   const {
     isOpen: isEditSheetOpen,
@@ -321,7 +359,6 @@ export default function Users() {
         isDeletedStr: showTrash ? 'true' : 'false'
       }
 
-
       const res = await api.post('/users', {
         q,
         page,
@@ -367,21 +404,159 @@ export default function Users() {
     minLoadingTime: 1000
   })
 
-  /* ---------------- Delete Hook ---------------- */
-  // Moved AFTER fetchData is defined
-  const {
-    dialogOpen,
-    confirmDelete,
-    cancelDelete,
-    handleDelete,
-    deleteLoading
-  } = useDeleteWithConfirm({
-    deleteFunction: async (id: string) => deleteUser(id, true),
-    onSuccess: fetchData,
-    successMessage: 'User deleted successfully',
-    errorMessage: 'Failed to delete user',
-    inactiveMessage: 'User cannot be deleted'
-  })
+  /* ---------------- Delete Handler with Relation Check ---------------- */
+  const checkDeleteEligibility = useCallback(async (id: string): Promise<boolean> => {
+    setCheckingDelete(true)
+    try {
+      const info = await getDeleteInfo(id)
+      setDeleteInfo(info)
+      
+      const userToDelete = data.find(u => u.id === id)
+      if (userToDelete?.roles?.includes('developer')) {
+        setDeleteInfo({
+          canBePermanent: false,
+          message: 'Cannot delete user with Developer role. Please remove the Developer role first.',
+          hasRelatedRecords: true,
+          blockingConstraints: []
+        })
+        return false
+      }
+      
+      return info.canBePermanent
+    } catch (error) {
+      console.error('Failed to get delete info:', error)
+      setDeleteInfo({
+        canBePermanent: false,
+        message: 'Failed to check delete eligibility',
+        blockingConstraints: []
+      })
+      return false
+    } finally {
+      setCheckingDelete(false)
+    }
+  }, [data])
+
+  const confirmDelete = useCallback(async (id: string) => {
+    setDeleteId(id)
+    
+    if (showTrash) {
+      await checkDeleteEligibility(id)
+      setPermanentDeleteDialogOpen(true)
+    } else {
+      const canBePermanent = await checkDeleteEligibility(id)
+      
+      if (canBePermanent) {
+        setSoftDeleteDialogOpen(true)
+      } else {
+        setSoftDeleteDialogOpen(true)
+      }
+    }
+  }, [showTrash, checkDeleteEligibility])
+
+  const confirmPermanentDelete = useCallback((id: string) => {
+    setDeleteId(id)
+    checkDeleteEligibility(id)
+    setPermanentDeleteDialogOpen(true)
+  }, [checkDeleteEligibility])
+
+  const handleSoftDelete = useCallback(async () => {
+    if (!deleteId) return
+    
+    setDeleteLoading(true)
+    try {
+      const response = await deleteUser(deleteId, false)
+      
+      if (response.status === 200) {
+        dispatchShowToast({ 
+          type: "success", 
+          message: response.data?.message || "User moved to trash successfully" 
+        })
+        setSoftDeleteDialogOpen(false)
+        setDeleteId(null)
+        fetchData()
+      } else {
+        throw new Error(response.data?.message || "Failed to move user to trash")
+      }
+    } catch (error: any) {
+      console.error('Soft delete failed:', error)
+      
+      let errorMessage = "Failed to move user to trash"
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      dispatchShowToast({ 
+        type: "danger", 
+        message: errorMessage 
+      })
+      setSoftDeleteDialogOpen(false)
+    } finally {
+      setDeleteLoading(false)
+    }
+  }, [deleteId, fetchData])
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!deleteId) return
+    
+    setDeleteLoading(true)
+    try {
+      const response = await deleteUser(deleteId, true)
+      
+      if (response.status === 200 && response.data) {
+        dispatchShowToast({ 
+          type: "success", 
+          message: response.data.message || "User permanently deleted successfully" 
+        })
+        setPermanentDeleteDialogOpen(false)
+        setSoftDeleteDialogOpen(false)
+        setDeleteId(null)
+        fetchData()
+      } else {
+        throw new Error(response.data?.message || "Failed to delete user")
+      }
+    } catch (error: any) {
+      console.error('Permanent delete failed:', error)
+      
+      let errorMessage = "Failed to permanently delete user"
+      let blockingTables: string[] | undefined
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.response?.data?.blockingTables) {
+        blockingTables = error.response.data.blockingTables
+      } else if (error.response?.data?.blockingConstraints && Array.isArray(error.response.data.blockingConstraints)) {
+        blockingTables = error.response.data.blockingConstraints.map((c: any) => 
+          typeof c === 'string' ? c : c.tableName || c.TableName
+        )
+      } else if (deleteInfo?.blockingConstraints && deleteInfo.blockingConstraints.length > 0) {
+        blockingTables = deleteInfo.blockingConstraints
+      }
+      
+      setErrorDetails({
+        message: errorMessage,
+        blockingTables: blockingTables
+      })
+      setErrorDialogOpen(true)
+      setPermanentDeleteDialogOpen(false)
+    } finally {
+      setDeleteLoading(false)
+    }
+  }, [deleteId, fetchData, deleteInfo])
+
+  const cancelDelete = useCallback(() => {
+    setSoftDeleteDialogOpen(false)
+    setPermanentDeleteDialogOpen(false)
+    setDeleteId(null)
+    setDeleteInfo(null)
+    setErrorDetails(null)
+  }, [])
+
+  const closeErrorDialog = useCallback(() => {
+    setErrorDialogOpen(false)
+    setErrorDetails(null)
+  }, [])
 
   /* ---------------- Restore Handler ---------------- */
   const confirmRestore = useCallback((id: string) => {
@@ -400,11 +575,23 @@ export default function Users() {
     setRestoreLoading(true)
     try {
       await restoreUser(restoreId)
+      dispatchShowToast({ 
+        type: "success", 
+        message: "User restored successfully" 
+      })
       setRestoreDialogOpen(false)
       setRestoreId(null)
-      fetchData() // Refresh the data
-    } catch (error) {
+      fetchData()
+    } catch (error: any) {
       console.error('Failed to restore user:', error)
+      let errorMessage = "Failed to restore user"
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      }
+      dispatchShowToast({ 
+        type: "danger", 
+        message: errorMessage 
+      })
     } finally {
       setRestoreLoading(false)
     }
@@ -422,10 +609,12 @@ export default function Users() {
       authRoles: authroles,
       confirmDelete,
       confirmRestore,
+      confirmPermanentDelete,
       showDetail,
       showEdit,
       showDelete,
-      showRestore
+      showRestore,
+      showPermanentDelete
     })
   }
 
@@ -525,44 +714,6 @@ export default function Users() {
   const showEmptyState = !loading && !error && data.length === 0
   const showErrorState = !loading && error
 
-  const tableHeader = (
-    <table className="table-auto w-full text-left border border-collapse">
-      <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-        {table.getHeaderGroups().map(headerGroup => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map(header => (
-              <th
-                key={header.id}
-                className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-              >
-                <div
-                  className="flex justify-between items-center w-full cursor-pointer"
-                  onClick={header.column.getToggleSortingHandler()}
-                >
-                  <span className="flex-1 text-center">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </span>
-                  <span className="ml-2">
-                    {header.column.getIsSorted() === 'asc' ? (
-                      <FaSortUp size={12} />
-                    ) : header.column.getIsSorted() === 'desc' ? (
-                      <FaSortDown size={12} />
-                    ) : (
-                      <FaSort size={12} />
-                    )}
-                  </span>
-                </div>
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-    </table>
-  )
-
   /* ---------------- UI ---------------- */
   return (
     <motion.div
@@ -580,19 +731,19 @@ export default function Users() {
         showAddButton={showAddButton}
         showTrashButton={showTrashButton}
         trashButton={
-        !showTrash ? {
-          onClick: handleTrashClick,
-          label: 'Trash',
-          show: true
-        } : undefined
-      }
-      storeButton={
-        showTrash ? {
-          onClick: handleStoreClick,
-          label: 'Store',
-          show: true
-        } : undefined
-      }
+          !showTrash ? {
+            onClick: handleTrashClick,
+            label: 'Trash',
+            show: true
+          } : undefined
+        }
+        storeButton={
+          showTrash ? {
+            onClick: handleStoreClick,
+            label: 'Store',
+            show: true
+          } : undefined
+        }
         onColumnSettings={() => setShowColumnModal(true)}
         onPrint={() => printTableById('printable-user-table', 'Users')}
         onExport={() =>
@@ -606,17 +757,17 @@ export default function Users() {
         onFilter={() => setFilterModalOpen(true)}
         isFilterActive={isFilterActive}
       />
+      
       {/* TABLE */}
       <TableWithLoader 
         loading={loading}
         id="printable-user-table"
       >
-        {/* Always show the complete table structure */}
         <table className="table-auto w-full text-left border border-collapse">
           <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-            {table.getHeaderGroups().map(headerGroup => (
+            {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
+                {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
                     className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
@@ -647,65 +798,26 @@ export default function Users() {
             ))}
           </thead>
 
-          <motion.tbody
-            key={pageIndex}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{
-              duration: 0.5,
-              ease: 'easeOut'
-            }}
-          >
-            {/* Error State Row */}
-            {showErrorState && (
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
-                  <EmptyState
-                    message="Error loading users"
-                    suggestion="Please try again or contact support"
-                  />
-                </td>
-              </tr>
-            )}
-
-            {/* Empty State Row */}
-            {!showErrorState && showEmptyState && (
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
-                  <EmptyState
-                    message="No users found"
-                    suggestion="Try adjusting your filters or add a new user"
-                  />
-                </td>
-              </tr>
-            )}
-
-            {/* Data Rows */}
-            {!showErrorState && !showEmptyState && (
-              <>
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="border-b dark:border-gray-700">
-                    {row.getVisibleCells().map(cell => (
-                      <td
-                        key={cell.id}
-                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className="border-b dark:border-gray-700">
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                  >
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </td>
                 ))}
-              </>
-            )}
-          </motion.tbody>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </TableWithLoader>
 
-      {/* PAGINATION */}
       {!showEmptyState && !showErrorState && totalCount > 0 && (
         <TablePaginationFooter
           pageIndex={pageIndex}
@@ -717,7 +829,6 @@ export default function Users() {
         />
       )}
 
-      {/* USER DETAIL */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -731,7 +842,6 @@ export default function Users() {
         )}
       </Modal>
 
-      {/* COLUMN MANAGER */}
       {showColumnModal && (
         <ColumnVisibilityManager<IUser>
           tableId="userTable"
@@ -742,7 +852,6 @@ export default function Users() {
         />
       )}
 
-      {/* FILTER MODAL */}
       <FilterModal
         tableId="userTable"
         title="Filter Users"
@@ -781,7 +890,6 @@ export default function Users() {
         )}
       />
 
-      {/* ADD USER */}
       {showAddButton && (
         <FormHolderSheet
           open={isSheetOpen}
@@ -793,34 +901,202 @@ export default function Users() {
         </FormHolderSheet>
       )}
 
-      {/* DELETE CONFIRMATION */}
-      {showDelete && (
-        <ConfirmDialog
-          open={dialogOpen}
-          onCancel={cancelDelete}
-          onConfirm={handleDelete}
-          title="Confirm Deletion"
-          description="Are you sure you want to delete this user"
-          confirmLabel={deleteLoading ? 'Deleting...' : 'Delete'}
-          loading={deleteLoading}
-        />
-      )}
+      {/* Move to Trash Dialog */}
+      <ConfirmDialog
+        open={softDeleteDialogOpen && deleteInfo?.canBePermanent === false}
+        onCancel={cancelDelete}
+        onConfirm={handleSoftDelete}
+        title="Move to Trash"
+        variant="warning"
+        icon={<Archive className="w-6 h-6" />}
+        confirmLabel={deleteLoading ? 'Moving to Trash...' : 'Move to Trash'}
+        loading={deleteLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+            This user will be moved to trash.
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            You can restore them later from the trash view.
+          </p>
+          {deleteInfo?.message && (
+            <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {deleteInfo.message}
+              </p>
+            </div>
+          )}
+        </div>
+      </ConfirmDialog>
 
-      {/* RESTORE CONFIRMATION */}
+      {/* Permanent Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={permanentDeleteDialogOpen}
+        onCancel={cancelDelete}
+        onConfirm={handlePermanentDelete}
+        title="Permanently Delete User"
+        variant="destructive"
+        icon={<FileWarning className="w-6 h-6" />}
+        confirmLabel={deleteLoading ? 'Permanently Deleting...' : 'Yes, Permanently Delete'}
+        loading={deleteLoading}
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+              Warning: This action cannot be undone!
+            </p>
+          </div>
+          
+          <p className="text-gray-700 dark:text-gray-300">
+            This will permanently delete the user and all associated data including:
+          </p>
+          
+          <ul className="space-y-2 ml-4">
+            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              Profile image file
+            </li>
+            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              Role and permission assignments
+            </li>
+            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              Email verification records
+            </li>
+            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              All activity logs
+            </li>
+          </ul>
+
+          {deleteInfo?.message && !deleteInfo.canBePermanent && (
+            <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {deleteInfo.message}
+              </p>
+            </div>
+          )}
+        </div>
+      </ConfirmDialog>
+
+      {/* Restore Confirmation Dialog */}
       {showRestore && (
         <ConfirmDialog
           open={restoreDialogOpen}
           onCancel={cancelRestore}
           onConfirm={handleRestore}
-          title="Confirm Restore"
-          description="Are you sure you want to restore this user"
+          title="Restore User"
+          variant="success"
+          icon={<RotateCcw className="w-6 h-6" />}
           confirmLabel={restoreLoading ? 'Restoring...' : 'Restore'}
           loading={restoreLoading}
-          variant='success'
-        />
+        >
+          <div className="space-y-3">
+            <p className="text-green-600 dark:text-green-400 font-medium">
+              Are you sure you want to restore this user?
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              The user will be moved back to active users and all their data will be restored.
+            </p>
+          </div>
+        </ConfirmDialog>
       )}
 
-      {/* EDIT USER */}
+      {/* Delete Type Selection Dialog */}
+      <ConfirmDialog
+        open={softDeleteDialogOpen && deleteInfo?.canBePermanent === true && !showTrash}
+        onCancel={cancelDelete}
+        onConfirm={handleSoftDelete}
+        onPermanentDelete={handlePermanentDelete}
+        title="Choose Delete Option"
+        variant="info"
+        icon={<Info className="w-6 h-6" />}
+        showConfirmButton={false}
+        showPermanentDeleteButton={true}
+        permanentDeleteLabel="Permanently Delete"
+        confirmLabel="Move to Trash"
+        loading={deleteLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-blue-600 dark:text-blue-400 font-medium">
+            This user can be permanently deleted or moved to trash.
+          </p>
+          
+          {deleteInfo?.message && (
+            <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+              <p className="text-sm text-green-700 dark:text-green-300">
+                ✓ {deleteInfo.message}
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+              <Trash2 className="w-4 h-4 text-red-600 mb-2" />
+              <p className="text-sm font-medium text-red-700 dark:text-red-300">Permanent Delete</p>
+              <p className="text-xs text-red-600/70 mt-1">Complete removal (cannot undo)</p>
+            </div>
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <Archive className="w-4 h-4 text-yellow-600 mb-2" />
+              <p className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Move to Trash</p>
+              <p className="text-xs text-yellow-600/70 mt-1">Soft delete (can restore later)</p>
+            </div>
+          </div>
+        </div>
+      </ConfirmDialog>
+
+      {/* Error Dialog */}
+      <ConfirmDialog
+        open={errorDialogOpen}
+        onCancel={closeErrorDialog}
+        onConfirm={closeErrorDialog}
+        title="Cannot Delete User"
+        variant="destructive"
+        icon={<XCircle className="w-6 h-6" />}
+        confirmLabel="OK"
+        showCancelButton={false}
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <Database className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 dark:text-red-300 text-sm">
+              {errorDetails?.message || "This user has existing related records in other modules"}
+            </p>
+          </div>
+          
+          {errorDetails?.blockingTables && errorDetails.blockingTables.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                Related data found in:
+              </p>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {errorDetails.blockingTables.map((tableName, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {tableName}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Please move this user to trash instead, or manually remove the related records first.
+            </p>
+          </div>
+        </div>
+      </ConfirmDialog>
+
+      {/* Edit User Sheet */}
       {showEdit && (
         <FormHolderSheet
           open={isEditSheetOpen}

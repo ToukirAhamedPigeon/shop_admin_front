@@ -1,7 +1,7 @@
 import { useEffect, useMemo, type ReactNode } from "react"
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { FaEye, FaEdit, FaTrash, FaPlus, FaPrint, FaFileExcel, FaSlidersH, FaFilter } from 'react-icons/fa'
+import { FaEye, FaEdit, FaTrash, FaPlus, FaPrint, FaFileExcel, FaSlidersH, FaFilter, FaTrashRestore } from 'react-icons/fa'
 import { useTranslations } from "@/hooks/useTranslations";
 import Loader from "@/components/custom/Loader";
 import { formatNumber } from "@/lib/helpers";
@@ -10,21 +10,24 @@ import type { RootState } from "@/redux/store";
 // import { useDebounce } from '@/hooks/useDebounce'
 import { Can } from "./Can";
 
-/** --- RowActions Component --- **/
+/** --- RowActions Component with Permanent Delete --- **/
 interface RowActionsProps<T> {
   row: T
   onDetail?: (row: T) => void
   onEdit?: (row: T) => void
   onDelete?: (row: T) => void
-  onRestore?: (row: T) => void 
+  onRestore?: (row: T) => void
+  onPermanentDelete?: (row: T) => void  // NEW: Permanent delete
   showDetail?: boolean
   showEdit?: boolean
   showDelete?: boolean
   showRestore?: boolean
+  showPermanentDelete?: boolean  // NEW: Show permanent delete button
   detailPermissions?: string[]
   editPermissions?: string[]
   deletePermissions?: string[]
   restorePermissions?: string[]
+  permanentDeletePermissions?: string[]  // NEW
 }
 
 export function RowActions<T>({
@@ -33,18 +36,21 @@ export function RowActions<T>({
   onEdit,
   onDelete,
   onRestore,
+  onPermanentDelete,
   showDetail = true,
   showEdit = true,
   showDelete = true,
   showRestore = true,
+  showPermanentDelete = false,
   detailPermissions = [],
   editPermissions = [],
   deletePermissions = [],
   restorePermissions = [],
+  permanentDeletePermissions = [],
 }: RowActionsProps<T>) {
   const { t } = useTranslations();
   return (
-    <div className="flex gap-2 dark:text-gray-200 justify-center">
+    <div className="flex gap-2 dark:text-gray-200 justify-center flex-wrap">
       {showDetail && onDetail && (
         <Can anyOf={detailPermissions}>
           <Button size="sm" variant="info" onClick={() => onDetail(row)}>
@@ -75,10 +81,22 @@ export function RowActions<T>({
       {showRestore && onRestore && (
         <Can anyOf={restorePermissions}>
           <Button size="sm" variant="success" onClick={() => onRestore(row)}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+            <FaTrashRestore className="h-4 w-4" />
             <span className="hidden md:block ml-1">{t("Restore")}</span>
+          </Button>
+        </Can>
+      )}
+
+      {showPermanentDelete && onPermanentDelete && (
+        <Can anyOf={permanentDeletePermissions}>
+          <Button 
+            size="sm" 
+            variant="destructive" 
+            onClick={() => onPermanentDelete(row)}
+            className="bg-red-700 hover:bg-red-800"
+          >
+            <FaTrash />
+            <span className="hidden md:block ml-1">{t("Permanent Delete")}</span>
           </Button>
         </Can>
       )}
