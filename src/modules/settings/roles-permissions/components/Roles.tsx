@@ -1,3 +1,5 @@
+// app/(dashboard)/admin/roles/Roles.tsx
+
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import {
   flexRender,
@@ -43,9 +45,16 @@ import FormHolderSheet from '@/components/custom/FormHolderSheet'
 import AddRole from './AddRole'
 import EditRole from './EditRole'
 import { useEditSheet } from '@/hooks/useEditSheet'
-import { useDeleteWithConfirm } from '@/hooks/useDeleteWithConfirm'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
-import { deleteRole, restoreRole, getRoles } from '../api'
+import { deleteRole, restoreRole, getRoleDeleteInfo, getRoles } from '../api'
+import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle } from 'lucide-react'
+import { dispatchShowToast } from '@/lib/dispatch'
+
+interface DeleteInfoResponse {
+  canBePermanent: boolean
+  message: string
+  hasRelatedRecords?: boolean
+}
 
 /* ---------------------------------- */
 /* Columns Definition */
@@ -55,23 +64,27 @@ const getAllColumns = ({
   pageSize,
   fetchDetail,
   handleEditClick,
-  confirmDelete,
+  confirmSoftDelete,
   confirmRestore,
+  confirmPermanentDelete,
   showDetail = true,
   showEdit = true,
-  showDelete = true,
-  showRestore = true
+  showSoftDelete = true,
+  showRestore = true,
+  showPermanentDelete = true
 }: {
   pageIndex: number
   pageSize: number
   fetchDetail: (item: IRole) => void
   handleEditClick: (item: IRole) => void
-  confirmDelete: (id: string) => void
+  confirmSoftDelete: (id: string) => void
   confirmRestore: (id: string) => void
+  confirmPermanentDelete: (id: string) => void
   showDetail?: boolean
   showEdit?: boolean
-  showDelete?: boolean
+  showSoftDelete?: boolean
   showRestore?: boolean
+  showPermanentDelete?: boolean
 }): ColumnDef<IRole>[] => [
   {
     header: 'SL',
@@ -92,12 +105,17 @@ const getAllColumns = ({
           row={row.original}
           onDetail={() => fetchDetail(row.original)}
           onEdit={!isDeleted ? () => handleEditClick(row.original) : undefined}
-          onDelete={!isDeleted ? () => confirmDelete(row.original.id) : undefined}
-          onRestore={isDeleted ? () => confirmRestore(row.original.id) : undefined}
+          onDelete={!isDeleted && showSoftDelete ? () => confirmSoftDelete(row.original.id) : undefined}
+          onRestore={isDeleted && showRestore ? () => confirmRestore(row.original.id) : undefined}
+          onPermanentDelete={isDeleted && showPermanentDelete ? () => confirmPermanentDelete(row.original.id) : undefined}
           showDetail={showDetail}
           showEdit={showEdit && !isDeleted}
-          showDelete={showDelete && !isDeleted}
+          showDelete={showSoftDelete && !isDeleted}
           showRestore={showRestore && isDeleted}
+          showPermanentDelete={showPermanentDelete && isDeleted}
+          deletePermissions={['delete-admin-roles']}
+          restorePermissions={['restore-admin-roles']}
+          permanentDeletePermissions={['delete-admin-roles']}
         />
       )
     },
@@ -169,6 +187,21 @@ export default function Roles() {
   const [showAddButton, setShowAddButton] = useState(false)
   const [showTrashButton, setShowTrashButton] = useState(false)
 
+  // Delete dialogs state
+  const [softDeleteDialogOpen, setSoftDeleteDialogOpen] = useState(false)
+  const [permanentDeleteDialogOpen, setPermanentDeleteDialogOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteInfo, setDeleteInfo] = useState<DeleteInfoResponse | null>(null)
+  const [checkingDelete, setCheckingDelete] = useState(false)
+
+  // Error dialog state
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
+  const [errorDetails, setErrorDetails] = useState<{ 
+    message: string; 
+    blockingTables?: string[] 
+  } | null>(null)
+
   // Restore dialog state
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
   const [restoreId, setRestoreId] = useState<string | null>(null)
@@ -176,8 +209,9 @@ export default function Roles() {
 
   const showDetail = true
   const showEdit = can(['update-admin-roles'])
-  const showDelete = can(['delete-admin-roles'])
+  const showSoftDelete = can(['delete-admin-roles'])
   const showRestore = can(['restore-admin-roles'])
+  const showPermanentDelete = can(['delete-admin-roles'])
 
   const {
     isOpen: isEditSheetOpen,
@@ -186,7 +220,6 @@ export default function Roles() {
     closeEdit: closeEditSheet
   } = useEditSheet<IRole>()
 
-  // Use ref to track if initial fetch has been done
   const hasFetchedRef = useRef(false)
   const prevFiltersRef = useRef<Record<string, any>>({})
 
@@ -274,36 +307,110 @@ export default function Roles() {
     minLoadingTime: 1000
   })
 
-  /* ---------------- Sync isDeletedStr with showTrash ---------------- */
-  useEffect(() => {
-    const newIsDeletedStr = showTrash ? 'true' : 'false'
-    if (filters.isDeletedStr !== newIsDeletedStr) {
-      setFilters(prev => ({
-        ...prev,
-        isDeletedStr: newIsDeletedStr
-      }))
+  /* ---------------- Delete Eligibility Check ---------------- */
+  const checkDeleteEligibility = useCallback(async (id: string): Promise<boolean> => {
+    setCheckingDelete(true)
+    try {
+      const info = await getRoleDeleteInfo(id)
+      setDeleteInfo(info)
+      return info.canBePermanent
+    } catch (error) {
+      console.error('Failed to get delete info:', error)
+      setDeleteInfo({
+        canBePermanent: false,
+        message: 'Failed to check delete eligibility'
+      })
+      return false
+    } finally {
+      setCheckingDelete(false)
     }
-  }, [showTrash])
+  }, [])
 
-  /* ---------------- Delete Hook ---------------- */
-  const {
-    dialogOpen,
-    confirmDelete,
-    cancelDelete,
-    handleDelete,
-    deleteLoading
-  } = useDeleteWithConfirm({
-    deleteFunction: async (id: string) => deleteRole(id, true),
-    onSuccess: fetchData,
-    successMessage: 'Role deleted successfully',
-    errorMessage: 'Failed to delete role',
-    inactiveMessage: 'Role cannot be deleted'
-  })
+  const confirmSoftDelete = useCallback(async (id: string) => {
+    setDeleteId(id)
+    setSoftDeleteDialogOpen(true)
+  }, [])
 
-  /* ---------------- Restore Handler ---------------- */
   const confirmRestore = useCallback((id: string) => {
     setRestoreId(id)
     setRestoreDialogOpen(true)
+  }, [])
+
+  const confirmPermanentDelete = useCallback(async (id: string) => {
+    setDeleteId(id)
+    await checkDeleteEligibility(id)
+    setPermanentDeleteDialogOpen(true)
+  }, [checkDeleteEligibility])
+
+  const handleSoftDelete = useCallback(async () => {
+    if (!deleteId) return
+    
+    setDeleteLoading(true)
+    try {
+      const response = await deleteRole(deleteId, false)
+      
+      if (response.status === 200) {
+        dispatchShowToast({ 
+          type: "success", 
+          message: response.data?.message || "Role moved to trash successfully" 
+        })
+        setSoftDeleteDialogOpen(false)
+        setDeleteId(null)
+        fetchData()
+      } else {
+        throw new Error(response.data?.message || "Failed to move role to trash")
+      }
+    } catch (error: any) {
+      console.error('Soft delete failed:', error)
+      let errorMessage = error.response?.data?.message || error.message || "Failed to move role to trash"
+      dispatchShowToast({ type: "danger", message: errorMessage })
+      setSoftDeleteDialogOpen(false)
+    } finally {
+      setDeleteLoading(false)
+    }
+  }, [deleteId, fetchData])
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!deleteId) return
+    
+    setDeleteLoading(true)
+    try {
+      const response = await deleteRole(deleteId, true)
+      
+      if (response.status === 200 && response.data) {
+        dispatchShowToast({ 
+          type: "success", 
+          message: response.data.message || "Role permanently deleted successfully" 
+        })
+        setPermanentDeleteDialogOpen(false)
+        setSoftDeleteDialogOpen(false)
+        setDeleteId(null)
+        fetchData()
+      } else {
+        throw new Error(response.data?.message || "Failed to delete role")
+      }
+    } catch (error: any) {
+      console.error('Permanent delete failed:', error)
+      
+      let errorMessage = error.response?.data?.message || error.message || "Failed to permanently delete role"
+      
+      setErrorDetails({
+        message: errorMessage,
+        blockingTables: error.response?.data?.blockingTables
+      })
+      setErrorDialogOpen(true)
+      setPermanentDeleteDialogOpen(false)
+    } finally {
+      setDeleteLoading(false)
+    }
+  }, [deleteId, fetchData])
+
+  const cancelDelete = useCallback(() => {
+    setSoftDeleteDialogOpen(false)
+    setPermanentDeleteDialogOpen(false)
+    setDeleteId(null)
+    setDeleteInfo(null)
+    setErrorDetails(null)
   }, [])
 
   const cancelRestore = useCallback(() => {
@@ -317,11 +424,14 @@ export default function Roles() {
     setRestoreLoading(true)
     try {
       await restoreRole(restoreId)
+      dispatchShowToast({ type: "success", message: "Role restored successfully" })
       setRestoreDialogOpen(false)
       setRestoreId(null)
       fetchData()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to restore role:', error)
+      let errorMessage = error.response?.data?.message || "Failed to restore role"
+      dispatchShowToast({ type: "danger", message: errorMessage })
     } finally {
       setRestoreLoading(false)
     }
@@ -336,12 +446,14 @@ export default function Roles() {
       pageSize,
       fetchDetail,
       handleEditClick,
-      confirmDelete,
+      confirmSoftDelete,
       confirmRestore,
+      confirmPermanentDelete,
       showDetail,
       showEdit,
-      showDelete,
-      showRestore
+      showSoftDelete,
+      showRestore,
+      showPermanentDelete
     })
   }
 
@@ -437,11 +549,9 @@ export default function Roles() {
     getPaginationRowModel: getPaginationRowModel()
   })
 
-  /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0
   const showErrorState = !loading && error
 
-  /* ---------------- UI ---------------- */
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -485,7 +595,6 @@ export default function Roles() {
         isFilterActive={isFilterActive}
       />
       
-      {/* TABLE */}
       <TableWithLoader loading={loading} id="printable-role-table">
         <table className="table-auto w-full text-left border border-collapse">
           <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
@@ -522,65 +631,26 @@ export default function Roles() {
             ))}
           </thead>
 
-          <motion.tbody
-            key={pageIndex}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{
-              duration: 0.5,
-              ease: 'easeOut'
-            }}
-          >
-            {/* Error State Row */}
-            {showErrorState && (
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
-                  <EmptyState
-                    message="Error loading roles"
-                    suggestion="Please try again or contact support"
-                  />
-                </td>
-              </tr>
-            )}
-
-            {/* Empty State Row */}
-            {!showErrorState && showEmptyState && (
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
-                  <EmptyState
-                    message="No roles found"
-                    suggestion="Try adjusting your filters or add a new role"
-                  />
-                </td>
-              </tr>
-            )}
-
-            {/* Data Rows */}
-            {!showErrorState && !showEmptyState && (
-              <>
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="border-b dark:border-gray-700">
-                    {row.getVisibleCells().map(cell => (
-                      <td
-                        key={cell.id}
-                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className="border-b dark:border-gray-700">
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                  >
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </td>
                 ))}
-              </>
-            )}
-          </motion.tbody>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </TableWithLoader>
 
-      {/* PAGINATION */}
       {!showEmptyState && !showErrorState && totalCount > 0 && (
         <TablePaginationFooter
           pageIndex={pageIndex}
@@ -592,7 +662,7 @@ export default function Roles() {
         />
       )}
 
-      {/* ROLE DETAIL */}
+      {/* Role Detail Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -606,7 +676,7 @@ export default function Roles() {
         )}
       </Modal>
 
-      {/* COLUMN MANAGER */}
+      {/* Column Manager */}
       {showColumnModal && (
         <ColumnVisibilityManager<IRole>
           tableId="roleTable"
@@ -617,7 +687,7 @@ export default function Roles() {
         />
       )}
 
-      {/* FILTER MODAL */}
+      {/* Filter Modal */}
       <FilterModal
         tableId="roleTable"
         title="Filter Roles"
@@ -656,7 +726,7 @@ export default function Roles() {
         )}
       />
 
-      {/* ADD ROLE */}
+      {/* Add Role Sheet */}
       {showAddButton && (
         <FormHolderSheet
           open={isSheetOpen}
@@ -668,34 +738,122 @@ export default function Roles() {
         </FormHolderSheet>
       )}
 
-      {/* DELETE CONFIRMATION */}
-      {showDelete && (
-        <ConfirmDialog
-          open={dialogOpen}
-          onCancel={cancelDelete}
-          onConfirm={handleDelete}
-          title="Confirm Deletion"
-          description="Are you sure you want to delete this role?"
-          confirmLabel={deleteLoading ? 'Deleting...' : 'Delete'}
-          loading={deleteLoading}
-        />
-      )}
+      {/* Soft Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={softDeleteDialogOpen}
+        onCancel={cancelDelete}
+        onConfirm={handleSoftDelete}
+        title="Move to Trash"
+        variant="warning"
+        icon={<Archive className="w-6 h-6" />}
+        confirmLabel={deleteLoading ? 'Moving to Trash...' : 'Move to Trash'}
+        loading={deleteLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+            This role will be moved to trash. You can restore it later.
+          </p>
+          {deleteInfo?.message && deleteInfo.canBePermanent === false && (
+            <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <p className="text-sm text-gray-600 dark:text-gray-400">{deleteInfo.message}</p>
+            </div>
+          )}
+        </div>
+      </ConfirmDialog>
 
-      {/* RESTORE CONFIRMATION */}
+      {/* Permanent Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={permanentDeleteDialogOpen}
+        onCancel={cancelDelete}
+        onConfirm={handlePermanentDelete}
+        title="Permanently Delete Role"
+        variant="destructive"
+        icon={<FileWarning className="w-6 h-6" />}
+        confirmLabel={deleteLoading ? 'Permanently Deleting...' : 'Yes, Permanently Delete'}
+        loading={deleteLoading}
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+              Warning: This action cannot be undone!
+            </p>
+          </div>
+          
+          <p className="text-gray-700 dark:text-gray-300">
+            This will permanently delete the role and all associated data including:
+          </p>
+          
+          <ul className="space-y-2 ml-4">
+            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              Role-permission assignments
+            </li>
+            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              User-role assignments
+            </li>
+          </ul>
+
+          {deleteInfo?.message && deleteInfo.canBePermanent === false && (
+            <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <p className="text-sm text-gray-600 dark:text-gray-400">{deleteInfo.message}</p>
+            </div>
+          )}
+        </div>
+      </ConfirmDialog>
+
+      {/* Restore Confirmation Dialog */}
       {showRestore && (
         <ConfirmDialog
           open={restoreDialogOpen}
           onCancel={cancelRestore}
           onConfirm={handleRestore}
-          title="Confirm Restore"
-          description="Are you sure you want to restore this role?"
+          title="Restore Role"
+          variant="success"
+          icon={<RotateCcw className="w-6 h-6" />}
           confirmLabel={restoreLoading ? 'Restoring...' : 'Restore'}
           loading={restoreLoading}
-          variant='success'
-        />
+        >
+          <div className="space-y-3">
+            <p className="text-green-600 dark:text-green-400 font-medium">
+              Are you sure you want to restore this role?
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              The role will be moved back to active roles with all its permissions.
+            </p>
+          </div>
+        </ConfirmDialog>
       )}
 
-      {/* EDIT ROLE */}
+      {/* Error Dialog */}
+      <ConfirmDialog
+        open={errorDialogOpen}
+        onCancel={() => setErrorDialogOpen(false)}
+        onConfirm={() => setErrorDialogOpen(false)}
+        title="Cannot Delete Role"
+        variant="destructive"
+        icon={<XCircle className="w-6 h-6" />}
+        confirmLabel="OK"
+        showCancelButton={false}
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <Database className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 dark:text-red-300 text-sm">
+              {errorDetails?.message || "This role has existing related records"}
+            </p>
+          </div>
+          
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Please move this role to trash instead, or manually remove the related records first.
+            </p>
+          </div>
+        </div>
+      </ConfirmDialog>
+
+      {/* Edit Role Sheet */}
       {showEdit && (
         <FormHolderSheet
           open={isEditSheetOpen}

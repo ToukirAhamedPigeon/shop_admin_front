@@ -1,3 +1,5 @@
+// app/(dashboard)/admin/options/Options.tsx - Add permanent delete functionality
+
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import {
   flexRender,
@@ -43,10 +45,17 @@ import FormHolderSheet from '@/components/custom/FormHolderSheet';
 import AddOption from './AddOption';
 import EditOption from './EditOption';
 import { useEditSheet } from '@/hooks/useEditSheet';
-import { useDeleteWithConfirm } from '@/hooks/useDeleteWithConfirm';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import { deleteOption, restoreOption, getOptions, getOptionDeleteInfo } from '../api';
+import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle } from 'lucide-react';
 import { dispatchShowToast } from '@/lib/dispatch';
+
+interface DeleteInfoResponse {
+  canBePermanent: boolean;
+  message: string;
+  hasChildren: boolean;
+  childrenCount: number;
+}
 
 /* ---------------------------------- */
 /* Columns Definition */
@@ -56,23 +65,27 @@ const getAllColumns = ({
   pageSize,
   fetchDetail,
   handleEditClick,
-  confirmDelete,
+  confirmSoftDelete,
   confirmRestore,
+  confirmPermanentDelete,
   showDetail = true,
   showEdit = true,
-  showDelete = true,
-  showRestore = true
+  showSoftDelete = true,
+  showRestore = true,
+  showPermanentDelete = true
 }: {
   pageIndex: number;
   pageSize: number;
   fetchDetail: (item: IOption) => void;
   handleEditClick: (item: IOption) => void;
-  confirmDelete: (id: string) => void;
+  confirmSoftDelete: (id: string) => void;
   confirmRestore: (id: string) => void;
+  confirmPermanentDelete: (id: string) => void;
   showDetail?: boolean;
   showEdit?: boolean;
-  showDelete?: boolean;
+  showSoftDelete?: boolean;
   showRestore?: boolean;
+  showPermanentDelete?: boolean;
 }): ColumnDef<IOption>[] => [
   {
     header: 'SL',
@@ -93,12 +106,17 @@ const getAllColumns = ({
           row={row.original}
           onDetail={() => fetchDetail(row.original)}
           onEdit={!isDeleted ? () => handleEditClick(row.original) : undefined}
-          onDelete={!isDeleted ? () => confirmDelete(row.original.id) : undefined}
-          onRestore={isDeleted ? () => confirmRestore(row.original.id) : undefined}
+          onDelete={!isDeleted && showSoftDelete ? () => confirmSoftDelete(row.original.id) : undefined}
+          onRestore={isDeleted && showRestore ? () => confirmRestore(row.original.id) : undefined}
+          onPermanentDelete={isDeleted && showPermanentDelete ? () => confirmPermanentDelete(row.original.id) : undefined}
           showDetail={showDetail}
           showEdit={showEdit && !isDeleted}
-          showDelete={showDelete && !isDeleted}
+          showDelete={showSoftDelete && !isDeleted}
           showRestore={showRestore && isDeleted}
+          showPermanentDelete={showPermanentDelete && isDeleted}
+          deletePermissions={['delete-admin-options']}
+          restorePermissions={['update-admin-options']}
+          permanentDeletePermissions={['delete-admin-options']}
         />
       );
     },
@@ -175,7 +193,21 @@ export default function Options() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [showAddButton, setShowAddButton] = useState(false);
   const [showTrashButton, setShowTrashButton] = useState(false);
-  const [deleteInfo, setDeleteInfo] = useState<{ canBePermanent: boolean; hasChildren: boolean; childrenCount: number } | null>(null);
+
+  // Delete dialogs state
+  const [softDeleteDialogOpen, setSoftDeleteDialogOpen] = useState(false);
+  const [permanentDeleteDialogOpen, setPermanentDeleteDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteInfo, setDeleteInfo] = useState<DeleteInfoResponse | null>(null);
+  const [checkingDelete, setCheckingDelete] = useState(false);
+
+  // Error dialog state
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<{ 
+    message: string; 
+    childrenCount?: number 
+  } | null>(null);
 
   // Restore dialog state
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
@@ -184,8 +216,9 @@ export default function Options() {
 
   const showDetail = true;
   const showEdit = can(['update-admin-options']);
-  const showDelete = can(['delete-admin-options']);
-  const showRestore = can(['update-admin-options']); // Restore uses update permission
+  const showSoftDelete = can(['delete-admin-options']);
+  const showRestore = can(['update-admin-options']);
+  const showPermanentDelete = can(['delete-admin-options']);
 
   const {
     isOpen: isEditSheetOpen,
@@ -222,14 +255,12 @@ export default function Options() {
         if ((key === 'createdFrom' || key === 'createdTo') && value === '') {
           acc[key] = null;
         } else if (key === 'parentId') {
-          // Handle parentId filter
           if (value === 'all') {
-            // Don't send parentId filter at all
-            // Skip adding to acc
+            // Skip
           } else if (value === null) {
-            acc[key] = null; // Filter where parent_id IS NULL
+            acc[key] = null;
           } else {
-            acc[key] = value; // Filter by specific parent ID
+            acc[key] = value;
           }
         } else if (Array.isArray(value) && value.length === 0) {
           // Skip
@@ -300,56 +331,115 @@ export default function Options() {
     }
   }, [showTrash]);
 
-  /* ---------------- Delete Hook with eligibility check ---------------- */
-  const handleDeleteClick = useCallback(async (id: string) => {
+  /* ---------------- Delete Eligibility Check ---------------- */
+  const checkDeleteEligibility = useCallback(async (id: string): Promise<boolean> => {
+    setCheckingDelete(true);
     try {
       const info = await getOptionDeleteInfo(id);
       setDeleteInfo(info);
-      
-      if (info.hasChildren && !isDeveloper) {
-        dispatchShowToast({
-          type: 'warning',
-          message: 'Only Developer type users can delete options that have children. Please soft delete instead.'
-        });
-        return;
-      }
-      
-      // Show confirmation dialog
-      confirmDelete(id);
+      return info.canBePermanent;
     } catch (error) {
-      console.error('Failed to check delete eligibility:', error);
-      dispatchShowToast({
-        type: 'danger',
-        message: 'Failed to check delete eligibility'
+      console.error('Failed to get delete info:', error);
+      setDeleteInfo({
+        canBePermanent: false,
+        message: 'Failed to check delete eligibility',
+        hasChildren: false,
+        childrenCount: 0
       });
+      return false;
+    } finally {
+      setCheckingDelete(false);
     }
-  }, [isDeveloper]);
+  }, []);
 
-  const {
-    dialogOpen,
-    confirmDelete,
-    cancelDelete,
-    handleDelete,
-    deleteLoading
-  } = useDeleteWithConfirm({
-    deleteFunction: async (id: string) => {
-      // If has children and not developer, force soft delete
-      if (deleteInfo?.hasChildren && !isDeveloper) {
-        return deleteOption(id, false);
-      }
-      // Otherwise allow permanent if user chooses
-      return deleteOption(id, false); // Default to soft delete, user can choose permanent in UI
-    },
-    onSuccess: fetchData,
-    successMessage: 'Option deleted successfully',
-    errorMessage: 'Failed to delete option',
-    inactiveMessage: 'Option cannot be deleted'
-  });
+  const confirmSoftDelete = useCallback(async (id: string) => {
+    setDeleteId(id);
+    await checkDeleteEligibility(id);
+    setSoftDeleteDialogOpen(true);
+  }, [checkDeleteEligibility]);
 
-  /* ---------------- Restore Handler ---------------- */
   const confirmRestore = useCallback((id: string) => {
     setRestoreId(id);
     setRestoreDialogOpen(true);
+  }, []);
+
+  const confirmPermanentDelete = useCallback(async (id: string) => {
+    setDeleteId(id);
+    const canBePermanent = await checkDeleteEligibility(id);
+    if (canBePermanent) {
+      setPermanentDeleteDialogOpen(true);
+    } else {
+      setErrorDetails({
+        message: deleteInfo?.message || 'Cannot permanently delete this option',
+        childrenCount: deleteInfo?.childrenCount
+      });
+      setErrorDialogOpen(true);
+    }
+  }, [checkDeleteEligibility, deleteInfo]);
+
+  const handleSoftDelete = useCallback(async () => {
+    if (!deleteId) return;
+    
+    setDeleteLoading(true);
+    try {
+      const response = await deleteOption(deleteId, false);
+      
+      if (response.status === 200) {
+        dispatchShowToast({ 
+          type: "success", 
+          message: response.data?.message || "Option moved to trash successfully" 
+        });
+        setSoftDeleteDialogOpen(false);
+        setDeleteId(null);
+        fetchData();
+      } else {
+        throw new Error(response.data?.message || "Failed to move option to trash");
+      }
+    } catch (error: any) {
+      console.error('Soft delete failed:', error);
+      let errorMessage = error.response?.data?.message || error.message || "Failed to move option to trash";
+      dispatchShowToast({ type: "danger", message: errorMessage });
+      setSoftDeleteDialogOpen(false);
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deleteId, fetchData]);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!deleteId) return;
+    
+    setDeleteLoading(true);
+    try {
+      const response = await deleteOption(deleteId, true);
+      
+      if (response.status === 200 && response.data) {
+        dispatchShowToast({ 
+          type: "success", 
+          message: response.data.message || "Option permanently deleted successfully" 
+        });
+        setPermanentDeleteDialogOpen(false);
+        setSoftDeleteDialogOpen(false);
+        setDeleteId(null);
+        fetchData();
+      } else {
+        throw new Error(response.data?.message || "Failed to delete option");
+      }
+    } catch (error: any) {
+      console.error('Permanent delete failed:', error);
+      let errorMessage = error.response?.data?.message || error.message || "Failed to permanently delete option";
+      dispatchShowToast({ type: "danger", message: errorMessage });
+      setPermanentDeleteDialogOpen(false);
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deleteId, fetchData]);
+
+  const cancelDelete = useCallback(() => {
+    setSoftDeleteDialogOpen(false);
+    setPermanentDeleteDialogOpen(false);
+    setDeleteId(null);
+    setDeleteInfo(null);
+    setErrorDetails(null);
   }, []);
 
   const cancelRestore = useCallback(() => {
@@ -363,19 +453,14 @@ export default function Options() {
     setRestoreLoading(true);
     try {
       await restoreOption(restoreId);
+      dispatchShowToast({ type: "success", message: "Option restored successfully" });
       setRestoreDialogOpen(false);
       setRestoreId(null);
       fetchData();
-      dispatchShowToast({
-        type: 'success',
-        message: 'Option restored successfully'
-      });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to restore option:', error);
-      dispatchShowToast({
-        type: 'danger',
-        message: 'Failed to restore option'
-      });
+      let errorMessage = error.response?.data?.message || "Failed to restore option";
+      dispatchShowToast({ type: "danger", message: errorMessage });
     } finally {
       setRestoreLoading(false);
     }
@@ -390,12 +475,14 @@ export default function Options() {
       pageSize,
       fetchDetail,
       handleEditClick,
-      confirmDelete: handleDeleteClick,
+      confirmSoftDelete,
       confirmRestore,
+      confirmPermanentDelete,
       showDetail,
       showEdit,
-      showDelete,
-      showRestore
+      showSoftDelete,
+      showRestore,
+      showPermanentDelete
     });
   }
 
@@ -491,7 +578,6 @@ export default function Options() {
     getPaginationRowModel: getPaginationRowModel()
   });
 
-  /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0;
   const showErrorState = !loading && error;
 
@@ -572,69 +658,30 @@ export default function Options() {
                     </div>
                   </th>
                 ))}
-               </tr>
+              </tr>
             ))}
           </thead>
 
-          <motion.tbody
-            key={pageIndex}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{
-              duration: 0.5,
-              ease: 'easeOut'
-            }}
-          >
-            {/* Error State Row */}
-            {showErrorState && (
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
-                  <EmptyState
-                    message="Error loading options"
-                    suggestion="Please try again or contact support"
-                  />
-                </td>
-              </tr>
-            )}
-
-            {/* Empty State Row */}
-            {!showErrorState && showEmptyState && (
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
-                  <EmptyState
-                    message="No options found"
-                    suggestion="Try adjusting your filters or add a new option"
-                  />
-                </td>
-              </tr>
-            )}
-
-            {/* Data Rows */}
-            {!showErrorState && !showEmptyState && (
-              <>
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="border-b dark:border-gray-700">
-                    {row.getVisibleCells().map(cell => (
-                      <td
-                        key={cell.id}
-                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
+          <tbody>
+            {table.getRowModel().rows.map(row => (
+              <tr key={row.id} className="border-b dark:border-gray-700">
+                {row.getVisibleCells().map(cell => (
+                  <td
+                    key={cell.id}
+                    className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                  >
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </td>
                 ))}
-              </>
-            )}
-          </motion.tbody>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </TableWithLoader>
 
-      {/* PAGINATION */}
       {!showEmptyState && !showErrorState && totalCount > 0 && (
         <TablePaginationFooter
           pageIndex={pageIndex}
@@ -722,34 +769,119 @@ export default function Options() {
         </FormHolderSheet>
       )}
 
-      {/* DELETE CONFIRMATION */}
-      {showDelete && (
-        <ConfirmDialog
-          open={dialogOpen}
-          onCancel={cancelDelete}
-          onConfirm={handleDelete}
-          title="Confirm Deletion"
-          description={deleteInfo?.hasChildren && !isDeveloper 
-            ? "This option has children and will be soft deleted. Only Developer type users can permanently delete options with children."
-            : "Are you sure you want to delete this option?"}
-          confirmLabel={deleteLoading ? 'Deleting...' : 'Delete'}
-          loading={deleteLoading}
-        />
-      )}
+      {/* SOFT DELETE CONFIRMATION DIALOG */}
+      <ConfirmDialog
+        open={softDeleteDialogOpen}
+        onCancel={cancelDelete}
+        onConfirm={handleSoftDelete}
+        title="Move to Trash"
+        variant="warning"
+        icon={<Archive className="w-6 h-6" />}
+        confirmLabel={deleteLoading ? 'Moving to Trash...' : 'Move to Trash'}
+        loading={deleteLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+            This option will be moved to trash. You can restore it later.
+          </p>
+          {deleteInfo?.message && deleteInfo.canBePermanent === false && (
+            <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <p className="text-sm text-gray-600 dark:text-gray-400">{deleteInfo.message}</p>
+            </div>
+          )}
+        </div>
+      </ConfirmDialog>
 
-      {/* RESTORE CONFIRMATION */}
+      {/* PERMANENT DELETE CONFIRMATION DIALOG */}
+      <ConfirmDialog
+        open={permanentDeleteDialogOpen}
+        onCancel={cancelDelete}
+        onConfirm={handlePermanentDelete}
+        title="Permanently Delete Option"
+        variant="destructive"
+        icon={<FileWarning className="w-6 h-6" />}
+        confirmLabel={deleteLoading ? 'Permanently Deleting...' : 'Yes, Permanently Delete'}
+        loading={deleteLoading}
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+              Warning: This action cannot be undone!
+            </p>
+          </div>
+          
+          <p className="text-gray-700 dark:text-gray-300">
+            This will permanently delete this option.
+          </p>
+          
+          {deleteInfo?.hasChildren && (
+            <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Note: This option has {deleteInfo.childrenCount} child option(s). They will be updated to remove parent reference.
+              </p>
+            </div>
+          )}
+        </div>
+      </ConfirmDialog>
+
+      {/* RESTORE CONFIRMATION DIALOG */}
       {showRestore && (
         <ConfirmDialog
           open={restoreDialogOpen}
           onCancel={cancelRestore}
           onConfirm={handleRestore}
-          title="Confirm Restore"
-          description="Are you sure you want to restore this option?"
+          title="Restore Option"
+          variant="success"
+          icon={<RotateCcw className="w-6 h-6" />}
           confirmLabel={restoreLoading ? 'Restoring...' : 'Restore'}
           loading={restoreLoading}
-          variant='success'
-        />
+        >
+          <div className="space-y-3">
+            <p className="text-green-600 dark:text-green-400 font-medium">
+              Are you sure you want to restore this option?
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              The option will be moved back to active options.
+            </p>
+          </div>
+        </ConfirmDialog>
       )}
+
+      {/* ERROR DIALOG - Cannot permanently delete due to children */}
+      <ConfirmDialog
+        open={errorDialogOpen}
+        onCancel={() => setErrorDialogOpen(false)}
+        onConfirm={() => setErrorDialogOpen(false)}
+        title="Cannot Delete Option"
+        variant="destructive"
+        icon={<XCircle className="w-6 h-6" />}
+        confirmLabel="OK"
+        showCancelButton={false}
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <Database className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 dark:text-red-300 text-sm">
+              {errorDetails?.message || "This option has child options and cannot be permanently deleted"}
+            </p>
+          </div>
+          
+          {errorDetails?.childrenCount && errorDetails.childrenCount > 0 && (
+            <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                This option has {errorDetails.childrenCount} child option(s). Please soft delete it instead.
+              </p>
+            </div>
+          )}
+          
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Please move this option to trash instead.
+            </p>
+          </div>
+        </div>
+      </ConfirmDialog>
 
       {/* EDIT OPTION */}
       {showEdit && (
