@@ -662,7 +662,7 @@ export default function Users() {
         const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         return guidRegex.test(id);
       }
-      // console.log(userId);
+      
       const isDisabled = hasDeveloperRole || !userId || !isValidGuid(userId)
       
       return (
@@ -741,7 +741,7 @@ export default function Users() {
   // Update getSelectedIds to filter invalid IDs
   const getSelectedIds = useCallback(() => {
       const selectedIds = Object.keys(selectedRowIds).filter(id => selectedRowIds[id]);
-      console.log('Selected IDs for bulk delete:', selectedIds);
+      // console.log('Selected IDs for bulk delete:', selectedIds);
       // Filter out invalid GUIDs
       const validIds = selectedIds.filter(isValidGuid);
       
@@ -924,7 +924,7 @@ export default function Users() {
     const table = useReactTable<IUser>({
       data,
       columns: visible,
-      getRowId: (row) => row.id, // Explicitly set row ID
+      getRowId: (row) => row.id,
       state: {
         sorting,
         pagination: {
@@ -940,15 +940,20 @@ export default function Users() {
         return !hasDeveloperRole
       },
       onRowSelectionChange: (updater) => {
-        // Handle both function and object updaters
+        // console.log('=== ON ROW SELECTION CHANGE ===')
+        // console.log('20. Updater type:', typeof updater)
+        // console.log('21. Current selectedRowIds:', selectedRowIds)
+        
         let newSelection: Record<string, boolean>;
         
         if (typeof updater === 'function') {
           newSelection = updater(selectedRowIds);
+          // console.log('22. New selection from function:', newSelection)
         } else {
           newSelection = updater;
+          // console.log('23. New selection from object:', newSelection)
         }
-                
+        
         // Filter out invalid GUIDs
         const isValidGuid = (id: string): boolean => {
           const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -962,10 +967,13 @@ export default function Users() {
           return acc;
         }, {} as Record<string, boolean>);
         
+        // console.log('24. Filtered selection:', filteredSelection)
+        // console.log('25. Filtered selection keys count:', Object.keys(filteredSelection).length)
+        
         setSelectedRowIds(filteredSelection);
       },
       manualPagination: true,
-      manualSorting: true,
+      manualSorting: false, // Set to false to let React Table handle sorting internally
       pageCount: Math.ceil(totalCount / pageSize),
       getCoreRowModel: getCoreRowModel(),
       getSortedRowModel: getSortedRowModel(),

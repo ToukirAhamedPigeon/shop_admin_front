@@ -18,53 +18,86 @@ import {
 } from "@/components/ui/dropdown-menu"
 
   export const SelectAllCheckbox = <TData,>({ table }: { table: TanStackTable<TData> }) => {
-    const { rows } = table.getCoreRowModel()
+    // Get only the current page rows (visible rows)
+    const { rows } = table.getRowModel()
     
-    // Get only selectable rows (non-developer users)
+    // Get all rows that are selectable from the current page
     const selectableRows = rows.filter((row: Row<TData>) => {
       const user = row.original as any
       const hasDeveloperRole = user.roles?.includes('developer') || 
                                 user.roleNames?.split(',').map((r: string) => r.trim()).includes('developer')
-      return !hasDeveloperRole
+      const isValidGuid = (id: string): boolean => {
+        const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return guidRegex.test(id);
+      }
+      return !hasDeveloperRole && user.id && isValidGuid(user.id)
     })
     
+    // Check if all selectable rows are selected
     const isAllSelectableSelected = selectableRows.length > 0 && 
       selectableRows.every((row: Row<TData>) => row.getIsSelected())
-    const isSomeSelectableSelected = selectableRows.some((row: Row<TData>) => row.getIsSelected())
+    const isSomeSelectableSelected = selectableRows.some((row: Row<TData>) => row.getIsSelected()) && !isAllSelectableSelected
+    
+    const handleSelectAll = () => {
+      if (isAllSelectableSelected) {
+        // Deselect all - set empty selection
+        table.setRowSelection({})
+      } else {
+        // Select all - build selection object with all selectable row IDs
+        const newSelection: Record<string, boolean> = {}
+        selectableRows.forEach((row: Row<TData>) => {
+          const rowId = row.id
+          newSelection[rowId] = true
+        })
+        // Set the selection directly to avoid multiple updates
+        table.setRowSelection(newSelection)
+      }
+    }
+    
+    // Determine checkbox state
+    let checkedState: boolean = false
+    let indeterminateState: boolean = false
+    
+    if (selectableRows.length > 0) {
+      if (isAllSelectableSelected) {
+        checkedState = true
+        indeterminateState = false
+      } else if (isSomeSelectableSelected) {
+        checkedState = false
+        indeterminateState = true
+      } else {
+        checkedState = false
+        indeterminateState = false
+      }
+    }
     
     return (
       <div 
         className="flex justify-center cursor-pointer"
-        onClick={() => {
-          if (isAllSelectableSelected) {
-            // Unselect all selectable rows
-            selectableRows.forEach((row: Row<TData>) => row.toggleSelected(false))
-          } else {
-            // Select all selectable rows
-            selectableRows.forEach((row: Row<TData>) => row.toggleSelected(true))
-          }
+        onClick={(e) => {
+          e.stopPropagation()
+          handleSelectAll()
         }}
       >
-        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors cursor-pointer ${
-          isAllSelectableSelected 
-            ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500' 
-            : isSomeSelectableSelected 
-              ? 'bg-blue-200 border-blue-400 dark:bg-blue-800 dark:border-blue-600' 
-              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900'
+        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+          checkedState
+            ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+            : indeterminateState
+              ? 'bg-blue-200 border-blue-400 dark:bg-blue-800 dark:border-blue-600'
+              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
         }`}>
-          {isAllSelectableSelected && (
+          {checkedState && (
             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           )}
-          {!isAllSelectableSelected && isSomeSelectableSelected && (
+          {indeterminateState && (
             <div className="w-2 h-0.5 bg-blue-600 dark:bg-blue-400" />
           )}
         </div>
       </div>
     )
 }
-
 /** --- RowActions Component with Permanent Delete --- **/
 interface RowActionsProps<T> {
   row: T
@@ -218,6 +251,7 @@ interface TableHeaderActionsProps {
   onBulkDelete?: () => void
   onBulkRestore?: () => void
   onBulkPermanentDelete?: () => void
+  onResetSorting?: () => void  // Add this new prop
   isFilterActive?: boolean
   addButtonLabel?: string
   showSearch?: boolean
@@ -228,6 +262,7 @@ interface TableHeaderActionsProps {
   showExportButton?: boolean
   showColumnSettingsButton?: boolean
   showBulkActions?: boolean
+  showResetSorting?: boolean  // Add this new prop
   selectedCount?: number
   trashButton?: {
     onClick: () => void
@@ -252,6 +287,7 @@ export function TableHeaderActions({
   onBulkDelete,
   onBulkRestore,
   onBulkPermanentDelete,
+  onResetSorting,  // Add this
   isFilterActive = false,
   addButtonLabel = 'common.Add New',
   showSearch = true,
@@ -262,6 +298,7 @@ export function TableHeaderActions({
   showExportButton = true,
   showColumnSettingsButton = true,
   showBulkActions = false,
+  showResetSorting = false,  // Add this
   selectedCount = 0,
   trashButton,
   storeButton,
@@ -307,6 +344,21 @@ export function TableHeaderActions({
                 aria-hidden="true"
               />
             )}
+          </Button>
+        )}
+
+        {/* Reset Sorting Button */}
+        {showResetSorting && onResetSorting && (
+          <Button
+            onClick={onResetSorting}
+            aria-label="Reset sorting"
+            variant="outline"
+            className="flex items-center whitespace-nowrap border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:border-yellow-600 dark:text-yellow-400 dark:hover:bg-yellow-950/30"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className="hidden sm:inline">{t('Reset Sorting')}</span>
           </Button>
         )}
 
