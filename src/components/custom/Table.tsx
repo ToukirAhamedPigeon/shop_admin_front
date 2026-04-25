@@ -1,7 +1,7 @@
 import { useEffect, useMemo, type ReactNode } from "react"
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { FaEye, FaEdit, FaTrash, FaPlus, FaPrint, FaFileExcel, FaSlidersH, FaFilter, FaTrashRestore } from 'react-icons/fa'
+import { FaEye, FaEdit, FaTrash, FaPlus, FaPrint, FaFileExcel, FaSlidersH, FaFilter, FaTrashRestore, FaEllipsisH } from 'react-icons/fa'
 import { useTranslations } from "@/hooks/useTranslations";
 import Loader from "@/components/custom/Loader";
 import { formatNumber } from "@/lib/helpers";
@@ -9,6 +9,12 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 // import { useDebounce } from '@/hooks/useDebounce'
 import { Can } from "./Can";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 /** --- RowActions Component with Permanent Delete --- **/
 interface RowActionsProps<T> {
@@ -152,6 +158,7 @@ export function IndexCell({ rowIndex, pageIndex, pageSize }: IndexCellProps) {
 }
 
 /** --- TableHeaderActions Component --- **/
+/** --- TableHeaderActions Component with More Dropdown --- **/
 interface TableHeaderActionsProps {
   searchValue: string
   onSearchChange: (value: string) => void
@@ -202,7 +209,7 @@ export function TableHeaderActions({
   storeButton,
 }: TableHeaderActionsProps) {
   const { t } = useTranslations();
-  // const debouncedSearchValue = useDebounce(searchValue, 500)
+
   return (
     <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-3 mb-4 dark:text-gray-200">
       {showSearch &&
@@ -226,7 +233,6 @@ export function TableHeaderActions({
           </Button>
         )}
 
-        
         {showFilterButton && onFilter && (
           <Button
             onClick={onFilter}
@@ -245,40 +251,6 @@ export function TableHeaderActions({
           </Button>
         )}
 
-        {showColumnSettingsButton && onColumnSettings && (
-          <Button
-            onClick={onColumnSettings}
-            aria-label="Open column settings"
-            className=""
-          >
-            <FaSlidersH />
-            <span className="hidden lg:block ml-1">{t('Columns')}</span>
-          </Button>
-        )}
-
-        {showPrintButton && onPrint && (
-          <Button
-            variant="info"
-            onClick={onPrint}
-            aria-label="Print table"
-            className="bg-sky-800 hover:bg-sky-700 dark:bg-sky-800 dark:hover:bg-sky-700"
-          >
-            <FaPrint />
-            <span className="hidden lg:block ml-1">{t('Print')}</span>
-          </Button>
-        )}
-
-        {showExportButton && onExport && (
-          <Button
-            variant="success"
-            onClick={onExport}
-            className="bg-green-800 dark:bg-green-700 dark:hover:bg-green-600"
-            aria-label="Export table to Excel"
-          >
-            <FaFileExcel />
-            <span className="hidden lg:block ml-1">{t('Excel')}</span>
-          </Button>
-        )}
         {/* Trash Button - shown when not in trash view */}
         {showTrashButton && trashButton?.show && trashButton.onClick && (
           <Button
@@ -308,6 +280,48 @@ export function TableHeaderActions({
             <span className="hidden sm:inline">{storeButton.label || t('Store')}</span>
           </Button>
         )}
+        {/* More Actions Dropdown - Contains Print, Excel, Column Settings */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="flex items-center gap-1"
+              aria-label="More actions"
+            >
+              <FaEllipsisH className="w-3 h-3" />
+              <span className="hidden lg:block">{t('More')}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[160px]">
+            {showPrintButton && onPrint && (
+              <DropdownMenuItem 
+                onClick={onPrint} 
+                className="cursor-pointer hover:bg-sky-50 hover:text-sky-700 dark:hover:bg-sky-950/50 dark:hover:text-sky-300 transition-colors duration-200"
+              >
+                <FaPrint className="w-4 h-4 mr-2 text-sky-600 dark:text-sky-400" />
+                <span>{t('Print')}</span>
+              </DropdownMenuItem>
+            )}
+            {showExportButton && onExport && (
+              <DropdownMenuItem 
+                onClick={onExport} 
+                className="cursor-pointer hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/50 dark:hover:text-green-300 transition-colors duration-200"
+              >
+                <FaFileExcel className="w-4 h-4 mr-2 text-green-600 dark:text-green-400" />
+                <span>{t('Excel')}</span>
+              </DropdownMenuItem>
+            )}
+            {showColumnSettingsButton && onColumnSettings && (
+              <DropdownMenuItem 
+                onClick={onColumnSettings} 
+                className="cursor-pointer hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950/50 dark:hover:text-purple-300 transition-colors duration-200"
+              >
+                <FaSlidersH className="w-4 h-4 mr-2 text-purple-600 dark:text-purple-400" />
+                <span>{t('Columns')}</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )

@@ -79,3 +79,14 @@ export const getDeleteInfo = async (id: string) => {
   const response = await api.get(`/users/${id}/delete-info`);
   return response.data;
 };
+
+export const bulkDeleteUsers = async (ids: string[], permanent: boolean = false) => {
+  const response = await api.post('/users/bulk-delete', { ids, permanent });
+  return response.data;
+};
+
+// Bulk restore users
+export const bulkRestoreUsers = async (ids: string[]) => {
+  const response = await api.post('/users/bulk-restore', { ids });
+  return response.data;
+};
