@@ -80,6 +80,7 @@ export const getDeleteInfo = async (id: string) => {
   return response.data;
 };
 
+// Bulk operations
 export const bulkDeleteUsers = async (ids: string[], permanent: boolean = false) => {
   const response = await api.post('/users/bulk-delete', { ids, permanent });
   return response.data;

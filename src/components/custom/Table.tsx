@@ -7,14 +7,63 @@ import Loader from "@/components/custom/Loader";
 import { formatNumber } from "@/lib/helpers";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
-// import { useDebounce } from '@/hooks/useDebounce'
 import { Can } from "./Can";
+import type { Row} from '@tanstack/react-table'
+import type { Table as TanStackTable } from '@tanstack/react-table'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
+  export const SelectAllCheckbox = <TData,>({ table }: { table: TanStackTable<TData> }) => {
+    const { rows } = table.getCoreRowModel()
+    
+    // Get only selectable rows (non-developer users)
+    const selectableRows = rows.filter((row: Row<TData>) => {
+      const user = row.original as any
+      const hasDeveloperRole = user.roles?.includes('developer') || 
+                                user.roleNames?.split(',').map((r: string) => r.trim()).includes('developer')
+      return !hasDeveloperRole
+    })
+    
+    const isAllSelectableSelected = selectableRows.length > 0 && 
+      selectableRows.every((row: Row<TData>) => row.getIsSelected())
+    const isSomeSelectableSelected = selectableRows.some((row: Row<TData>) => row.getIsSelected())
+    
+    return (
+      <div 
+        className="flex justify-center cursor-pointer"
+        onClick={() => {
+          if (isAllSelectableSelected) {
+            // Unselect all selectable rows
+            selectableRows.forEach((row: Row<TData>) => row.toggleSelected(false))
+          } else {
+            // Select all selectable rows
+            selectableRows.forEach((row: Row<TData>) => row.toggleSelected(true))
+          }
+        }}
+      >
+        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors cursor-pointer ${
+          isAllSelectableSelected 
+            ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500' 
+            : isSomeSelectableSelected 
+              ? 'bg-blue-200 border-blue-400 dark:bg-blue-800 dark:border-blue-600' 
+              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900'
+        }`}>
+          {isAllSelectableSelected && (
+            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+          {!isAllSelectableSelected && isSomeSelectableSelected && (
+            <div className="w-2 h-0.5 bg-blue-600 dark:bg-blue-400" />
+          )}
+        </div>
+      </div>
+    )
+}
 
 /** --- RowActions Component with Permanent Delete --- **/
 interface RowActionsProps<T> {
@@ -157,8 +206,7 @@ export function IndexCell({ rowIndex, pageIndex, pageSize }: IndexCellProps) {
   return <span className="text-gray-800 dark:text-gray-200">{rowIndex + 1 + pageIndex * pageSize}</span>
 }
 
-/** --- TableHeaderActions Component --- **/
-/** --- TableHeaderActions Component with More Dropdown --- **/
+// Update TableHeaderActions component
 interface TableHeaderActionsProps {
   searchValue: string
   onSearchChange: (value: string) => void
@@ -167,6 +215,9 @@ interface TableHeaderActionsProps {
   onExport?: () => void
   onColumnSettings?: () => void
   onFilter?: () => void
+  onBulkDelete?: () => void
+  onBulkRestore?: () => void
+  onBulkPermanentDelete?: () => void
   isFilterActive?: boolean
   addButtonLabel?: string
   showSearch?: boolean
@@ -176,6 +227,8 @@ interface TableHeaderActionsProps {
   showPrintButton?: boolean
   showExportButton?: boolean
   showColumnSettingsButton?: boolean
+  showBulkActions?: boolean
+  selectedCount?: number
   trashButton?: {
     onClick: () => void
     label?: string
@@ -196,6 +249,9 @@ export function TableHeaderActions({
   onExport,
   onColumnSettings,
   onFilter,
+  onBulkDelete,
+  onBulkRestore,
+  onBulkPermanentDelete,
   isFilterActive = false,
   addButtonLabel = 'common.Add New',
   showSearch = true,
@@ -205,10 +261,13 @@ export function TableHeaderActions({
   showPrintButton = true,
   showExportButton = true,
   showColumnSettingsButton = true,
+  showBulkActions = false,
+  selectedCount = 0,
   trashButton,
   storeButton,
 }: TableHeaderActionsProps) {
   const { t } = useTranslations();
+  const hasSelection = selectedCount > 0;
 
   return (
     <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-3 mb-4 dark:text-gray-200">
@@ -221,7 +280,7 @@ export function TableHeaderActions({
           className="w-full sm:w-[220px] md:w-1/3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
         />
       }
-      <div className="flex gap-2 relative">
+      <div className="flex gap-2 relative flex-wrap">
         {showAddButton && onAddNew && (
           <Button
             onClick={onAddNew}
@@ -251,6 +310,65 @@ export function TableHeaderActions({
           </Button>
         )}
 
+        {/* Bulk Actions - Always show but disabled when no selection */}
+        {showBulkActions && (
+          <>
+            {/* Bulk Restore - visible in Trash View (Store button visible) */}
+            {storeButton?.show && onBulkRestore && (
+              <Button
+                onClick={onBulkRestore}
+                disabled={!hasSelection}
+                aria-label="Bulk restore selected items"
+                variant="success"
+                className={`flex items-center whitespace-nowrap ${
+                  hasSelection 
+                    ? 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600' 
+                    : 'opacity-50 cursor-not-allowed'
+                }`}
+              >
+                <FaTrashRestore className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">{t('Bulk Restore')} {hasSelection && `(${selectedCount})`}</span>
+              </Button>
+            )}
+            
+            {/* Bulk Delete (Move to Trash) - visible in Store View (Trash button visible) */}
+            {!storeButton?.show && trashButton?.show && onBulkDelete && (
+              <Button
+                onClick={onBulkDelete}
+                disabled={!hasSelection}
+                aria-label="Bulk move to trash"
+                variant="destructive"
+                className={`flex items-center whitespace-nowrap ${
+                  hasSelection 
+                    ? 'bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-600' 
+                    : 'opacity-50 cursor-not-allowed'
+                }`}
+              >
+                <FaTrash className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">{t('Bulk Delete')} {hasSelection && `(${selectedCount})`}</span>
+              </Button>
+            )}
+            
+            {/* Bulk Permanent Delete - visible in Trash View (Trash button visible) */}
+            {storeButton?.show && onBulkPermanentDelete && (
+              <Button
+                onClick={onBulkPermanentDelete}
+                disabled={!hasSelection}
+                aria-label="Bulk permanently delete selected items"
+                variant="destructive"
+                className={`flex items-center whitespace-nowrap ${
+                  hasSelection 
+                    ? 'bg-red-700 hover:bg-red-800 dark:bg-red-800 dark:hover:bg-red-900' 
+                    : 'opacity-50 cursor-not-allowed'
+                }`}
+              >
+                <FaTrash className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">{t('Bulk Permanent Delete')} {hasSelection && `(${selectedCount})`}</span>
+              </Button>
+            )}
+          </>
+        )}
+
         {/* Trash Button - shown when not in trash view */}
         {showTrashButton && trashButton?.show && trashButton.onClick && (
           <Button
@@ -266,7 +384,7 @@ export function TableHeaderActions({
           </Button>
         )}
 
-        {/* Store Button - shown when in trash view - updated from Active */}
+        {/* Store Button - shown when in trash view */}
         {storeButton?.show && storeButton.onClick && (
           <Button
             onClick={storeButton.onClick}
@@ -280,7 +398,8 @@ export function TableHeaderActions({
             <span className="hidden sm:inline">{storeButton.label || t('Store')}</span>
           </Button>
         )}
-        {/* More Actions Dropdown - Contains Print, Excel, Column Settings */}
+        
+        {/* More Actions Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

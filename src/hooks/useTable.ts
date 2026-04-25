@@ -44,6 +44,7 @@ export function useTable<T>({
   const [pendingPage, setPendingPage] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showTrash, setShowTrash] = useState(false)
+  const [isInitialFetch, setIsInitialFetch] = useState(true)
   
   // Refs for tracking previous values to detect changes
   const prevGlobalFilterRef = useRef(globalFilter)
@@ -69,6 +70,7 @@ export function useTable<T>({
     const sortBy = sorting.length ? sorting[0].id : defaultSort
     const sortOrder = sorting.length && !sorting[0].desc ? 'asc' : 'desc'
     
+    // Use targetPage if provided, otherwise use current pageIndex + 1
     const pageToFetch = targetPage !== undefined ? targetPage + 1 : pageIndex + 1
 
     try {
@@ -112,9 +114,7 @@ export function useTable<T>({
               setPageIndex(pendingData.current.targetPage)
             }
             
-            setTimeout(() => {
-              setLoading(false)
-            }, minLoadingTime)
+            setLoading(false)
             pendingData.current = null
             timeoutRef.current = undefined
           }
@@ -128,9 +128,7 @@ export function useTable<T>({
           setPageIndex(targetPage)
         }
         
-        setTimeout(() => {
-          setLoading(false)
-        }, minLoadingTime)
+        setLoading(false)
         pendingData.current = null
       }
     } catch (err) {
@@ -144,6 +142,12 @@ export function useTable<T>({
 
   // Reset page index when filter-related values change
   useEffect(() => {
+    // Skip on initial mount
+    if (isInitialFetch) {
+      setIsInitialFetch(false)
+      return
+    }
+    
     // Check if any filter value changed (excluding pageIndex)
     const globalFilterChanged = prevGlobalFilterRef.current !== globalFilter
     const showTrashChanged = prevShowTrashRef.current !== showTrash
@@ -161,17 +165,30 @@ export function useTable<T>({
       prevPageSizeRef.current = pageSize
       prevSortingRef.current = sorting
     }
-  }, [globalFilter, showTrash, pageSize, sorting])
+  }, [globalFilter, showTrash, pageSize, sorting, isInitialFetch])
 
+  // Handle pending page changes
   useEffect(() => {
     if (pendingPage !== null && pendingPage !== pageIndex) {
       fetchData(pendingPage)
     }
   }, [pendingPage, pageIndex, fetchData])
 
+  // Only fetch on initial mount and when dependencies change (not on every render)
+  useEffect(() => {
+    // Skip if it's the initial fetch (handled by separate useEffect)
+    if (isInitialFetch) return
+    
+    // Reset the flag after first fetch
+    setIsInitialFetch(true)
+    
+    fetchData()
+  }, [globalFilter, pageSize, sorting, defaultSort, showTrash]) // Remove fetchData from dependencies
+
+  // Separate useEffect for initial fetch
   useEffect(() => {
     fetchData()
-  }, [globalFilter, pageSize, sorting, defaultSort, showTrash])
+  }, []) // Empty dependency array - only run once on mount
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -193,17 +210,14 @@ export function useTable<T>({
 
   const handleTrashClick = useCallback(() => {
     setShowTrash(true)
-    // pageIndex will be reset by the useEffect above
   }, [])
 
   const handleStoreClick = useCallback(() => {
     setShowTrash(false)
-    // pageIndex will be reset by the useEffect above
   }, [])
 
   const toggleTrashView = useCallback(() => {
     setShowTrash(prev => !prev)
-    // pageIndex will be reset by the useEffect above
   }, [])
 
   const viewIndicator: ViewIndicatorConfig | null = enableTrashView ? {

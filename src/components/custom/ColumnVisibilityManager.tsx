@@ -240,6 +240,20 @@ export function ColumnVisibilityManager<T>({
     }
   }
 
+  const getColumnDisplayName = <T,>(col: ColumnDef<T>): string => {
+    const header = col.header
+    if (typeof header === 'string') return header
+    if (header && typeof header === 'function') {
+      // Check if it's the select column by id
+      if (col.id === 'select') return 'Select All'
+      // For other component-based headers, try to get a meaningful name
+      const headerStr = String(header)
+      if (headerStr.includes('SelectAllCheckbox')) return 'Select All'
+      // Return the column id or a default value
+      return col.id || 'Column'
+    }
+    return col.id || 'Column'
+  }
 
   const filteredHidden = hidden.filter(col =>
     (String(col.header) || '').toLowerCase().includes(search.toLowerCase())
@@ -265,6 +279,7 @@ export function ColumnVisibilityManager<T>({
             <ScrollArea className="border border-gray-600 dark:border-gray-700 rounded h-120 space-y-1">
               {visible.map(col => {
                 const colId = getColumnId(col)
+                const displayName = getColumnDisplayName(col)
                 return (
                   <div key={colId} className="border-b border-gray-300 dark:border-gray-700">
                     <div
@@ -276,7 +291,7 @@ export function ColumnVisibilityManager<T>({
                       onClick={e => handleSelect(colId, selectedVisible, setSelectedVisible, e)}
                       className={`w-full py-1 px-2 cursor-pointer ${selectedVisible.includes(colId) ? 'bg-blue-200 dark:bg-blue-600' : ''}`}
                     >
-                      {t(String(col.header))}
+                      {t(displayName)}
                     </div>
                   </div>
                 )
@@ -304,6 +319,7 @@ export function ColumnVisibilityManager<T>({
             <ScrollArea className="border border-gray-600 dark:border-gray-700 rounded h-120 space-y-1">
               {filteredHidden.map(col => {
                 const colId = getColumnId(col)
+                const displayName = getColumnDisplayName(col)
                 return (
                   <div key={colId} className="border-b border-gray-300 dark:border-gray-700">
                     <div
@@ -315,7 +331,7 @@ export function ColumnVisibilityManager<T>({
                       onClick={e => handleSelect(colId, selectedHidden, setSelectedHidden, e)}
                       className={`w-full py-1 px-2 cursor-pointer ${selectedHidden.includes(colId) ? 'bg-blue-200 dark:bg-blue-600' : ''}`}
                     >
-                      {t(String(col.header))}
+                      {t(displayName)}
                     </div>
                   </div>
                 )

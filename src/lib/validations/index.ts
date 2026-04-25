@@ -76,3 +76,8 @@ export const checkAllotmentOverlap = async (
     return false
   }
 }
+
+export const isValidGuid = (id: string): boolean => {
+  const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return guidRegex.test(id);
+};

@@ -25,7 +25,8 @@ import {
   IndexCell,
   EmptyState,
   TrashViewIndicator, 
-  TableWithLoader
+  TableWithLoader,
+  SelectAllCheckbox
 } from '@/components/custom/Table'
 import Modal from '@/components/custom/Modal'
 import { ColumnVisibilityManager } from '@/components/custom/ColumnVisibilityManager'
@@ -51,9 +52,11 @@ import { useEditSheet } from '@/hooks/useEditSheet'
 import { capitalize } from '@/lib/helpers'
 import { useAppSelector } from '@/hooks/useRedux'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
-import { deleteUser, restoreUser, getDeleteInfo } from './../api'
+import { deleteUser, restoreUser, getDeleteInfo, bulkDeleteUsers, bulkRestoreUsers } from './../api'
 import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle } from 'lucide-react'
 import { dispatchShowToast } from '@/lib/dispatch'
+import { isValidGuid } from '@/lib/validations'
+import { cn } from '@/lib/utils'
 
 interface DeleteInfoResponse {
   canBePermanent: boolean
@@ -75,8 +78,6 @@ const getAllColumns = ({
   confirmRestore,
   confirmPermanentDelete,
   authRoles,
-  selectedRows,
-  onSelectRow,
   showDetail = true,
   showEdit = true,
   showDelete = true,
@@ -91,8 +92,6 @@ const getAllColumns = ({
     confirmRestore: (id: string) => void
     confirmPermanentDelete: (id: string) => void
     authRoles: string[]
-    selectedRows?: Set<string>
-    onSelectRow?: (id: string, checked: boolean) => void
     showDetail?: boolean
     showEdit?: boolean
     showDelete?: boolean
@@ -106,6 +105,7 @@ const getAllColumns = ({
       <IndexCell rowIndex={row.index} pageIndex={pageIndex} pageSize={pageSize} />
     ),
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: false,
   },
   {
     header: 'Action',
@@ -135,6 +135,7 @@ const getAllColumns = ({
       )
     },
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: false,
   },
   {
     header: 'Profile Image',
@@ -163,6 +164,7 @@ const getAllColumns = ({
       )
     },
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: false,
   },
   {
     header: 'QR Code',
@@ -310,6 +312,11 @@ export default function Users() {
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
   const [restoreId, setRestoreId] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
+ const [selectedRowIds, setSelectedRowIds] = useState<Record<string, boolean>>({})
+ const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
+ const [bulkRestoreDialogOpen, setBulkRestoreDialogOpen] = useState(false)
+ const [bulkPermanentDeleteDialogOpen, setBulkPermanentDeleteDialogOpen] = useState(false)
+ const [bulkLoading, setBulkLoading] = useState(false)
 
   const showDetail = true
   const showEdit = can(['update-admin-users'])
@@ -324,6 +331,8 @@ export default function Users() {
     closeEdit: closeEditSheet
   } = useEditSheet<IUser>()
 
+
+ 
   /* ---------------- Stable Fetcher ---------------- */
   const stableFetcher = useCallback(
     async ({
@@ -602,27 +611,97 @@ export default function Users() {
   }, [restoreId, fetchData])
 
   /* ---------------- Stable Columns ---------------- */
-  const allColumnsRef = useRef<ColumnDef<IUser>[]>([])
+  // Create data columns using useCallback or useMemo with stable dependencies
+  const dataColumns = useMemo(() => getAllColumns({
+    pageIndex,
+    pageSize,
+    fetchDetail,
+    handleEditClick,
+    authRoles: authroles,
+    confirmDelete,
+    confirmRestore,
+    confirmPermanentDelete,
+    showDetail,
+    showEdit,
+    showDelete,
+    showRestore,
+    showPermanentDelete
+  }), [
+    pageIndex, 
+    pageSize, 
+    fetchDetail, 
+    handleEditClick,
+    confirmDelete, 
+    confirmRestore, 
+    confirmPermanentDelete,
+    authroles, 
+    showDetail, 
+    showEdit, 
+    showDelete, 
+    showRestore, 
+    showPermanentDelete
+  ])
 
-  if (!allColumnsRef.current.length) {
-    allColumnsRef.current = getAllColumns({
-      pageIndex,
-      pageSize,
-      fetchDetail,
-      handleEditClick,
-      authRoles: authroles,
-      confirmDelete,
-      confirmRestore,
-      confirmPermanentDelete,
-      showDetail,
-      showEdit,
-      showDelete,
-      showRestore,
-      showPermanentDelete
-    })
-  }
+  // Make sure your selectColumn is using the actual user ID
+  const selectColumn: ColumnDef<IUser> = useMemo(() => ({
+    id: 'select',
+    header: ({ table }) => <SelectAllCheckbox<IUser> table={table} />,
+    cell: ({ row }) => {
+      const isSelected = row.getIsSelected()
+      const user = row.original
+      
+      // Get the actual ID from the user object
+      const userId = user.id
+      
+      // Check if user has developer role
+      const hasDeveloperRole = user.roles?.includes('developer') || 
+                                (user as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')
+      
+      // Validate GUID format
+      const isValidGuid = (id: string): boolean => {
+        const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return guidRegex.test(id);
+      }
+      // console.log(userId);
+      const isDisabled = hasDeveloperRole || !userId || !isValidGuid(userId)
+      
+      return (
+        <div className="flex justify-center">
+          <div 
+            className={isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (!isDisabled) {
+                row.toggleSelected(!isSelected)
+              }
+            }}
+            title={isDisabled ? (hasDeveloperRole ? "Cannot select users with Developer role" : "Invalid user ID") : ""}
+          >
+            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+              isDisabled
+                ? 'bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-600 opacity-60'
+                : isSelected
+                  ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+                  : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
+            }`}>
+              {isSelected && !isDisabled && (
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+    },
+    enableSorting: false,
+  }), [])
 
-  const allColumns = allColumnsRef.current
+  // Combine columns - also use useMemo
+  const allColumns = useMemo(() => [selectColumn, ...dataColumns], [selectColumn, dataColumns])
+
+  const allColumnsRef = useRef(allColumns)
+  allColumnsRef.current = allColumns
 
   /* ---------------- Add Button Permission ---------------- */
   useEffect(() => {
@@ -657,62 +736,241 @@ export default function Users() {
     return () => {
       mounted = false
     }
-  }, [userId, allColumns])
+  }, [userId])
 
-  /* ---------------- Initial Fetch ---------------- */
-  useEffect(() => {
-    if (!hasFetchedRef.current) {
-      fetchData()
-      hasFetchedRef.current = true
-    }
-  }, [fetchData])
-
-  /* ---------------- Filters Fetch ---------------- */
-  useEffect(() => {
-    if (!hasFetchedRef.current) return
+  // Update getSelectedIds to filter invalid IDs
+  const getSelectedIds = useCallback(() => {
+      const selectedIds = Object.keys(selectedRowIds).filter(id => selectedRowIds[id]);
+      console.log('Selected IDs for bulk delete:', selectedIds);
+      // Filter out invalid GUIDs
+      const validIds = selectedIds.filter(isValidGuid);
+      
+      if (validIds.length !== selectedIds.length) {
+        console.warn('Filtered out invalid IDs:', selectedIds.filter(id => !isValidGuid(id)));
+      }
     
-    if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
+    return validIds;
+  }, [selectedRowIds]);
+
+    // Update bulk delete handler
+  const handleBulkDelete = useCallback(() => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+      dispatchShowToast({
+        type: "warning",
+        message: "No valid users selected for deletion"
+      });
+      return;
+    }
+    setBulkDeleteDialogOpen(true);
+  }, [getSelectedIds]);
+
+  // Update bulk restore handler
+  const handleBulkRestore = useCallback(() => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+      dispatchShowToast({
+        type: "warning",
+        message: "No valid users selected for restore"
+      });
+      return;
+    }
+    setBulkRestoreDialogOpen(true);
+  }, [getSelectedIds]);
+
+  // Update bulk permanent delete handler
+  const handleBulkPermanentDelete = useCallback(() => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+      dispatchShowToast({
+        type: "warning",
+        message: "No valid users selected for permanent deletion"
+      });
+      return;
+    }
+    setBulkPermanentDeleteDialogOpen(true);
+  }, [getSelectedIds]);
+
+  // Execute bulk soft delete
+  const executeBulkSoftDelete = useCallback(async () => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) return
+    
+    setBulkLoading(true)
+    try {
+      await bulkDeleteUsers(selectedIds, false)
+      dispatchShowToast({
+        type: "success",
+        message: `${selectedIds.length} user(s) moved to trash successfully`
+      })
+      setBulkDeleteDialogOpen(false)
+      setSelectedRowIds({}) // Clear selection
+      fetchData() // Refresh table
+    } catch (error: any) {
+      console.error('Bulk soft delete failed:', error)
+      dispatchShowToast({
+        type: "danger",
+        message: error.response?.data?.message || "Failed to move users to trash"
+      })
+    } finally {
+      setBulkLoading(false)
+    }
+  }, [getSelectedIds, fetchData])
+
+  // Execute bulk restore
+  const executeBulkRestore = useCallback(async () => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) return
+    
+    setBulkLoading(true)
+    try {
+      await bulkRestoreUsers(selectedIds)
+      dispatchShowToast({
+        type: "success",
+        message: `${selectedIds.length} user(s) restored successfully`
+      })
+      setBulkRestoreDialogOpen(false)
+      setSelectedRowIds({}) // Clear selection
+      fetchData() // Refresh table
+    } catch (error: any) {
+      console.error('Bulk restore failed:', error)
+      dispatchShowToast({
+        type: "danger",
+        message: error.response?.data?.message || "Failed to restore users"
+      })
+    } finally {
+      setBulkLoading(false)
+    }
+  }, [getSelectedIds, fetchData])
+
+  // Execute bulk permanent delete
+  const executeBulkPermanentDelete = useCallback(async () => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) return
+    
+    // Filter out developer users from bulk permanent delete
+    const developerUsers = data.filter(user => 
+      selectedIds.includes(user.id) && 
+      (user.roles?.includes('developer') || 
+      (user as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer'))
+    )
+    
+    if (developerUsers.length > 0) {
+      dispatchShowToast({
+        type: "warning",
+        message: `Cannot permanently delete ${developerUsers.length} user(s) with Developer role. Please remove Developer role first.`
+      })
       return
     }
-    setPageIndex(0)
-    fetchData()
-    prevFiltersRef.current = filters
     
-  }, [filters, fetchData])
+    setBulkLoading(true)
+    try {
+      await bulkDeleteUsers(selectedIds, true)
+      dispatchShowToast({
+        type: "success",
+        message: `${selectedIds.length} user(s) permanently deleted successfully`
+      })
+      setBulkPermanentDeleteDialogOpen(false)
+      setSelectedRowIds({}) // Clear selection
+      fetchData() // Refresh table
+    } catch (error: any) {
+      console.error('Bulk permanent delete failed:', error)
+      dispatchShowToast({
+        type: "danger",
+        message: error.response?.data?.message || "Failed to permanently delete users"
+      })
+    } finally {
+      setBulkLoading(false)
+    }
+  }, [getSelectedIds, fetchData, data])
 
-  /* ---------------- Visible Column IDs ---------------- */
-  const visibleIds = useMemo(
-    () => visible.map(c => c.id ?? ((c as any).accessorKey ?? '')),
-    [visible]
-  )
 
-  const isFilterActive = useMemo(
-    () =>
-      Object.values(filters).some(
-        v => v && (Array.isArray(v) ? v.length > 0 : true)
-      ),
-    [filters]
-  )
-
-  /* ---------------- Table Instance ---------------- */
-  const table = useReactTable({
-    data,
-    columns: visible,
-    state: {
-      sorting,
-      pagination: {
-        pageIndex,
-        pageSize
+    /* ---------------- Initial Fetch ---------------- */
+    useEffect(() => {
+      if (!hasFetchedRef.current) {
+        fetchData()
+        hasFetchedRef.current = true
       }
-    },
-    onSortingChange: setSorting as OnChangeFn<SortingState>,
-    manualPagination: true,
-    manualSorting: true,
-    pageCount: Math.ceil(totalCount / pageSize),
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel()
-  })
+    }, [fetchData])
+
+    /* ---------------- Filters Fetch ---------------- */
+    useEffect(() => {
+      if (!hasFetchedRef.current) return
+      
+      if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
+        return
+      }
+      setPageIndex(0)
+      fetchData()
+      prevFiltersRef.current = filters
+      
+    }, [filters, fetchData])
+
+    /* ---------------- Visible Column IDs ---------------- */
+    const visibleIds = useMemo(
+      () => visible.map(c => c.id ?? ((c as any).accessorKey ?? '')),
+      [visible]
+    )
+
+    const isFilterActive = useMemo(
+      () =>
+        Object.values(filters).some(
+          v => v && (Array.isArray(v) ? v.length > 0 : true)
+        ),
+      [filters]
+    )
+
+    /* ---------------- Table Instance ---------------- */
+    const table = useReactTable<IUser>({
+      data,
+      columns: visible,
+      getRowId: (row) => row.id, // Explicitly set row ID
+      state: {
+        sorting,
+        pagination: {
+          pageIndex,
+          pageSize
+        },
+        rowSelection: selectedRowIds,
+      },
+      enableRowSelection: (row) => {
+        const user = row.original
+        const hasDeveloperRole = user.roles?.includes('developer') || 
+                                  (user as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')
+        return !hasDeveloperRole
+      },
+      onRowSelectionChange: (updater) => {
+        // Handle both function and object updaters
+        let newSelection: Record<string, boolean>;
+        
+        if (typeof updater === 'function') {
+          newSelection = updater(selectedRowIds);
+        } else {
+          newSelection = updater;
+        }
+                
+        // Filter out invalid GUIDs
+        const isValidGuid = (id: string): boolean => {
+          const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          return guidRegex.test(id);
+        };
+        
+        const filteredSelection = Object.keys(newSelection).reduce((acc, key) => {
+          if (isValidGuid(key) && newSelection[key]) {
+            acc[key] = newSelection[key];
+          }
+          return acc;
+        }, {} as Record<string, boolean>);
+        
+        setSelectedRowIds(filteredSelection);
+      },
+      manualPagination: true,
+      manualSorting: true,
+      pageCount: Math.ceil(totalCount / pageSize),
+      getCoreRowModel: getCoreRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+    })
 
   /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0
@@ -734,6 +992,11 @@ export default function Users() {
         onAddNew={() => setIsSheetOpen(true)}
         showAddButton={showAddButton}
         showTrashButton={showTrashButton}
+        showBulkActions={true}
+        selectedCount={Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length}
+        onBulkDelete={!showTrash ? handleBulkDelete : undefined}
+        onBulkRestore={showTrash ? handleBulkRestore : undefined}
+        onBulkPermanentDelete={showTrash ? handleBulkPermanentDelete : undefined}
         trashButton={
           !showTrash ? {
             onClick: handleTrashClick,
@@ -771,40 +1034,50 @@ export default function Users() {
           <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-                  >
-                    <div
-                      className="flex justify-between items-center w-full cursor-pointer"
-                      onClick={header.column.getToggleSortingHandler()}
+                {headerGroup.headers.map((header) => {
+                  // Check if column is sortable
+                  const isSortable = header.column.getCanSort()
+                  
+                  return (
+                    <th
+                      key={header.id}
+                      className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
                     >
-                      <span className="flex-1 text-center">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
+                      <div
+                        className={`flex justify-between items-center w-full ${isSortable ? 'cursor-pointer' : ''}`}
+                        onClick={isSortable ? header.column.getToggleSortingHandler() : undefined}
+                      >
+                        <span className="flex-1 text-center">
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                        </span>
+                        {isSortable && (
+                          <span className="ml-2">
+                            {header.column.getIsSorted() === 'asc' ? (
+                              <FaSortUp size={12} />
+                            ) : header.column.getIsSorted() === 'desc' ? (
+                              <FaSortDown size={12} />
+                            ) : (
+                              <FaSort size={12} />
+                            )}
+                          </span>
                         )}
-                      </span>
-                      <span className="ml-2">
-                        {header.column.getIsSorted() === 'asc' ? (
-                          <FaSortUp size={12} />
-                        ) : header.column.getIsSorted() === 'desc' ? (
-                          <FaSortDown size={12} />
-                        ) : (
-                          <FaSort size={12} />
-                        )}
-                      </span>
-                    </div>
-                  </th>
-                ))}
+                      </div>
+                    </th>
+                  )
+                })}
               </tr>
             ))}
           </thead>
 
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b dark:border-gray-700">
+                <tr key={row.id} className={cn(
+                  "border-b dark:border-gray-700 transition-colors",
+                  row.getIsSelected() && "bg-blue-200 dark:bg-blue-950/70"
+                )}>
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
@@ -1117,6 +1390,75 @@ export default function Users() {
           )}
         </FormHolderSheet>
       )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onCancel={() => setBulkDeleteDialogOpen(false)}
+        onConfirm={executeBulkSoftDelete}
+        title="Bulk Move to Trash"
+        variant="warning"
+        icon={<Archive className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Moving to Trash...' : 'Move to Trash'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+            Are you sure you want to move {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected user(s) to trash?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            These users can be restored later from the trash view.
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      {/* Bulk Restore Confirmation Dialog */}
+      <ConfirmDialog
+        open={bulkRestoreDialogOpen}
+        onCancel={() => setBulkRestoreDialogOpen(false)}
+        onConfirm={executeBulkRestore}
+        title="Bulk Restore Users"
+        variant="success"
+        icon={<RotateCcw className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Restoring...' : 'Restore'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-green-600 dark:text-green-400 font-medium">
+            Are you sure you want to restore {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected user(s)?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            These users will be moved back to active users.
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      {/* Bulk Permanent Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={bulkPermanentDeleteDialogOpen}
+        onCancel={() => setBulkPermanentDeleteDialogOpen(false)}
+        onConfirm={executeBulkPermanentDelete}
+        title="Bulk Permanently Delete Users"
+        variant="destructive"
+        icon={<FileWarning className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Permanently Deleting...' : 'Permanently Delete'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+              Warning: This action cannot be undone!
+            </p>
+          </div>
+          <p className="text-gray-700 dark:text-gray-300">
+            Are you sure you want to permanently delete {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected user(s)?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            This will permanently delete all selected users and their associated data.
+          </p>
+        </div>
+      </ConfirmDialog>
     </motion.div>
   )
 }
