@@ -35,15 +35,25 @@ export async function refreshColumnSettings<T>(
     // Fetch saved settings from DB
     const savedIds: string[] = (await getTableColumnSettings(tableId, userId)) ?? []
 
-    // Map columns by ID
-    const columnMap: Record<string, ColumnDef<T>> = {}
+    
+    // Create a map of original columns with their full properties
+    const columnMap = new Map<string, ColumnDef<T>>()
     initialColumns.forEach(col => {
-      columnMap[resolveColumnId(col)] = col
+      const colId = resolveColumnId(col)
+      columnMap.set(colId, col)
     })
 
     // Filter + reorder according to saved order
+    // IMPORTANT: Return the ORIGINAL column objects, not new ones
     const visibleColumns = savedIds
-      .map(id => columnMap[id])
+      .map(id => {
+        const originalCol = columnMap.get(id)
+        if (originalCol) {
+          // Log to verify we're keeping the original
+          return originalCol
+        }
+        return null
+      })
       .filter((col): col is ColumnDef<T> => Boolean(col))
 
     // Optional callback
@@ -76,15 +86,18 @@ export function useRefreshColumnSettings<T>(
     (state: RootState) => state.tableColumnSettings[REDUX_KEY] ?? null
   )
 
-  // Build column map once per render
+  // Build column map once per render - preserving original columns
   const resolvedColumns = useMemo(() => {
     if (!reduxVisibleIds) return null
 
-    const columnMap: Record<string, ColumnDef<T>> = {}
-    initialColumns.forEach(col => (columnMap[resolveColumnId(col)] = col))
+    const columnMap = new Map<string, ColumnDef<T>>()
+    initialColumns.forEach(col => {
+      columnMap.set(resolveColumnId(col), col)
+    })
 
+    // Return the ORIGINAL column objects, not new ones
     return reduxVisibleIds
-      .map(id => columnMap[id])
+      .map(id => columnMap.get(id))
       .filter((col): col is ColumnDef<T> => Boolean(col))
   }, [reduxVisibleIds, initialColumns])
 

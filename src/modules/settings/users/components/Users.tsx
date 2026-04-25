@@ -199,6 +199,7 @@ const getAllColumns = ({
       )
     },
     meta: { customClassName: 'text-center', tdClassName: 'text-center min-w-[120px]' },
+    enableSorting: false,
   },
   { header: 'Name', accessorKey: 'name' },
   { header: 'Username', accessorKey: 'username' },
@@ -642,22 +643,19 @@ export default function Users() {
     showPermanentDelete
   ])
 
-  // Make sure your selectColumn is using the actual user ID
+  
   const selectColumn: ColumnDef<IUser> = useMemo(() => ({
     id: 'select',
+    accessorFn: (row) => row.id, // This is the key fix - provides a value for sorting
     header: ({ table }) => <SelectAllCheckbox<IUser> table={table} />,
     cell: ({ row }) => {
       const isSelected = row.getIsSelected()
       const user = row.original
       
-      // Get the actual ID from the user object
       const userId = user.id
-      
-      // Check if user has developer role
       const hasDeveloperRole = user.roles?.includes('developer') || 
                                 (user as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')
       
-      // Validate GUID format
       const isValidGuid = (id: string): boolean => {
         const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         return guidRegex.test(id);
@@ -694,11 +692,22 @@ export default function Users() {
         </div>
       )
     },
-    enableSorting: false,
+    enableSorting: true,
+    sortingFn: (rowA, rowB, columnId) => {
+      const isSelectedA = rowA.getIsSelected()
+      const isSelectedB = rowB.getIsSelected()
+      
+      if (isSelectedA === isSelectedB) return 0
+      return isSelectedA ? -1 : 1
+    },
+    sortDescFirst: false,
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' },
   }), [])
 
   // Combine columns - also use useMemo
-  const allColumns = useMemo(() => [selectColumn, ...dataColumns], [selectColumn, dataColumns])
+  const allColumns = useMemo(() => {
+    return [selectColumn, ...dataColumns]
+  }, [selectColumn, dataColumns])
 
   const allColumnsRef = useRef(allColumns)
   allColumnsRef.current = allColumns
@@ -711,20 +720,20 @@ export default function Users() {
 
   /* ---------------- Load Column Settings ---------------- */
   useEffect(() => {
-    if (!userId) return
+  if (!userId) return
 
-    let mounted = true
+  let mounted = true
 
-    const loadColumnSettings = async () => {
+  const loadColumnSettings = async () => {
       try {
         const { visibleColumns } = await refreshColumnSettings<IUser>(
           'userTable',
           userId,
-          allColumns
+          allColumnsRef.current
         )
 
         if (mounted) {
-          setVisible(visibleColumns.length ? visibleColumns : allColumns)
+          setVisible(visibleColumns.length ? visibleColumns : allColumnsRef.current)
         }
       } catch (err) {
         console.error(err)
@@ -741,7 +750,6 @@ export default function Users() {
   // Update getSelectedIds to filter invalid IDs
   const getSelectedIds = useCallback(() => {
       const selectedIds = Object.keys(selectedRowIds).filter(id => selectedRowIds[id]);
-      // console.log('Selected IDs for bulk delete:', selectedIds);
       // Filter out invalid GUIDs
       const validIds = selectedIds.filter(isValidGuid);
       
@@ -921,10 +929,12 @@ export default function Users() {
     )
 
     /* ---------------- Table Instance ---------------- */
+
     const table = useReactTable<IUser>({
       data,
       columns: visible,
       getRowId: (row) => row.id,
+      enableSorting: true,
       state: {
         sorting,
         pagination: {
@@ -940,21 +950,14 @@ export default function Users() {
         return !hasDeveloperRole
       },
       onRowSelectionChange: (updater) => {
-        // console.log('=== ON ROW SELECTION CHANGE ===')
-        // console.log('20. Updater type:', typeof updater)
-        // console.log('21. Current selectedRowIds:', selectedRowIds)
-        
         let newSelection: Record<string, boolean>;
         
         if (typeof updater === 'function') {
           newSelection = updater(selectedRowIds);
-          // console.log('22. New selection from function:', newSelection)
         } else {
           newSelection = updater;
-          // console.log('23. New selection from object:', newSelection)
         }
         
-        // Filter out invalid GUIDs
         const isValidGuid = (id: string): boolean => {
           const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
           return guidRegex.test(id);
@@ -967,18 +970,29 @@ export default function Users() {
           return acc;
         }, {} as Record<string, boolean>);
         
-        // console.log('24. Filtered selection:', filteredSelection)
-        // console.log('25. Filtered selection keys count:', Object.keys(filteredSelection).length)
-        
         setSelectedRowIds(filteredSelection);
       },
+      onSortingChange: (updater) => {
+        const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
+        setSorting(newSorting);
+        
+        // Only fetch data if sorting by columns other than 'select'
+        const isSelectColumnSort = newSorting.length > 0 && newSorting[0].id === 'select';
+        if (!isSelectColumnSort) {
+          fetchData();
+        }
+      },
       manualPagination: true,
-      manualSorting: false, // Set to false to let React Table handle sorting internally
+      manualSorting: false,
       pageCount: Math.ceil(totalCount / pageSize),
       getCoreRowModel: getCoreRowModel(),
       getSortedRowModel: getSortedRowModel(),
       getPaginationRowModel: getPaginationRowModel(),
     })
+
+    const handleResetSorting = useCallback(() => {
+      setSorting([])
+    }, [setSorting])
 
   /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0
@@ -1019,6 +1033,8 @@ export default function Users() {
             show: true
           } : undefined
         }
+        showResetSorting={sorting.length > 0 && sorting[0]?.id === 'select'}
+        onResetSorting={handleResetSorting}
         onColumnSettings={() => setShowColumnModal(true)}
         onPrint={() => printTableById('printable-user-table', 'Users')}
         onExport={() =>
@@ -1043,18 +1059,23 @@ export default function Users() {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  // Check if column is sortable
                   const isSortable = header.column.getCanSort()
                   
                   return (
                     <th
-                      key={header.id}
-                      className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-                    >
-                      <div
-                        className={`flex justify-between items-center w-full ${isSortable ? 'cursor-pointer' : ''}`}
-                        onClick={isSortable ? header.column.getToggleSortingHandler() : undefined}
+                        key={header.id}
+                        className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
+                        onClick={(event) => {
+                          if (isSortable) {
+                            const handler = header.column.getToggleSortingHandler()
+                            if (handler) {
+                              handler(event)
+                            }
+                          }
+                        }}
+                        style={{ cursor: isSortable ? 'pointer' : 'default' }}
                       >
+                      <div className="flex justify-between items-center w-full">
                         <span className="flex-1 text-center">
                           {flexRender(
                             header.column.columnDef.header,

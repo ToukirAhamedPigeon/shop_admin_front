@@ -379,7 +379,7 @@ export function TableHeaderActions({
                 }`}
               >
                 <FaTrashRestore className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">{t('Bulk Restore')} {hasSelection && `(${selectedCount})`}</span>
+                <span className="hidden sm:inline">{t('Restore')} {hasSelection && `(${selectedCount})`}</span>
               </Button>
             )}
             
@@ -397,7 +397,7 @@ export function TableHeaderActions({
                 }`}
               >
                 <FaTrash className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">{t('Bulk Delete')} {hasSelection && `(${selectedCount})`}</span>
+                <span className="hidden sm:inline">{t('Delete')} {hasSelection && `(${selectedCount})`}</span>
               </Button>
             )}
             
@@ -415,7 +415,7 @@ export function TableHeaderActions({
                 }`}
               >
                 <FaTrash className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">{t('Bulk Permanent Delete')} {hasSelection && `(${selectedCount})`}</span>
+                <span className="hidden sm:inline">{t('Delete')} {hasSelection && `(${selectedCount})`}</span>
               </Button>
             )}
           </>
