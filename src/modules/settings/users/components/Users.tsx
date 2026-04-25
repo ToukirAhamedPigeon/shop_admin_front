@@ -75,25 +75,29 @@ const getAllColumns = ({
   confirmRestore,
   confirmPermanentDelete,
   authRoles,
+  selectedRows,
+  onSelectRow,
   showDetail = true,
   showEdit = true,
   showDelete = true,
   showRestore = true,
   showPermanentDelete = true
 }: {
-  pageIndex: number
-  pageSize: number
-  fetchDetail: (item: IUser) => void
-  handleEditClick: (item: IUser) => void
-  confirmDelete: (id: string) => void
-  confirmRestore: (id: string) => void
-  confirmPermanentDelete: (id: string) => void
-  authRoles: string[]
-  showDetail?: boolean
-  showEdit?: boolean
-  showDelete?: boolean
-  showRestore?: boolean
-  showPermanentDelete?: boolean
+    pageIndex: number
+    pageSize: number
+    fetchDetail: (item: IUser) => void
+    handleEditClick: (item: IUser) => void
+    confirmDelete: (id: string) => void
+    confirmRestore: (id: string) => void
+    confirmPermanentDelete: (id: string) => void
+    authRoles: string[]
+    selectedRows?: Set<string>
+    onSelectRow?: (id: string, checked: boolean) => void
+    showDetail?: boolean
+    showEdit?: boolean
+    showDelete?: boolean
+    showRestore?: boolean
+    showPermanentDelete?: boolean
 }): ColumnDef<IUser>[] => [
   {
     header: 'SL',
