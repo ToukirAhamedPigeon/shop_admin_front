@@ -95,3 +95,27 @@ export const getPermissionDeleteInfo = async (id: string) => {
   const response = await api.get(`/permissions/${id}/delete-info`);
   return response.data;
 };
+
+// Bulk delete roles (soft or permanent)
+export const bulkDeleteRoles = async (ids: string[], permanent: boolean = false) => {
+  const response = await api.post('/roles/bulk-delete', { ids, permanent });
+  return response.data;
+};
+
+// Bulk restore roles
+export const bulkRestoreRoles = async (ids: string[]) => {
+  const response = await api.post('/roles/bulk-restore', { ids });
+  return response.data;
+};
+
+// Bulk delete permissions (soft or permanent)
+export const bulkDeletePermissions = async (ids: string[], permanent: boolean = false) => {
+  const response = await api.post('/permissions/bulk-delete', { ids, permanent });
+  return response.data;
+};
+
+// Bulk restore permissions
+export const bulkRestorePermissions = async (ids: string[]) => {
+  const response = await api.post('/permissions/bulk-restore', { ids });
+  return response.data;
+};

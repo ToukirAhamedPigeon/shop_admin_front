@@ -46,9 +46,10 @@ import AddPermission from './AddPermission'
 import EditPermission from './EditPermission'
 import { useEditSheet } from '@/hooks/useEditSheet'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
-import { deletePermission, restorePermission, getPermissionDeleteInfo, getPermissions } from '../api'
-import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle } from 'lucide-react'
+import { deletePermission, restorePermission, getPermissionDeleteInfo, getPermissions, bulkDeletePermissions, bulkRestorePermissions } from '../api'
+import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle } from 'lucide-react'
 import { dispatchShowToast } from '@/lib/dispatch'
+import { cn } from '@/lib/utils'
 
 interface DeleteInfoResponse {
   canBePermanent: boolean
@@ -56,10 +57,91 @@ interface DeleteInfoResponse {
   hasRelatedRecords?: boolean
 }
 
+// Helper function to validate ID
+const isValidId = (id: string): boolean => {
+  return Boolean(id && id.length > 0 && id !== '0')
+}
+
+/* ---------------------------------- */
+/* Select Column with Frontend Sorting - DIRECT IMPLEMENTATION */
+/* ---------------------------------- */
+const getSelectColumn = (): ColumnDef<IPermission> => ({
+  id: 'select',
+  accessorFn: (row) => row.id,
+  header: ({ table }) => {
+    const isSomeSelected = table.getIsSomeRowsSelected()
+    const isAllSelected = table.getIsAllPageRowsSelected()
+    
+    return (
+      <div 
+        className="flex justify-center cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation()
+          // Use the table's built-in method to toggle all rows on the current page
+          table.toggleAllPageRowsSelected(!isAllSelected)
+        }}
+      >
+        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+          isAllSelected
+            ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+            : isSomeSelected
+              ? 'bg-blue-200 border-blue-400 dark:bg-blue-800 dark:border-blue-600'
+              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
+        }`}>
+          {isAllSelected && (
+            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+          {!isAllSelected && isSomeSelected && (
+            <div className="w-2 h-0.5 bg-blue-600 dark:bg-blue-400" />
+          )}
+        </div>
+      </div>
+    )
+  },
+  cell: ({ row }) => {
+    const isSelected = row.getIsSelected()
+    
+    return (
+      <div className="flex justify-center">
+        <div 
+          className="cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation()
+            row.toggleSelected(!isSelected)
+          }}
+        >
+          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+            isSelected
+              ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
+          }`}>
+            {isSelected && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  },
+  enableSorting: true,
+  sortingFn: (rowA, rowB) => {
+    const isSelectedA = rowA.getIsSelected()
+    const isSelectedB = rowB.getIsSelected()
+    if (isSelectedA === isSelectedB) return 0
+    return isSelectedA ? -1 : 1
+  },
+  sortDescFirst: false,
+  meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+})
+
 /* ---------------------------------- */
 /* Columns Definition */
 /* ---------------------------------- */
-const getAllColumns = ({
+const getDataColumns = ({
   pageIndex,
   pageSize,
   fetchDetail,
@@ -93,6 +175,7 @@ const getAllColumns = ({
       <IndexCell rowIndex={row.index} pageIndex={pageIndex} pageSize={pageSize} />
     ),
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: false,
   },
   {
     header: 'Action',
@@ -120,6 +203,7 @@ const getAllColumns = ({
       )
     },
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: false,
   },
   {
     header: 'Name',
@@ -139,7 +223,8 @@ const getAllColumns = ({
         <ExpandableText text={roles.join(', ')} wordLimit={5} className="max-w-[300px] whitespace-pre-wrap break-all" />
       ) : <span className="text-gray-400">-</span>
     },
-    meta: { customClassName: 'text-left min-w-[300px]' }
+    meta: { customClassName: 'text-left min-w-[300px]' },
+    enableSorting: false,
   },
   {
     header: 'Active',
@@ -179,6 +264,12 @@ export default function Permissions() {
     detailLoading
   } = useDetailModal<IPermission>('/permissions')
 
+  const fetchDetailRef = useRef(fetchDetail)
+  fetchDetailRef.current = fetchDetail
+
+  const hasFetchedRef = useRef(false)
+  const prevFiltersRef = useRef<Record<string, any>>({})
+
   const [visible, setVisible] = useState<ColumnDef<IPermission>[]>([])
   const [showColumnModal, setShowColumnModal] = useState(false)
   const [filterModalOpen, setFilterModalOpen] = useState(false)
@@ -187,6 +278,9 @@ export default function Permissions() {
   const [showAddButton, setShowAddButton] = useState(false)
   const [showTrashButton, setShowTrashButton] = useState(false)
 
+  // Selection state
+  const [selectedRowIds, setSelectedRowIds] = useState<Record<string, boolean>>({})
+
   // Delete dialogs state
   const [softDeleteDialogOpen, setSoftDeleteDialogOpen] = useState(false)
   const [permanentDeleteDialogOpen, setPermanentDeleteDialogOpen] = useState(false)
@@ -194,6 +288,12 @@ export default function Permissions() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteInfo, setDeleteInfo] = useState<DeleteInfoResponse | null>(null)
   const [checkingDelete, setCheckingDelete] = useState(false)
+
+  // Bulk operations state
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
+  const [bulkRestoreDialogOpen, setBulkRestoreDialogOpen] = useState(false)
+  const [bulkPermanentDeleteDialogOpen, setBulkPermanentDeleteDialogOpen] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   // Error dialog state
   const [errorDialogOpen, setErrorDialogOpen] = useState(false)
@@ -219,9 +319,6 @@ export default function Permissions() {
     openEdit: handleEditClick,
     closeEdit: closeEditSheet
   } = useEditSheet<IPermission>()
-
-  const hasFetchedRef = useRef(false)
-  const prevFiltersRef = useRef<Record<string, any>>({})
 
   /* ---------------- Stable Fetcher ---------------- */
   const stableFetcher = useCallback(
@@ -307,6 +404,14 @@ export default function Permissions() {
     minLoadingTime: 1000
   })
 
+  // Debug: Log data when it changes
+  useEffect(() => {
+    console.log('=== DATA CHANGED ===')
+    console.log('Data length:', data.length)
+    console.log('Data sample:', data.slice(0, 2))
+    console.log('SelectedRowIds:', selectedRowIds)
+  }, [data, selectedRowIds])
+
   /* ---------------- Delete Eligibility Check ---------------- */
   const checkDeleteEligibility = useCallback(async (id: string): Promise<boolean> => {
     setCheckingDelete(true)
@@ -357,6 +462,7 @@ export default function Permissions() {
         setSoftDeleteDialogOpen(false)
         setDeleteId(null)
         fetchData()
+        setSelectedRowIds({})
       } else {
         throw new Error(response.data?.message || "Failed to move permission to trash")
       }
@@ -386,6 +492,7 @@ export default function Permissions() {
         setSoftDeleteDialogOpen(false)
         setDeleteId(null)
         fetchData()
+        setSelectedRowIds({})
       } else {
         throw new Error(response.data?.message || "Failed to delete permission")
       }
@@ -428,6 +535,7 @@ export default function Permissions() {
       setRestoreDialogOpen(false)
       setRestoreId(null)
       fetchData()
+      setSelectedRowIds({})
     } catch (error: any) {
       console.error('Failed to restore permission:', error)
       let errorMessage = error.response?.data?.message || "Failed to restore permission"
@@ -437,27 +545,115 @@ export default function Permissions() {
     }
   }, [restoreId, fetchData])
 
+  /* ---------------- Bulk Operations ---------------- */
+  const getSelectedIds = useCallback(() => {
+    return Object.keys(selectedRowIds).filter(id => selectedRowIds[id] && isValidId(id))
+  }, [selectedRowIds])
+
+  const handleBulkDelete = useCallback(() => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) {
+      dispatchShowToast({ type: "warning", message: "No permissions selected for deletion" })
+      return
+    }
+    setBulkDeleteDialogOpen(true)
+  }, [getSelectedIds])
+
+  const handleBulkRestore = useCallback(() => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) {
+      dispatchShowToast({ type: "warning", message: "No permissions selected for restore" })
+      return
+    }
+    setBulkRestoreDialogOpen(true)
+  }, [getSelectedIds])
+
+  const handleBulkPermanentDelete = useCallback(() => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) {
+      dispatchShowToast({ type: "warning", message: "No permissions selected for permanent deletion" })
+      return
+    }
+    setBulkPermanentDeleteDialogOpen(true)
+  }, [getSelectedIds])
+
+  const executeBulkSoftDelete = useCallback(async () => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) return
+    
+    setBulkLoading(true)
+    try {
+      await bulkDeletePermissions(selectedIds, false)
+      dispatchShowToast({ type: "success", message: `${selectedIds.length} permission(s) moved to trash successfully` })
+      setBulkDeleteDialogOpen(false)
+      setSelectedRowIds({})
+      fetchData()
+    } catch (error: any) {
+      console.error('Bulk soft delete failed:', error)
+      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to move permissions to trash" })
+    } finally {
+      setBulkLoading(false)
+    }
+  }, [getSelectedIds, fetchData])
+
+  const executeBulkRestore = useCallback(async () => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) return
+    
+    setBulkLoading(true)
+    try {
+      await bulkRestorePermissions(selectedIds)
+      dispatchShowToast({ type: "success", message: `${selectedIds.length} permission(s) restored successfully` })
+      setBulkRestoreDialogOpen(false)
+      setSelectedRowIds({})
+      fetchData()
+    } catch (error: any) {
+      console.error('Bulk restore failed:', error)
+      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to restore permissions" })
+    } finally {
+      setBulkLoading(false)
+    }
+  }, [getSelectedIds, fetchData])
+
+  const executeBulkPermanentDelete = useCallback(async () => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) return
+    
+    setBulkLoading(true)
+    try {
+      await bulkDeletePermissions(selectedIds, true)
+      dispatchShowToast({ type: "success", message: `${selectedIds.length} permission(s) permanently deleted successfully` })
+      setBulkPermanentDeleteDialogOpen(false)
+      setSelectedRowIds({})
+      fetchData()
+    } catch (error: any) {
+      console.error('Bulk permanent delete failed:', error)
+      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to permanently delete permissions" })
+    } finally {
+      setBulkLoading(false)
+    }
+  }, [getSelectedIds, fetchData])
+
   /* ---------------- Stable Columns ---------------- */
-  const allColumnsRef = useRef<ColumnDef<IPermission>[]>([])
+  const selectColumn = useMemo(() => getSelectColumn(), [])
+  const dataColumns = useMemo(() => getDataColumns({
+    pageIndex,
+    pageSize,
+    fetchDetail,
+    handleEditClick,
+    confirmSoftDelete,
+    confirmRestore,
+    confirmPermanentDelete,
+    showDetail,
+    showEdit,
+    showSoftDelete,
+    showRestore,
+    showPermanentDelete
+  }), [pageIndex, pageSize, fetchDetail, handleEditClick, confirmSoftDelete, confirmRestore, confirmPermanentDelete, showDetail, showEdit, showSoftDelete, showRestore, showPermanentDelete])
 
-  if (!allColumnsRef.current.length) {
-    allColumnsRef.current = getAllColumns({
-      pageIndex,
-      pageSize,
-      fetchDetail,
-      handleEditClick,
-      confirmSoftDelete,
-      confirmRestore,
-      confirmPermanentDelete,
-      showDetail,
-      showEdit,
-      showSoftDelete,
-      showRestore,
-      showPermanentDelete
-    })
-  }
-
-  const allColumns = allColumnsRef.current
+  const allColumns = useMemo(() => [selectColumn, ...dataColumns], [selectColumn, dataColumns])
+  const allColumnsRef = useRef(allColumns)
+  allColumnsRef.current = allColumns
 
   /* ---------------- Add Button Permission ---------------- */
   useEffect(() => {
@@ -476,11 +672,11 @@ export default function Permissions() {
         const { visibleColumns } = await refreshColumnSettings<IPermission>(
           'permissionTable',
           userId,
-          allColumns
+          allColumnsRef.current
         )
 
         if (mounted) {
-          setVisible(visibleColumns.length ? visibleColumns : allColumns)
+          setVisible(visibleColumns.length ? visibleColumns : allColumnsRef.current)
         }
       } catch (err) {
         console.error(err)
@@ -492,7 +688,7 @@ export default function Permissions() {
     return () => {
       mounted = false
     }
-  }, [userId, allColumns])
+  }, [userId])
 
   /* ---------------- Initial Fetch ---------------- */
   useEffect(() => {
@@ -530,28 +726,69 @@ export default function Permissions() {
   )
 
   /* ---------------- Table Instance ---------------- */
-  const table = useReactTable({
+  const table = useReactTable<IPermission>({
     data,
     columns: visible,
+    getRowId: (row) => row.id,
+    enableSorting: true,
     state: {
       sorting,
       pagination: {
         pageIndex,
         pageSize
+      },
+      rowSelection: selectedRowIds,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: (updater) => {
+      console.log('=== ON ROW SELECTION CHANGE ===')
+      let newSelection: Record<string, boolean>
+      
+      if (typeof updater === 'function') {
+        newSelection = updater(selectedRowIds)
+      } else {
+        newSelection = updater
+      }
+      
+      console.log('New selection:', newSelection)
+      
+      const filteredSelection = Object.keys(newSelection).reduce((acc, key) => {
+        if (isValidId(key) && newSelection[key]) {
+          acc[key] = newSelection[key]
+        }
+        return acc
+      }, {} as Record<string, boolean>)
+      
+      console.log('Filtered selection:', filteredSelection)
+      setSelectedRowIds(filteredSelection)
+    },
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === 'function' ? updater(sorting) : updater
+      setSorting(newSorting)
+      
+      // Only fetch data if sorting by columns other than 'select'
+      const isSelectColumnSort = newSorting.length > 0 && newSorting[0].id === 'select'
+      if (!isSelectColumnSort) {
+        fetchData()
       }
     },
-    onSortingChange: setSorting as OnChangeFn<SortingState>,
     manualPagination: true,
-    manualSorting: true,
+    manualSorting: false,
     pageCount: Math.ceil(totalCount / pageSize),
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel()
+    getPaginationRowModel: getPaginationRowModel(),
   })
 
+  const handleResetSorting = useCallback(() => {
+    setSorting([])
+  }, [setSorting])
+
+  /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0
   const showErrorState = !loading && error
 
+  /* ---------------- UI ---------------- */
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -567,6 +804,11 @@ export default function Permissions() {
         onAddNew={() => setIsSheetOpen(true)}
         showAddButton={showAddButton}
         showTrashButton={showTrashButton}
+        showBulkActions={true}
+        selectedCount={Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length}
+        onBulkDelete={!showTrash ? handleBulkDelete : undefined}
+        onBulkRestore={showTrash ? handleBulkRestore : undefined}
+        onBulkPermanentDelete={showTrash ? handleBulkPermanentDelete : undefined}
         trashButton={
           !showTrash ? {
             onClick: handleTrashClick,
@@ -581,6 +823,8 @@ export default function Permissions() {
             show: true
           } : undefined
         }
+        showResetSorting={sorting.length > 0 && sorting[0]?.id === 'select'}
+        onResetSorting={handleResetSorting}
         onColumnSettings={() => setShowColumnModal(true)}
         onPrint={() => printTableById('printable-permission-table', 'Permissions')}
         onExport={() =>
@@ -595,60 +839,86 @@ export default function Permissions() {
         isFilterActive={isFilterActive}
       />
       
+      {/* TABLE */}
       <TableWithLoader loading={loading} id="printable-permission-table">
-        <table className="table-auto w-full text-left border border-collapse">
-          <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th
-                    key={header.id}
-                    className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-                  >
-                    <div
-                      className="flex justify-between items-center w-full cursor-pointer"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      <span className="flex-1 text-center">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </span>
-                      <span className="ml-2">
-                        {header.column.getIsSorted() === 'asc' ? (
-                          <FaSortUp size={12} />
-                        ) : header.column.getIsSorted() === 'desc' ? (
-                          <FaSortDown size={12} />
-                        ) : (
-                          <FaSort size={12} />
-                        )}
-                      </span>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
+        {showEmptyState ? (
+          <EmptyState 
+            message={showTrash ? "No deleted permissions found" : "No permissions found"}
+            suggestion={showTrash ? "Deleted permissions will appear here once you move them to trash." : "Try adjusting your search or filter criteria to see more results."}
+          />
+        ) : (
+          <table className="table-auto w-full text-left border border-collapse">
+            <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const isSortable = header.column.getCanSort()
+                    
+                    return (
+                      <th
+                        key={header.id}
+                        className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
+                        onClick={(event) => {
+                          if (isSortable) {
+                            const handler = header.column.getToggleSortingHandler()
+                            if (handler) handler(event)
+                          }
+                        }}
+                        style={{ cursor: isSortable ? 'pointer' : 'default' }}
+                      >
+                        <div className="flex justify-between items-center w-full">
+                          <span className="flex-1 text-center">
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </span>
+                          {isSortable && (
+                            <span className="ml-2 relative">
+                              {header.column.getIsSorted() === 'asc' ? (
+                                <FaSortUp size={12} />
+                              ) : header.column.getIsSorted() === 'desc' ? (
+                                <FaSortDown size={12} />
+                              ) : (
+                                <FaSort size={12} />
+                              )}
+                              {header.column.id === 'select' && header.column.getIsSorted() && (
+                                <span className="absolute -top-1 -right-2 text-xs text-blue-500" title="Frontend sorting (no API call)">
+                                  ⚡
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    )
+                  })}
+                </tr>
+              ))}
+            </thead>
 
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b dark:border-gray-700">
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
-                  >
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className={cn(
+                  "border-b dark:border-gray-700 transition-colors",
+                  row.getIsSelected() && "bg-blue-200 dark:bg-blue-950/70"
+                )}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </TableWithLoader>
 
       {!showEmptyState && !showErrorState && totalCount > 0 && (
@@ -698,8 +968,7 @@ export default function Permissions() {
             if ((key === 'from' || key === 'to') && value === '') {
               acc[key] = null
             } else {
-              acc[key] = value
-            }
+              acc[key] = value            }
             return acc
           }, {} as Record<string, any>)
           
@@ -870,6 +1139,75 @@ export default function Permissions() {
           )}
         </FormHolderSheet>
       )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onCancel={() => setBulkDeleteDialogOpen(false)}
+        onConfirm={executeBulkSoftDelete}
+        title="Bulk Move to Trash"
+        variant="warning"
+        icon={<Archive className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Moving to Trash...' : 'Move to Trash'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+            Are you sure you want to move {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected permission(s) to trash?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            These permissions can be restored later from the trash view.
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      {/* Bulk Restore Confirmation Dialog */}
+      <ConfirmDialog
+        open={bulkRestoreDialogOpen}
+        onCancel={() => setBulkRestoreDialogOpen(false)}
+        onConfirm={executeBulkRestore}
+        title="Bulk Restore Permissions"
+        variant="success"
+        icon={<RotateCcw className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Restoring...' : 'Restore'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-green-600 dark:text-green-400 font-medium">
+            Are you sure you want to restore {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected permission(s)?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            These permissions will be moved back to active permissions.
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      {/* Bulk Permanent Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={bulkPermanentDeleteDialogOpen}
+        onCancel={() => setBulkPermanentDeleteDialogOpen(false)}
+        onConfirm={executeBulkPermanentDelete}
+        title="Bulk Permanently Delete Permissions"
+        variant="destructive"
+        icon={<FileWarning className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Permanently Deleting...' : 'Permanently Delete'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+              Warning: This action cannot be undone!
+            </p>
+          </div>
+          <p className="text-gray-700 dark:text-gray-300">
+            Are you sure you want to permanently delete {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected permission(s)?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            This will permanently delete all selected permissions and their associated data.
+          </p>
+        </div>
+      </ConfirmDialog>
     </motion.div>
   )
 }

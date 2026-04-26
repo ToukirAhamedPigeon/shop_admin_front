@@ -1,4 +1,4 @@
-// app/(dashboard)/admin/options/Options.tsx - Add permanent delete functionality
+// app/(dashboard)/admin/options/Options.tsx
 
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import {
@@ -8,8 +8,6 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
-  type OnChangeFn,
 } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
@@ -22,9 +20,9 @@ import {
   TablePaginationFooter,
   RowActions,
   IndexCell,
-  EmptyState,
   TrashViewIndicator,
-  TableWithLoader
+  TableWithLoader,
+  SelectAllCheckbox
 } from '@/components/custom/Table';
 import Modal from '@/components/custom/Modal';
 import { ColumnVisibilityManager } from '@/components/custom/ColumnVisibilityManager';
@@ -46,9 +44,10 @@ import AddOption from './AddOption';
 import EditOption from './EditOption';
 import { useEditSheet } from '@/hooks/useEditSheet';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
-import { deleteOption, restoreOption, getOptions, getOptionDeleteInfo } from '../api';
+import { deleteOption, restoreOption, getOptions, bulkDeleteOptions, bulkRestoreOptions, getOptionDeleteInfo } from '../api';
 import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle } from 'lucide-react';
 import { dispatchShowToast } from '@/lib/dispatch';
+import { cn } from '@/lib/utils';
 
 interface DeleteInfoResponse {
   canBePermanent: boolean;
@@ -57,10 +56,60 @@ interface DeleteInfoResponse {
   childrenCount: number;
 }
 
+// Helper function to validate ID
+const isValidId = (id: string): boolean => {
+  return Boolean(id && id.length > 0 && id !== '0');
+};
+
+/* ---------------------------------- */
+/* Select Column with Frontend Sorting */
+/* ---------------------------------- */
+const getSelectColumn = (): ColumnDef<IOption> => ({
+  id: 'select',
+  accessorFn: (row) => row.id,
+  header: ({ table }) => <SelectAllCheckbox<IOption> table={table} />,
+  cell: ({ row }) => {
+    const isSelected = row.getIsSelected();
+    
+    return (
+      <div className="flex justify-center">
+        <div 
+          className="cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            row.toggleSelected(!isSelected);
+          }}
+        >
+          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+            isSelected
+              ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
+          }`}>
+            {isSelected && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  },
+  enableSorting: true,
+  sortingFn: (rowA, rowB) => {
+    const isSelectedA = rowA.getIsSelected();
+    const isSelectedB = rowB.getIsSelected();
+    if (isSelectedA === isSelectedB) return 0;
+    return isSelectedA ? -1 : 1;
+  },
+  sortDescFirst: false,
+  meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+});
+
 /* ---------------------------------- */
 /* Columns Definition */
 /* ---------------------------------- */
-const getAllColumns = ({
+const getDataColumns = ({
   pageIndex,
   pageSize,
   fetchDetail,
@@ -94,6 +143,7 @@ const getAllColumns = ({
       <IndexCell rowIndex={row.index} pageIndex={pageIndex} pageSize={pageSize} />
     ),
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: false,
   },
   {
     header: 'Action',
@@ -121,6 +171,7 @@ const getAllColumns = ({
       );
     },
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: false,
   },
   {
     header: 'Name',
@@ -139,7 +190,8 @@ const getAllColumns = ({
     header: 'Has Child',
     accessorKey: 'hasChild',
     cell: ({ getValue }) => getValue() ? 'Yes' : 'No',
-    meta: { customClassName: 'text-center', tdClassName: 'text-center' }
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: false,
   },
   {
     header: 'Active',
@@ -175,8 +227,6 @@ const getAllColumns = ({
 /* ---------------------------------- */
 export default function Options() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '');
-  const currentUserRoles = useSelector((s: RootState) => s.auth.user?.roles || []);
-  const isDeveloper = currentUserRoles.includes('Developer');
 
   const {
     isModalOpen,
@@ -186,6 +236,12 @@ export default function Options() {
     detailLoading
   } = useDetailModal<IOption>('/options');
 
+  const fetchDetailRef = useRef(fetchDetail);
+  fetchDetailRef.current = fetchDetail;
+
+  const hasFetchedRef = useRef(false);
+  const prevFiltersRef = useRef<Record<string, any>>({});
+
   const [visible, setVisible] = useState<ColumnDef<IOption>[]>([]);
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -194,6 +250,9 @@ export default function Options() {
   const [showAddButton, setShowAddButton] = useState(false);
   const [showTrashButton, setShowTrashButton] = useState(false);
 
+  // Selection state
+  const [selectedRowIds, setSelectedRowIds] = useState<Record<string, boolean>>({});
+
   // Delete dialogs state
   const [softDeleteDialogOpen, setSoftDeleteDialogOpen] = useState(false);
   const [permanentDeleteDialogOpen, setPermanentDeleteDialogOpen] = useState(false);
@@ -201,6 +260,12 @@ export default function Options() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteInfo, setDeleteInfo] = useState<DeleteInfoResponse | null>(null);
   const [checkingDelete, setCheckingDelete] = useState(false);
+
+  // Bulk operations state
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkRestoreDialogOpen, setBulkRestoreDialogOpen] = useState(false);
+  const [bulkPermanentDeleteDialogOpen, setBulkPermanentDeleteDialogOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   // Error dialog state
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
@@ -226,9 +291,6 @@ export default function Options() {
     openEdit: handleEditClick,
     closeEdit: closeEditSheet
   } = useEditSheet<IOption>();
-
-  const hasFetchedRef = useRef(false);
-  const prevFiltersRef = useRef<Record<string, any>>({});
 
   /* ---------------- Stable Fetcher ---------------- */
   const stableFetcher = useCallback(
@@ -291,7 +353,7 @@ export default function Options() {
       };
     },
     [filters]
-);
+  );
 
   /* ---------------- Table Hook ---------------- */
   const {
@@ -319,17 +381,6 @@ export default function Options() {
     enableTrashView: true,
     minLoadingTime: 1000
   });
-
-  /* ---------------- Sync isDeletedStr with showTrash ---------------- */
-  useEffect(() => {
-    const newIsDeletedStr = showTrash ? 'true' : 'false';
-    if (filters.isDeletedStr !== newIsDeletedStr) {
-      setFilters(prev => ({
-        ...prev,
-        isDeletedStr: newIsDeletedStr
-      }));
-    }
-  }, [showTrash]);
 
   /* ---------------- Delete Eligibility Check ---------------- */
   const checkDeleteEligibility = useCallback(async (id: string): Promise<boolean> => {
@@ -392,6 +443,8 @@ export default function Options() {
         setSoftDeleteDialogOpen(false);
         setDeleteId(null);
         fetchData();
+        // Clear selection after data refresh
+        setSelectedRowIds({});
       } else {
         throw new Error(response.data?.message || "Failed to move option to trash");
       }
@@ -421,6 +474,8 @@ export default function Options() {
         setSoftDeleteDialogOpen(false);
         setDeleteId(null);
         fetchData();
+        // Clear selection after data refresh
+        setSelectedRowIds({});
       } else {
         throw new Error(response.data?.message || "Failed to delete option");
       }
@@ -457,6 +512,8 @@ export default function Options() {
       setRestoreDialogOpen(false);
       setRestoreId(null);
       fetchData();
+      // Clear selection after data refresh
+      setSelectedRowIds({});
     } catch (error: any) {
       console.error('Failed to restore option:', error);
       let errorMessage = error.response?.data?.message || "Failed to restore option";
@@ -466,27 +523,115 @@ export default function Options() {
     }
   }, [restoreId, fetchData]);
 
+  /* ---------------- Bulk Operations ---------------- */
+  const getSelectedIds = useCallback(() => {
+    return Object.keys(selectedRowIds).filter(id => selectedRowIds[id] && isValidId(id));
+  }, [selectedRowIds]);
+
+  const handleBulkDelete = useCallback(() => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+      dispatchShowToast({ type: "warning", message: "No options selected for deletion" });
+      return;
+    }
+    setBulkDeleteDialogOpen(true);
+  }, [getSelectedIds]);
+
+  const handleBulkRestore = useCallback(() => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+      dispatchShowToast({ type: "warning", message: "No options selected for restore" });
+      return;
+    }
+    setBulkRestoreDialogOpen(true);
+  }, [getSelectedIds]);
+
+  const handleBulkPermanentDelete = useCallback(() => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+      dispatchShowToast({ type: "warning", message: "No options selected for permanent deletion" });
+      return;
+    }
+    setBulkPermanentDeleteDialogOpen(true);
+  }, [getSelectedIds]);
+
+  const executeBulkSoftDelete = useCallback(async () => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) return;
+    
+    setBulkLoading(true);
+    try {
+      await bulkDeleteOptions(selectedIds, false);
+      dispatchShowToast({ type: "success", message: `${selectedIds.length} option(s) moved to trash successfully` });
+      setBulkDeleteDialogOpen(false);
+      setSelectedRowIds({});
+      fetchData();
+    } catch (error: any) {
+      console.error('Bulk soft delete failed:', error);
+      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to move options to trash" });
+    } finally {
+      setBulkLoading(false);
+    }
+  }, [getSelectedIds, fetchData]);
+
+  const executeBulkRestore = useCallback(async () => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) return;
+    
+    setBulkLoading(true);
+    try {
+      await bulkRestoreOptions(selectedIds);
+      dispatchShowToast({ type: "success", message: `${selectedIds.length} option(s) restored successfully` });
+      setBulkRestoreDialogOpen(false);
+      setSelectedRowIds({});
+      fetchData();
+    } catch (error: any) {
+      console.error('Bulk restore failed:', error);
+      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to restore options" });
+    } finally {
+      setBulkLoading(false);
+    }
+  }, [getSelectedIds, fetchData]);
+
+  const executeBulkPermanentDelete = useCallback(async () => {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) return;
+    
+    setBulkLoading(true);
+    try {
+      await bulkDeleteOptions(selectedIds, true);
+      dispatchShowToast({ type: "success", message: `${selectedIds.length} option(s) permanently deleted successfully` });
+      setBulkPermanentDeleteDialogOpen(false);
+      setSelectedRowIds({});
+      fetchData();
+    } catch (error: any) {
+      console.error('Bulk permanent delete failed:', error);
+      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to permanently delete options" });
+    } finally {
+      setBulkLoading(false);
+    }
+  }, [getSelectedIds, fetchData]);
+
   /* ---------------- Stable Columns ---------------- */
-  const allColumnsRef = useRef<ColumnDef<IOption>[]>([]);
+  const selectColumn = useMemo(() => getSelectColumn(), []);
+  const dataColumns = useMemo(() => getDataColumns({
+    pageIndex,
+    pageSize,
+    fetchDetail,
+    handleEditClick,
+    confirmSoftDelete,
+    confirmRestore,
+    confirmPermanentDelete,
+    showDetail,
+    showEdit,
+    showSoftDelete,
+    showRestore,
+    showPermanentDelete
+  }), [pageIndex, pageSize, fetchDetail, handleEditClick, confirmSoftDelete, confirmRestore, confirmPermanentDelete, showDetail, showEdit, showSoftDelete, showRestore, showPermanentDelete]);
 
-  if (!allColumnsRef.current.length) {
-    allColumnsRef.current = getAllColumns({
-      pageIndex,
-      pageSize,
-      fetchDetail,
-      handleEditClick,
-      confirmSoftDelete,
-      confirmRestore,
-      confirmPermanentDelete,
-      showDetail,
-      showEdit,
-      showSoftDelete,
-      showRestore,
-      showPermanentDelete
-    });
-  }
-
-  const allColumns = allColumnsRef.current;
+  const allColumns = useMemo(() => [selectColumn, ...dataColumns], [selectColumn, dataColumns]);
+  const allColumnsRef = useRef(allColumns);
+  allColumnsRef.current = allColumns;
 
   /* ---------------- Add Button Permission ---------------- */
   useEffect(() => {
@@ -505,11 +650,11 @@ export default function Options() {
         const { visibleColumns } = await refreshColumnSettings<IOption>(
           'optionTable',
           userId,
-          allColumns
+          allColumnsRef.current
         );
 
         if (mounted) {
-          setVisible(visibleColumns.length ? visibleColumns : allColumns);
+          setVisible(visibleColumns.length ? visibleColumns : allColumnsRef.current);
         }
       } catch (err) {
         console.error(err);
@@ -521,7 +666,7 @@ export default function Options() {
     return () => {
       mounted = false;
     };
-  }, [userId, allColumns]);
+  }, [userId]);
 
   /* ---------------- Initial Fetch ---------------- */
   useEffect(() => {
@@ -542,7 +687,7 @@ export default function Options() {
     fetchData();
     prevFiltersRef.current = filters;
     
-  }, [filters, fetchData, setPageIndex]);
+  }, [filters, fetchData]);
 
   /* ---------------- Visible Column IDs ---------------- */
   const visibleIds = useMemo(
@@ -559,25 +704,61 @@ export default function Options() {
   );
 
   /* ---------------- Table Instance ---------------- */
-  const table = useReactTable({
+  const table = useReactTable<IOption>({
     data,
     columns: visible,
+    getRowId: (row) => row.id,
+    enableSorting: true,
     state: {
       sorting,
       pagination: {
         pageIndex,
         pageSize
+      },
+      rowSelection: selectedRowIds,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: (updater) => {
+      let newSelection: Record<string, boolean>;
+      
+      if (typeof updater === 'function') {
+        newSelection = updater(selectedRowIds);
+      } else {
+        newSelection = updater;
+      }
+      
+      const filteredSelection = Object.keys(newSelection).reduce((acc, key) => {
+        if (isValidId(key) && newSelection[key]) {
+          acc[key] = newSelection[key];
+        }
+        return acc;
+      }, {} as Record<string, boolean>);
+      
+      setSelectedRowIds(filteredSelection);
+    },
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
+      setSorting(newSorting);
+      
+      // Only fetch data if sorting by columns other than 'select'
+      const isSelectColumnSort = newSorting.length > 0 && newSorting[0].id === 'select';
+      if (!isSelectColumnSort) {
+        fetchData();
       }
     },
-    onSortingChange: setSorting as OnChangeFn<SortingState>,
     manualPagination: true,
-    manualSorting: true,
+    manualSorting: false,
     pageCount: Math.ceil(totalCount / pageSize),
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel()
+    getPaginationRowModel: getPaginationRowModel(),
   });
 
+  const handleResetSorting = useCallback(() => {
+    setSorting([]);
+  }, [setSorting]);
+
+  /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0;
   const showErrorState = !loading && error;
 
@@ -597,6 +778,11 @@ export default function Options() {
         onAddNew={() => setIsSheetOpen(true)}
         showAddButton={showAddButton}
         showTrashButton={showTrashButton}
+        showBulkActions={true}
+        selectedCount={Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length}
+        onBulkDelete={!showTrash ? handleBulkDelete : undefined}
+        onBulkRestore={showTrash ? handleBulkRestore : undefined}
+        onBulkPermanentDelete={showTrash ? handleBulkPermanentDelete : undefined}
         trashButton={
           !showTrash ? {
             onClick: handleTrashClick,
@@ -611,6 +797,8 @@ export default function Options() {
             show: true
           } : undefined
         }
+        showResetSorting={sorting.length > 0 && sorting[0]?.id === 'select'}
+        onResetSorting={handleResetSorting}
         onColumnSettings={() => setShowColumnModal(true)}
         onPrint={() => printTableById('printable-option-table', 'Options')}
         onExport={() =>
@@ -627,59 +815,104 @@ export default function Options() {
       
       {/* TABLE */}
       <TableWithLoader loading={loading} id="printable-option-table">
-        <table className="table-auto w-full text-left border border-collapse">
-          <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th
-                    key={header.id}
-                    className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-                  >
-                    <div
-                      className="flex justify-between items-center w-full cursor-pointer"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      <span className="flex-1 text-center">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </span>
-                      <span className="ml-2">
-                        {header.column.getIsSorted() === 'asc' ? (
-                          <FaSortUp size={12} />
-                        ) : header.column.getIsSorted() === 'desc' ? (
-                          <FaSortDown size={12} />
-                        ) : (
-                          <FaSort size={12} />
-                        )}
-                      </span>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
+        {showEmptyState ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <svg
+              className="w-24 h-24 text-gray-300 dark:text-gray-600 mb-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
+            </svg>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              {showTrash ? "No deleted options found" : "No options found"}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
+              {showTrash 
+                ? "Deleted options will appear here once you move them to trash." 
+                : "Try adjusting your search or filter criteria to see more results."}
+            </p>
+          </div>
+        ) : (
+          <table className="table-auto w-full text-left border border-collapse">
+            <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const isSortable = header.column.getCanSort();
+                    
+                    return (
+                      <th
+                        key={header.id}
+                        className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
+                        onClick={(event) => {
+                          if (isSortable) {
+                            const handler = header.column.getToggleSortingHandler();
+                            if (handler) handler(event);
+                          }
+                        }}
+                        style={{ cursor: isSortable ? 'pointer' : 'default' }}
+                      >
+                        <div className="flex justify-between items-center w-full">
+                          <span className="flex-1 text-center">
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </span>
+                          {isSortable && (
+                            <span className="ml-2 relative">
+                              {header.column.getIsSorted() === 'asc' ? (
+                                <FaSortUp size={12} />
+                              ) : header.column.getIsSorted() === 'desc' ? (
+                                <FaSortDown size={12} />
+                              ) : (
+                                <FaSort size={12} />
+                              )}
+                              {header.column.id === 'select' && header.column.getIsSorted() && (
+                                <span className="absolute -top-1 -right-2 text-xs text-blue-500" title="Frontend sorting (no API call)">
+                                  ⚡
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              ))}
+            </thead>
 
-          <tbody>
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id} className="border-b dark:border-gray-700">
-                {row.getVisibleCells().map(cell => (
-                  <td
-                    key={cell.id}
-                    className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
-                  >
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className={cn(
+                  "border-b dark:border-gray-700 transition-colors",
+                  row.getIsSelected() && "bg-blue-200 dark:bg-blue-950/70"
+                )}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </TableWithLoader>
 
       {!showEmptyState && !showErrorState && totalCount > 0 && (
@@ -693,7 +926,7 @@ export default function Options() {
         />
       )}
 
-      {/* OPTION DETAIL */}
+      {/* Option Detail Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -707,7 +940,7 @@ export default function Options() {
         )}
       </Modal>
 
-      {/* COLUMN MANAGER */}
+      {/* Column Manager */}
       {showColumnModal && (
         <ColumnVisibilityManager<IOption>
           tableId="optionTable"
@@ -718,7 +951,7 @@ export default function Options() {
         />
       )}
 
-      {/* FILTER MODAL */}
+      {/* Filter Modal */}
       <FilterModal
         tableId="optionTable"
         title="Filter Options"
@@ -757,7 +990,7 @@ export default function Options() {
         )}
       />
 
-      {/* ADD OPTION */}
+      {/* Add Option Sheet */}
       {showAddButton && (
         <FormHolderSheet
           open={isSheetOpen}
@@ -769,7 +1002,7 @@ export default function Options() {
         </FormHolderSheet>
       )}
 
-      {/* SOFT DELETE CONFIRMATION DIALOG */}
+      {/* Soft Delete Confirmation Dialog */}
       <ConfirmDialog
         open={softDeleteDialogOpen}
         onCancel={cancelDelete}
@@ -792,7 +1025,7 @@ export default function Options() {
         </div>
       </ConfirmDialog>
 
-      {/* PERMANENT DELETE CONFIRMATION DIALOG */}
+      {/* Permanent Delete Confirmation Dialog */}
       <ConfirmDialog
         open={permanentDeleteDialogOpen}
         onCancel={cancelDelete}
@@ -825,7 +1058,7 @@ export default function Options() {
         </div>
       </ConfirmDialog>
 
-      {/* RESTORE CONFIRMATION DIALOG */}
+      {/* Restore Confirmation Dialog */}
       {showRestore && (
         <ConfirmDialog
           open={restoreDialogOpen}
@@ -848,7 +1081,7 @@ export default function Options() {
         </ConfirmDialog>
       )}
 
-      {/* ERROR DIALOG - Cannot permanently delete due to children */}
+      {/* Error Dialog - Cannot permanently delete due to children */}
       <ConfirmDialog
         open={errorDialogOpen}
         onCancel={() => setErrorDialogOpen(false)}
@@ -883,7 +1116,7 @@ export default function Options() {
         </div>
       </ConfirmDialog>
 
-      {/* EDIT OPTION */}
+      {/* Edit Option Sheet */}
       {showEdit && (
         <FormHolderSheet
           open={isEditSheetOpen}
@@ -900,6 +1133,75 @@ export default function Options() {
           )}
         </FormHolderSheet>
       )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onCancel={() => setBulkDeleteDialogOpen(false)}
+        onConfirm={executeBulkSoftDelete}
+        title="Bulk Move to Trash"
+        variant="warning"
+        icon={<Archive className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Moving to Trash...' : 'Move to Trash'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+            Are you sure you want to move {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected option(s) to trash?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            These options can be restored later from the trash view.
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      {/* Bulk Restore Confirmation Dialog */}
+      <ConfirmDialog
+        open={bulkRestoreDialogOpen}
+        onCancel={() => setBulkRestoreDialogOpen(false)}
+        onConfirm={executeBulkRestore}
+        title="Bulk Restore Options"
+        variant="success"
+        icon={<RotateCcw className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Restoring...' : 'Restore'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <p className="text-green-600 dark:text-green-400 font-medium">
+            Are you sure you want to restore {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected option(s)?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            These options will be moved back to active options.
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      {/* Bulk Permanent Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={bulkPermanentDeleteDialogOpen}
+        onCancel={() => setBulkPermanentDeleteDialogOpen(false)}
+        onConfirm={executeBulkPermanentDelete}
+        title="Bulk Permanently Delete Options"
+        variant="destructive"
+        icon={<FileWarning className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Permanently Deleting...' : 'Permanently Delete'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+              Warning: This action cannot be undone!
+            </p>
+          </div>
+          <p className="text-gray-700 dark:text-gray-300">
+            Are you sure you want to permanently delete {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected option(s)?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            This will permanently delete all selected options and their associated data.
+          </p>
+        </div>
+      </ConfirmDialog>
     </motion.div>
   );
 }

@@ -1051,89 +1051,97 @@ export default function Users() {
       
       {/* TABLE */}
       <TableWithLoader 
-        loading={loading}
-        id="printable-user-table"
-      >
-        <table className="table-auto w-full text-left border border-collapse">
-          <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const isSortable = header.column.getCanSort()
-                  
-                  return (
-                    <th
-                        key={header.id}
-                        className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-                        onClick={(event) => {
-                          if (isSortable) {
-                            const handler = header.column.getToggleSortingHandler()
-                            if (handler) {
-                              handler(event)
-                            }
-                          }
-                        }}
-                        style={{ cursor: isSortable ? 'pointer' : 'default' }}
-                      >
-                      <div className="flex justify-between items-center w-full">
-                        <span className="flex-1 text-center">
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                        </span>
-                        {isSortable && (
-                          <span className="ml-2">
-                            {header.column.getIsSorted() === 'asc' ? (
-                              <FaSortUp size={12} />
-                            ) : header.column.getIsSorted() === 'desc' ? (
-                              <FaSortDown size={12} />
-                            ) : (
-                              <FaSort size={12} />
+          loading={loading}
+          id="printable-user-table"
+        >
+          {showEmptyState ? (
+            <EmptyState 
+              message={showTrash ? "No deleted users found" : "No users found"}
+              suggestion={showTrash ? "Deleted users will appear here once you move them to trash." : "Try adjusting your search or filter criteria to see more results."}
+            />
+          ) : (
+            <table className="table-auto w-full text-left border border-collapse">
+              <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      const isSortable = header.column.getCanSort()
+                      
+                      return (
+                        <th
+                            key={header.id}
+                            className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
+                            onClick={(event) => {
+                              if (isSortable) {
+                                const handler = header.column.getToggleSortingHandler()
+                                if (handler) {
+                                  handler(event)
+                                }
+                              }
+                            }}
+                            style={{ cursor: isSortable ? 'pointer' : 'default' }}
+                          >
+                          <div className="flex justify-between items-center w-full">
+                            <span className="flex-1 text-center">
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                            </span>
+                            {isSortable && (
+                              <span className="ml-2">
+                                {header.column.getIsSorted() === 'asc' ? (
+                                  <FaSortUp size={12} />
+                                ) : header.column.getIsSorted() === 'desc' ? (
+                                  <FaSortDown size={12} />
+                                ) : (
+                                  <FaSort size={12} />
+                                )}
+                              </span>
                             )}
-                          </span>
-                        )}
-                      </div>
-                    </th>
-                  )
-                })}
-              </tr>
-            ))}
-          </thead>
-
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className={cn(
-                  "border-b dark:border-gray-700 transition-colors",
-                  row.getIsSelected() && "bg-blue-200 dark:bg-blue-950/70"
-                )}>
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
-                  >
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </td>
+                          </div>
+                        </th>
+                      )
+                    })}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </TableWithLoader>
+              </thead>
 
-      {!showEmptyState && !showErrorState && totalCount > 0 && (
-        <TablePaginationFooter
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          grandTotalCount={grandTotalCount}
-          setPageIndex={setPageIndex}
-          setPageSize={setPageSize}
-        />
-      )}
+              <tbody>
+                {table.getRowModel().rows.map((row) => (
+                    <tr key={row.id} className={cn(
+                      "border-b dark:border-gray-700 transition-colors",
+                      row.getIsSelected() && "bg-blue-200 dark:bg-blue-950/70"
+                    )}>
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </TableWithLoader>
+
+        {/* Remove the old empty state condition here since it's now inside the table */}
+        {!showEmptyState && !showErrorState && totalCount > 0 && (
+          <TablePaginationFooter
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            grandTotalCount={grandTotalCount}
+            setPageIndex={setPageIndex}
+            setPageSize={setPageSize}
+          />
+        )}
 
       <Modal
         isOpen={isModalOpen}

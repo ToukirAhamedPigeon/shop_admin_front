@@ -41,3 +41,9 @@ export const getTranslationModules = async (): Promise<TranslationModuleOption[]
   const response = await api.get('/translations/modules');
   return response.data;
 };
+
+// Bulk delete translations
+export const bulkDeleteTranslations = async (ids: string[]) => {
+  const response = await api.post('/translations/bulk-delete', { ids });
+  return response.data;
+};

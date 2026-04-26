@@ -1,3 +1,5 @@
+// app/(dashboard)/admin/translations/Translations.tsx
+
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import {
   flexRender,
@@ -6,8 +8,6 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
-  type OnChangeFn,
 } from '@tanstack/react-table'
 import { motion } from 'framer-motion'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
@@ -20,8 +20,8 @@ import {
   TablePaginationFooter,
   RowActions,
   IndexCell,
-  EmptyState,
-  TableWithLoader
+  TableWithLoader,
+  SelectAllCheckbox
 } from '@/components/custom/Table'
 import Modal from '@/components/custom/Modal'
 import { ColumnVisibilityManager } from '@/components/custom/ColumnVisibilityManager'
@@ -31,7 +31,7 @@ import { printTableById } from '@/lib/printTable'
 import { getCustomDateTime } from '@/lib/formatDate'
 import { FilterModal } from '@/components/custom/FilterModal'
 import { useSelector } from 'react-redux'
-import type { AppDispatch, RootState } from '@/redux/store'
+import type { RootState } from '@/redux/store'
 
 import TranslationDetail from './TranslationDetail'
 import type { ITranslation } from '@/types/translation'
@@ -41,18 +41,111 @@ import FormHolderSheet from '@/components/custom/FormHolderSheet'
 import AddTranslation from './AddTranslation'
 import EditTranslation from './EditTranslation'
 import { useEditSheet } from '@/hooks/useEditSheet'
-import { useDeleteWithConfirm } from '@/hooks/useDeleteWithConfirm'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
-import { getTranslations, deleteTranslation } from '../api'
-import { useTranslations } from '@/hooks/useTranslations'
-import { useAppDispatch } from '@/hooks/useRedux'
-import { fetchTranslations } from '@/redux/slices/languageSlice'
+import { getTranslations, deleteTranslation, bulkDeleteTranslations } from '../api'
 import { useRefreshTranslations } from '@/hooks/useRefreshTranslations'
+import { dispatchShowToast } from '@/lib/dispatch'
+import { cn } from '@/lib/utils'
+import { AlertTriangle, Archive, Trash2 } from 'lucide-react'
+
+// Helper function to validate ID
+const isValidId = (id: string): boolean => {
+  return Boolean(id && id.length > 0 && id !== '0')
+}
+
+/* ---------------------------------- */
+/* Select Column with Frontend Sorting */
+/* ---------------------------------- */
+const getSelectColumn = (): ColumnDef<ITranslation> => ({
+  id: 'select',
+  accessorFn: (row) => row.id,
+  header: ({ table }) => {
+    const allRows = table.getCoreRowModel().rows
+    const selectableRows = allRows.filter(row => row.getCanSelect())
+    const isAllSelected = selectableRows.length > 0 && selectableRows.every(row => row.getIsSelected())
+    const isSomeSelected = selectableRows.some(row => row.getIsSelected()) && !isAllSelected
+    
+    const handleSelectAll = () => {
+      if (isAllSelected) {
+        table.setRowSelection({})
+      } else {
+        const newSelection: Record<string, boolean> = {}
+        selectableRows.forEach(row => {
+          newSelection[row.id] = true
+        })
+        table.setRowSelection(newSelection)
+      }
+    }
+    
+    return (
+      <div 
+        className="flex justify-center cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation()
+          handleSelectAll()
+        }}
+      >
+        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+          isAllSelected 
+            ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+            : isSomeSelected
+              ? 'bg-blue-200 border-blue-400 dark:bg-blue-800 dark:border-blue-600'
+              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
+        }`}>
+          {isAllSelected && (
+            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+          {!isAllSelected && isSomeSelected && (
+            <div className="w-2 h-0.5 bg-blue-600 dark:bg-blue-400" />
+          )}
+        </div>
+      </div>
+    )
+  },
+  cell: ({ row }) => {
+    const isSelected = row.getIsSelected()
+    
+    return (
+      <div className="flex justify-center">
+        <div 
+          className="cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation()
+            row.toggleSelected(!isSelected)
+          }}
+        >
+          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+            isSelected
+              ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
+          }`}>
+            {isSelected && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  },
+  enableSorting: true,
+  sortingFn: (rowA, rowB) => {
+    const isSelectedA = rowA.getIsSelected()
+    const isSelectedB = rowB.getIsSelected()
+    if (isSelectedA === isSelectedB) return 0
+    return isSelectedA ? -1 : 1
+  },
+  sortDescFirst: false,
+  meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+})
 
 /* ---------------------------------- */
 /* Columns Definition */
 /* ---------------------------------- */
-const getAllColumns = ({
+const getDataColumns = ({
   pageIndex,
   pageSize,
   fetchDetail,
@@ -78,6 +171,7 @@ const getAllColumns = ({
       <IndexCell rowIndex={row.index} pageIndex={pageIndex} pageSize={pageSize} />
     ),
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: false,
   },
   {
     header: 'Action',
@@ -88,7 +182,7 @@ const getAllColumns = ({
             row={row.original}
             onDetail={() => fetchDetail(row.original)}
             onEdit={() => handleEditClick(row.original)}
-            onDelete={() => confirmDelete(row.original.id)}  // row.original.id is string, which matches confirmDelete
+            onDelete={() => confirmDelete(row.original.id)}
             showDetail={showDetail}
             showEdit={showEdit}
             showDelete={showDelete}
@@ -96,16 +190,13 @@ const getAllColumns = ({
         )
     },
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
-    },
-//   {
-//     header: 'ID',
-//     accessorKey: 'id',
-//     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
-//   },
+    enableSorting: false,
+  },
   {
     header: 'Key',
     accessorKey: 'key',
-    cell: ({ getValue }) => <span className="font-mono text-sm">{getValue() as string}</span>
+    cell: ({ getValue }) => <span className="font-mono text-sm">{getValue() as string}</span>,
+    enableSorting: true,
   },
   {
     header: 'Module',
@@ -118,7 +209,8 @@ const getAllColumns = ({
         </span>
       )
     },
-    meta: { customClassName: 'text-center', tdClassName: 'text-center' }
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: true,
   },
   {
     header: 'English Value',
@@ -126,7 +218,8 @@ const getAllColumns = ({
     cell: ({ getValue }) => {
       const value = getValue() as string;
       return <span className="max-w-[300px] truncate block" title={value}>{value}</span>
-    }
+    },
+    enableSorting: true,
   },
   {
     header: 'Bangla Value',
@@ -134,36 +227,41 @@ const getAllColumns = ({
     cell: ({ getValue }) => {
       const value = getValue() as string;
       return <span className="max-w-[300px] truncate block" title={value}>{value}</span>
-    }
+    },
+    enableSorting: true,
   },
   {
     header: 'Created At',
     accessorKey: 'createdAt',
-    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-'
+    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-',
+    enableSorting: true,
   },
   {
     header: 'Updated At',
     accessorKey: 'updatedAt',
-    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-'
+    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-',
+    enableSorting: true,
   },
   {
-  header: 'Created By',
-  accessorKey: 'createdByName',
-  cell: ({ getValue }) => {
-    const value = getValue() as string;
-    return value || '-';
+    header: 'Created By',
+    accessorKey: 'createdByName',
+    cell: ({ getValue }) => {
+      const value = getValue() as string;
+      return value || '-';
+    },
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: true,
   },
-  meta: { customClassName: 'text-center', tdClassName: 'text-center' }
-},
-{
-  header: 'Updated By',
-  accessorKey: 'updatedByName',
-  cell: ({ getValue }) => {
-    const value = getValue() as string;
-    return value || '-';
+  {
+    header: 'Updated By',
+    accessorKey: 'updatedByName',
+    cell: ({ getValue }) => {
+      const value = getValue() as string;
+      return value || '-';
+    },
+    meta: { customClassName: 'text-center', tdClassName: 'text-center' },
+    enableSorting: true,
   },
-  meta: { customClassName: 'text-center', tdClassName: 'text-center' }
-},
 ]
 
 /* ---------------------------------- */
@@ -171,6 +269,7 @@ const getAllColumns = ({
 /* ---------------------------------- */
 export default function Translations() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '')
+  const { refreshTranslations } = useRefreshTranslations()
 
   const {
     isModalOpen,
@@ -179,8 +278,6 @@ export default function Translations() {
     closeModal,
     detailLoading
   } = useDetailModal<ITranslation>('/translations')
-  const { refreshTranslations } = useRefreshTranslations()
-
 
   const [visible, setVisible] = useState<ColumnDef<ITranslation>[]>([])
   const [showColumnModal, setShowColumnModal] = useState(false)
@@ -188,6 +285,13 @@ export default function Translations() {
   const [filters, setFilters] = useState<Record<string, any>>({})
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showAddButton, setShowAddButton] = useState(false)
+
+  // Selection state for bulk operations
+  const [selectedRowIds, setSelectedRowIds] = useState<Record<string, boolean>>({})
+  
+  // Bulk delete state
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   const showDetail = true
   const showEdit = can(['update-admin-translations'])
@@ -276,44 +380,91 @@ export default function Translations() {
     minLoadingTime: 500
   })
 
-/* ---------------- Delete Hook ---------------- */
-const { t } = useTranslations()
-const {
-  dialogOpen,
-  confirmDelete,
-  cancelDelete,
-  handleDelete,
-  deleteLoading
-} = useDeleteWithConfirm({
-  deleteFunction: async (id: string) => {
-    const result = await deleteTranslation(Number(id))
-    // After successful delete, refresh the frontend translations cache
-    await refreshTranslations()
-    return result
-  },
-  onSuccess: fetchData,
-  successMessage: t('Translation deleted successfully'),
-  errorMessage: t('Failed to delete translation'),
-  inactiveMessage: t('Translation cannot be deleted')
-})
+  /* ---------------- Delete Handler ---------------- */
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+
+  const confirmDelete = useCallback((id: string) => {
+    setDeleteId(id)
+    setDeleteDialogOpen(true)
+  }, [])
+
+  const cancelDelete = useCallback(() => {
+    setDeleteDialogOpen(false)
+    setDeleteId(null)
+  }, [])
+
+  const handleDelete = useCallback(async () => {
+    if (!deleteId) return
+    
+    setDeleteLoading(true)
+    try {
+      await deleteTranslation(Number(deleteId))
+      await refreshTranslations()
+      dispatchShowToast({ type: "success", message: "Translation deleted successfully" })
+      setDeleteDialogOpen(false)
+      setDeleteId(null)
+      fetchData()
+      setSelectedRowIds({})
+    } catch (error: any) {
+      console.error('Delete failed:', error)
+      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to delete translation" })
+    } finally {
+      setDeleteLoading(false)
+    }
+  }, [deleteId, fetchData, refreshTranslations])
+
+  /* ---------------- Bulk Operations ---------------- */
+  const getSelectedIds = useCallback(() => {
+    return Object.keys(selectedRowIds).filter(id => selectedRowIds[id] && isValidId(id))
+  }, [selectedRowIds])
+
+  const handleBulkDelete = useCallback(() => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) {
+      dispatchShowToast({ type: "warning", message: "No translations selected for deletion" })
+      return
+    }
+    setBulkDeleteDialogOpen(true)
+  }, [getSelectedIds])
+
+  const executeBulkDelete = useCallback(async () => {
+    const selectedIds = getSelectedIds()
+    if (selectedIds.length === 0) return
+    
+    setBulkLoading(true)
+    try {
+      await bulkDeleteTranslations(selectedIds)
+      await refreshTranslations()
+      dispatchShowToast({ type: "success", message: `${selectedIds.length} translation(s) deleted successfully` })
+      setBulkDeleteDialogOpen(false)
+      setSelectedRowIds({})
+      fetchData()
+    } catch (error: any) {
+      console.error('Bulk delete failed:', error)
+      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to delete translations" })
+    } finally {
+      setBulkLoading(false)
+    }
+  }, [getSelectedIds, fetchData, refreshTranslations])
 
   /* ---------------- Stable Columns ---------------- */
-  const allColumnsRef = useRef<ColumnDef<ITranslation>[]>([])
+  const selectColumn = useMemo(() => getSelectColumn(), [])
+  const dataColumns = useMemo(() => getDataColumns({
+    pageIndex,
+    pageSize,
+    fetchDetail,
+    handleEditClick,
+    confirmDelete,
+    showDetail,
+    showEdit,
+    showDelete
+  }), [pageIndex, pageSize, fetchDetail, handleEditClick, confirmDelete, showDetail, showEdit, showDelete])
 
-  if (!allColumnsRef.current.length) {
-    allColumnsRef.current = getAllColumns({
-      pageIndex,
-      pageSize,
-      fetchDetail,
-      handleEditClick,
-      confirmDelete,
-      showDetail,
-      showEdit,
-      showDelete
-    })
-  }
-
-  const allColumns = allColumnsRef.current
+  const allColumns = useMemo(() => [selectColumn, ...dataColumns], [selectColumn, dataColumns])
+  const allColumnsRef = useRef(allColumns)
+  allColumnsRef.current = allColumns
 
   /* ---------------- Add Button Permission ---------------- */
   useEffect(() => {
@@ -331,11 +482,11 @@ const {
         const { visibleColumns } = await refreshColumnSettings<ITranslation>(
           'translationTable',
           userId,
-          allColumns
+          allColumnsRef.current
         )
 
         if (mounted) {
-          setVisible(visibleColumns.length ? visibleColumns : allColumns)
+          setVisible(visibleColumns.length ? visibleColumns : allColumnsRef.current)
         }
       } catch (err) {
         console.error(err)
@@ -347,7 +498,7 @@ const {
     return () => {
       mounted = false
     }
-  }, [userId, allColumns])
+  }, [userId])
 
   /* ---------------- Initial Fetch ---------------- */
   useEffect(() => {
@@ -385,24 +536,59 @@ const {
   )
 
   /* ---------------- Table Instance ---------------- */
-  const table = useReactTable({
+  const table = useReactTable<ITranslation>({
     data,
     columns: visible,
+    getRowId: (row) => row.id.toString(),
+    enableSorting: true,
     state: {
       sorting,
       pagination: {
         pageIndex,
         pageSize
+      },
+      rowSelection: selectedRowIds,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: (updater) => {
+      let newSelection: Record<string, boolean>
+      
+      if (typeof updater === 'function') {
+        newSelection = updater(selectedRowIds)
+      } else {
+        newSelection = updater
+      }
+      
+      const filteredSelection = Object.keys(newSelection).reduce((acc, key) => {
+        if (isValidId(key) && newSelection[key]) {
+          acc[key] = newSelection[key]
+        }
+        return acc
+      }, {} as Record<string, boolean>)
+      
+      setSelectedRowIds(filteredSelection)
+    },
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === 'function' ? updater(sorting) : updater
+      setSorting(newSorting)
+      
+      // Only fetch data if sorting by columns other than 'select'
+      const isSelectColumnSort = newSorting.length > 0 && newSorting[0].id === 'select'
+      if (!isSelectColumnSort) {
+        fetchData()
       }
     },
-    onSortingChange: setSorting as OnChangeFn<SortingState>,
     manualPagination: true,
-    manualSorting: true,
+    manualSorting: false,
     pageCount: Math.ceil(totalCount / pageSize),
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel()
+    getPaginationRowModel: getPaginationRowModel(),
   })
+
+  const handleResetSorting = useCallback(() => {
+    setSorting([])
+  }, [setSorting])
 
   /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0
@@ -421,6 +607,19 @@ const {
         onAddNew={() => setIsSheetOpen(true)}
         showAddButton={showAddButton}
         showTrashButton={false}
+        showBulkActions={true}
+        selectedCount={Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length}
+        onBulkDelete={handleBulkDelete}
+        onBulkRestore={undefined}
+        onBulkPermanentDelete={undefined}
+        // Add a dummy trashButton to make the bulk delete button appear
+        trashButton={{
+          onClick: () => {},
+          label: 'Trash',
+          show: true
+        }}
+        showResetSorting={sorting.length > 0 && sorting[0]?.id === 'select'}
+        onResetSorting={handleResetSorting}
         onColumnSettings={() => setShowColumnModal(true)}
         onPrint={() => printTableById('printable-translation-table', 'Translations')}
         onExport={() =>
@@ -437,97 +636,101 @@ const {
       
       {/* TABLE */}
       <TableWithLoader loading={loading} id="printable-translation-table">
-        <table className="table-auto w-full text-left border border-collapse">
-          <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th
-                    key={header.id}
-                    className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-                  >
-                    <div
-                      className="flex justify-between items-center w-full cursor-pointer"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      <span className="flex-1 text-center">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </span>
-                      <span className="ml-2">
-                        {header.column.getIsSorted() === 'asc' ? (
-                          <FaSortUp size={12} />
-                        ) : header.column.getIsSorted() === 'desc' ? (
-                          <FaSortDown size={12} />
-                        ) : (
-                          <FaSort size={12} />
-                        )}
-                      </span>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-
-          <motion.tbody
-            key={pageIndex}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{
-              duration: 0.5,
-              ease: 'easeOut'
-            }}
-          >
-            {/* Error State Row */}
-            {showErrorState && (
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
-                  <EmptyState
-                    message="Error loading translations"
-                    suggestion="Please try again or contact support"
-                  />
-                </td>
-              </tr>
-            )}
-
-            {/* Empty State Row */}
-            {!showErrorState && showEmptyState && (
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
-                  <EmptyState
-                    message="No translations found"
-                    suggestion="Try adjusting your filters or add a new translation"
-                  />
-                </td>
-              </tr>
-            )}
-
-            {/* Data Rows */}
-            {!showErrorState && !showEmptyState && (
-              <>
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="border-b dark:border-gray-700">
-                    {row.getVisibleCells().map(cell => (
-                      <td
-                        key={cell.id}
-                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+        {showEmptyState ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <svg
+              className="w-24 h-24 text-gray-300 dark:text-gray-600 mb-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
+            </svg>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              No translations found
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
+              Try adjusting your search or filter criteria to see more results.
+            </p>
+          </div>
+        ) : (
+          <table className="table-auto w-full text-left border border-collapse">
+            <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const isSortable = header.column.getCanSort()
+                    
+                    return (
+                      <th
+                        key={header.id}
+                        className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
+                        onClick={(event) => {
+                          if (isSortable) {
+                            const handler = header.column.getToggleSortingHandler()
+                            if (handler) handler(event)
+                          }
+                        }}
+                        style={{ cursor: isSortable ? 'pointer' : 'default' }}
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </>
-            )}
-          </motion.tbody>
-        </table>
+                        <div className="flex justify-between items-center w-full">
+                          <span className="flex-1 text-center">
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </span>
+                          {isSortable && (
+                            <span className="ml-2 relative">
+                              {header.column.getIsSorted() === 'asc' ? (
+                                <FaSortUp size={12} />
+                              ) : header.column.getIsSorted() === 'desc' ? (
+                                <FaSortDown size={12} />
+                              ) : (
+                                <FaSort size={12} />
+                              )}
+                              {header.column.id === 'select' && header.column.getIsSorted() && (
+                                <span className="absolute -top-1 -right-2 text-xs text-blue-500" title="Frontend sorting (no API call)">
+                                  ⚡
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    )
+                  })}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className={cn(
+                  "border-b dark:border-gray-700 transition-colors",
+                  row.getIsSelected() && "bg-blue-200 dark:bg-blue-950/70"
+                )}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </TableWithLoader>
 
       {/* PAGINATION */}
@@ -610,10 +813,10 @@ const {
         </FormHolderSheet>
       )}
 
-      {/* DELETE CONFIRMATION */}
+      {/* DELETE CONFIRMATION DIALOG */}
       {showDelete && (
         <ConfirmDialog
-          open={dialogOpen}
+          open={deleteDialogOpen}
           onCancel={cancelDelete}
           onConfirm={handleDelete}
           title="Confirm Deletion"
@@ -622,6 +825,33 @@ const {
           loading={deleteLoading}
         />
       )}
+
+      {/* BULK DELETE CONFIRMATION DIALOG */}
+      <ConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onCancel={() => setBulkDeleteDialogOpen(false)}
+        onConfirm={executeBulkDelete}
+        title="Bulk Delete Translations"
+        variant="destructive"
+        icon={<Trash2 className="w-6 h-6" />}
+        confirmLabel={bulkLoading ? 'Deleting...' : 'Delete'}
+        loading={bulkLoading}
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+              Warning: This action cannot be undone!
+            </p>
+          </div>
+          <p className="text-gray-700 dark:text-gray-300">
+            Are you sure you want to delete {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected translation(s)?
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            This will permanently delete all selected translations and their associated values.
+          </p>
+        </div>
+      </ConfirmDialog>
 
       {/* EDIT TRANSLATION */}
       {showEdit && (

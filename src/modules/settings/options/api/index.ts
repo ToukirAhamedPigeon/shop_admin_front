@@ -65,3 +65,14 @@ export const getParentOptions = async (search?: string, limit?: number) => {
   });
   return response.data;
 };
+
+// Bulk delete options (soft or permanent)
+export const bulkDeleteOptions = async (ids: string[], permanent: boolean = false) => {
+  const response = await api.post('/options/bulk-delete', { ids, permanent });
+  return response.data;
+};
+
+export const bulkRestoreOptions = async (ids: string[]) => {
+  const response = await api.post('/options/bulk-restore', { ids });
+  return response.data;
+};
