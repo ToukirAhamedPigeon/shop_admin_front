@@ -654,7 +654,7 @@ export default function Roles() {
     return () => {
       mounted = false
     }
-  }, [userId, allColumns])
+  }, [userId])
 
   /* ---------------- Initial Fetch ---------------- */
   useEffect(() => {

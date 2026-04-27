@@ -45,7 +45,7 @@ import EditOption from './EditOption';
 import { useEditSheet } from '@/hooks/useEditSheet';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import { deleteOption, restoreOption, getOptions, bulkDeleteOptions, bulkRestoreOptions, getOptionDeleteInfo } from '../api';
-import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle } from 'lucide-react';
+import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle, List, AlertCircle } from 'lucide-react';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { cn } from '@/lib/utils';
 
@@ -54,6 +54,20 @@ interface DeleteInfoResponse {
   message: string;
   hasChildren: boolean;
   childrenCount: number;
+}
+
+interface BulkError {
+  id: string;
+  error: string;
+}
+
+interface BulkOperationResponse {
+  success: boolean;
+  message: string;
+  totalCount: number;
+  successCount: number;
+  failedCount: number;
+  errors: BulkError[];
 }
 
 // Helper function to validate ID
@@ -266,6 +280,11 @@ export default function Options() {
   const [bulkRestoreDialogOpen, setBulkRestoreDialogOpen] = useState(false);
   const [bulkPermanentDeleteDialogOpen, setBulkPermanentDeleteDialogOpen] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
+  
+  // Bulk error details state
+  const [bulkErrorDialogOpen, setBulkErrorDialogOpen] = useState(false);
+  const [bulkErrors, setBulkErrors] = useState<BulkError[]>([]);
+  const [bulkOperationType, setBulkOperationType] = useState<'delete' | 'restore' | 'permanent'>('delete');
 
   // Error dialog state
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
@@ -561,14 +580,38 @@ export default function Options() {
     
     setBulkLoading(true);
     try {
-      await bulkDeleteOptions(selectedIds, false);
-      dispatchShowToast({ type: "success", message: `${selectedIds.length} option(s) moved to trash successfully` });
-      setBulkDeleteDialogOpen(false);
-      setSelectedRowIds({});
-      fetchData();
+      const response = await bulkDeleteOptions(selectedIds, false) as BulkOperationResponse;
+      
+      if (response.success) {
+        dispatchShowToast({ 
+          type: "success", 
+          message: response.message || `${response.successCount} option(s) moved to trash successfully` 
+        });
+        setBulkDeleteDialogOpen(false);
+        setSelectedRowIds({});
+        fetchData();
+        
+        // Show error details if there were failures
+        if (response.failedCount > 0 && response.errors && response.errors.length > 0) {
+          setBulkErrors(response.errors);
+          setBulkOperationType('delete');
+          setBulkErrorDialogOpen(true);
+        }
+      } else {
+        throw new Error(response.message || "Failed to move options to trash");
+      }
     } catch (error: any) {
       console.error('Bulk soft delete failed:', error);
-      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to move options to trash" });
+      const errorResponse = error.response?.data;
+      
+      if (errorResponse?.errors && errorResponse.errors.length > 0) {
+        setBulkErrors(errorResponse.errors);
+        setBulkOperationType('delete');
+        setBulkErrorDialogOpen(true);
+        dispatchShowToast({ type: "danger", message: `Failed to delete ${errorResponse.failedCount} option(s). See details.` });
+      } else {
+        dispatchShowToast({ type: "danger", message: errorResponse?.message || "Failed to move options to trash" });
+      }
     } finally {
       setBulkLoading(false);
     }
@@ -580,14 +623,38 @@ export default function Options() {
     
     setBulkLoading(true);
     try {
-      await bulkRestoreOptions(selectedIds);
-      dispatchShowToast({ type: "success", message: `${selectedIds.length} option(s) restored successfully` });
-      setBulkRestoreDialogOpen(false);
-      setSelectedRowIds({});
-      fetchData();
+      const response = await bulkRestoreOptions(selectedIds) as BulkOperationResponse;
+      
+      if (response.success) {
+        dispatchShowToast({ 
+          type: "success", 
+          message: response.message || `${response.successCount} option(s) restored successfully` 
+        });
+        setBulkRestoreDialogOpen(false);
+        setSelectedRowIds({});
+        fetchData();
+        
+        // Show error details if there were failures
+        if (response.failedCount > 0 && response.errors && response.errors.length > 0) {
+          setBulkErrors(response.errors);
+          setBulkOperationType('restore');
+          setBulkErrorDialogOpen(true);
+        }
+      } else {
+        throw new Error(response.message || "Failed to restore options");
+      }
     } catch (error: any) {
       console.error('Bulk restore failed:', error);
-      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to restore options" });
+      const errorResponse = error.response?.data;
+      
+      if (errorResponse?.errors && errorResponse.errors.length > 0) {
+        setBulkErrors(errorResponse.errors);
+        setBulkOperationType('restore');
+        setBulkErrorDialogOpen(true);
+        dispatchShowToast({ type: "danger", message: `Failed to restore ${errorResponse.failedCount} option(s). See details.` });
+      } else {
+        dispatchShowToast({ type: "danger", message: errorResponse?.message || "Failed to restore options" });
+      }
     } finally {
       setBulkLoading(false);
     }
@@ -599,14 +666,38 @@ export default function Options() {
     
     setBulkLoading(true);
     try {
-      await bulkDeleteOptions(selectedIds, true);
-      dispatchShowToast({ type: "success", message: `${selectedIds.length} option(s) permanently deleted successfully` });
-      setBulkPermanentDeleteDialogOpen(false);
-      setSelectedRowIds({});
-      fetchData();
+      const response = await bulkDeleteOptions(selectedIds, true) as BulkOperationResponse;
+      
+      if (response.success) {
+        dispatchShowToast({ 
+          type: "success", 
+          message: response.message || `${response.successCount} option(s) permanently deleted successfully` 
+        });
+        setBulkPermanentDeleteDialogOpen(false);
+        setSelectedRowIds({});
+        fetchData();
+        
+        // Show error details if there were failures
+        if (response.failedCount > 0 && response.errors && response.errors.length > 0) {
+          setBulkErrors(response.errors);
+          setBulkOperationType('permanent');
+          setBulkErrorDialogOpen(true);
+        }
+      } else {
+        throw new Error(response.message || "Failed to permanently delete options");
+      }
     } catch (error: any) {
       console.error('Bulk permanent delete failed:', error);
-      dispatchShowToast({ type: "danger", message: error.response?.data?.message || "Failed to permanently delete options" });
+      const errorResponse = error.response?.data;
+      
+      if (errorResponse?.errors && errorResponse.errors.length > 0) {
+        setBulkErrors(errorResponse.errors);
+        setBulkOperationType('permanent');
+        setBulkErrorDialogOpen(true);
+        dispatchShowToast({ type: "danger", message: `Failed to delete ${errorResponse.failedCount} option(s). See details.` });
+      } else {
+        dispatchShowToast({ type: "danger", message: errorResponse?.message || "Failed to permanently delete options" });
+      }
     } finally {
       setBulkLoading(false);
     }
@@ -1080,6 +1171,56 @@ export default function Options() {
           </div>
         </ConfirmDialog>
       )}
+
+      {/* Bulk Error Details Dialog */}
+      <ConfirmDialog
+        open={bulkErrorDialogOpen}
+        onCancel={() => setBulkErrorDialogOpen(false)}
+        onConfirm={() => setBulkErrorDialogOpen(false)}
+        title={`Bulk ${bulkOperationType === 'delete' ? 'Delete' : bulkOperationType === 'restore' ? 'Restore' : 'Permanent Delete'} - Operation Details`}
+        variant="warning"
+        icon={<AlertCircle className="w-6 h-6" />}
+        confirmLabel="Close"
+        showCancelButton={false}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <Info className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+            <p className="text-yellow-700 dark:text-yellow-300 text-sm">
+              {bulkErrors.length} operation(s) failed during this bulk operation.
+            </p>
+          </div>
+          
+          <div className="max-h-64 overflow-y-auto">
+            <div className="space-y-2">
+              {bulkErrors.map((error, index) => (
+                <div 
+                  key={index} 
+                  className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800"
+                >
+                  <div className="flex items-start gap-2">
+                    <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-mono text-gray-700 dark:text-gray-300 break-all">
+                        ID: {error.id}
+                      </p>
+                      <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                        {error.error}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Please review the failed items and try again after addressing the issues.
+            </p>
+          </div>
+        </div>
+      </ConfirmDialog>
 
       {/* Error Dialog - Cannot permanently delete due to children */}
       <ConfirmDialog

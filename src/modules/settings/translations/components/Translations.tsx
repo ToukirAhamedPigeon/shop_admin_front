@@ -357,6 +357,7 @@ export default function Translations() {
     [filters]
   )
 
+
   /* ---------------- Table Hook ---------------- */
   const {
     data,
@@ -520,6 +521,14 @@ export default function Translations() {
     prevFiltersRef.current = filters
     
   }, [filters, fetchData, setPageIndex])
+
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
+  setPageSize(newPageSize)
+  // Reset to first page when changing page size
+  if (pageIndex !== 0) {
+    setPageIndex(0)
+  }
+}, [setPageSize, setPageIndex, pageIndex])
 
   /* ---------------- Visible Column IDs ---------------- */
   const visibleIds = useMemo(
@@ -741,7 +750,7 @@ export default function Translations() {
           totalCount={totalCount}
           grandTotalCount={grandTotalCount}
           setPageIndex={setPageIndex}
-          setPageSize={setPageSize}
+          setPageSize={handlePageSizeChange}
         />
       )}
 

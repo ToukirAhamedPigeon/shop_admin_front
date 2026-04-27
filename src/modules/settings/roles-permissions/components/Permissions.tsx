@@ -405,12 +405,6 @@ export default function Permissions() {
   })
 
   // Debug: Log data when it changes
-  useEffect(() => {
-    console.log('=== DATA CHANGED ===')
-    console.log('Data length:', data.length)
-    console.log('Data sample:', data.slice(0, 2))
-    console.log('SelectedRowIds:', selectedRowIds)
-  }, [data, selectedRowIds])
 
   /* ---------------- Delete Eligibility Check ---------------- */
   const checkDeleteEligibility = useCallback(async (id: string): Promise<boolean> => {

@@ -205,7 +205,8 @@ export function useTable<T>({
 
   const handlePageSizeChange = useCallback((newSize: number) => {
     setPageSize(newSize)
-    // pageIndex will be reset by the useEffect above
+     setPageIndex(0)
+    setPendingPage(0)
   }, [])
 
   const handleTrashClick = useCallback(() => {
