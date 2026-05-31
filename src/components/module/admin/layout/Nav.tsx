@@ -21,7 +21,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
 import { useTranslations } from "@/hooks/useTranslations";
 import { API_BASE_URL } from "@/constants/index";
-import Options from "@/modules/settings/options/components/Options";
+import { Mail } from "lucide-react";
 
 interface MenuItem {
   label: string;
@@ -41,6 +41,27 @@ const menuItems: MenuItem[] = [
     icon: <LayoutDashboard size={22} className="mr-2" />,
     basePath: "/dashboard",
     permissions: ["read-admin-dashboard"],
+  },
+  {
+    label: "common.mail.title",
+    defaultLabel: "Mailbox",
+    icon: <Mail size={22} className="mr-2" />,
+    basePath: "/mail",
+    permissions: ["read-admin-mails"],
+    children: [
+      {
+        label: "common.mail.mailbox",
+        defaultLabel: "Mailbox",
+        basePath: "/mail",
+        permissions: ["read-admin-mails"],
+      },
+      {
+        label: "mail.templates",
+        defaultLabel: "Templates",
+        basePath: "/mail/templates",
+        permissions: ["read-admin-mail-templates"],
+      },
+    ],
   },
   {
     label: "common.settings.title",

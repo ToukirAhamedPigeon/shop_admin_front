@@ -195,7 +195,7 @@ export default function LogListTable() {
   const fetchDetailRef = useRef(fetchDetail)
   fetchDetailRef.current = fetchDetail
 
-  const userId = useSelector((state: RootState) => state.auth.user?.id ?? '')
+  const userId = useSelector((state: RootState) => (state.auth as { user: { id: string } })?.user?.id ?? '')
   
   // Check if user has permission to read all logs
   const hasReadAllPermission = can(['read-admin-all-user-logs'])

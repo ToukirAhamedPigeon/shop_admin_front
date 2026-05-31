@@ -33,11 +33,16 @@ export const setRefreshSuccessHandler = (handler: (token: string) => void) => {
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL + "/api",
   withCredentials: true,
+  timeout: 120000, // Increase timeout to 120 seconds for large file uploads
+  maxContentLength: Infinity, // Remove content length limit
+  maxBodyLength: Infinity, // Remove body length limit
 });
 
 // ================= REQUEST INTERCEPTOR =================
 
 api.interceptors.request.use((config) => {
+    console.log('Request URL:', config.url);
+    console.log('Request Method:', config.method);
   //console.log("Request interceptor - URL:", config.url);
   
   config.headers = config.headers || {};

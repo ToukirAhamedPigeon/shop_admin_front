@@ -21,6 +21,8 @@ import RolesPage from "@/modules/settings/roles-permissions/pages/RolesPage";
 import PermissionsPage from "@/modules/settings/roles-permissions/pages/PermissionsPage";
 import TranslationsPage from "@/modules/settings/translations/pages/TranslationsPage";
 import OptionsPage from "@/modules/settings/options/pages/OptionsPage";
+import MailboxPage from "@/modules/mail/pages/MailboxPage";
+import TemplatesPage from "@/modules/mail/pages/TemplatesPage";
 
 
 export default function AppRoutes() {
@@ -60,7 +62,22 @@ export default function AppRoutes() {
             </PermissionRoute>
           }
         />
-
+        <Route
+          path="mail"
+          element={
+            <PermissionRoute anyOf={["read-admin-mails"]}>
+              <MailboxPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="mail/templates"
+          element={
+            <PermissionRoute anyOf={["read-admin-mail-templates"]}>
+              <TemplatesPage />
+            </PermissionRoute>
+          }
+        />
         <Route
           path="settings/users"
           element={

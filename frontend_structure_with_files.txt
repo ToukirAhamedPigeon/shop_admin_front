@@ -1,0 +1,186 @@
+﻿|-- .env.local
+|-- .gitignore
+|-- components.json
+|-- Dockerfile
+|-- eslint.config.js
+|-- frontend_structure.txt
+|-- frontend_structure_with_files.txt
+|-- index.html
+|-- package-lock.json
+|-- package.json
+|-- postcss.config.cjs
+|-- README.md
+|-- tailwind.config.ts
+|-- tsconfig.app.json
+|-- tsconfig.json
+|-- tsconfig.node.json
+|-- vite.config.ts
+  |-- favicon.ico
+  |-- human.png
+  |-- loader.svg
+  |-- login-bg-dark.jpg
+  |-- login-bg.jpg
+  |-- logo.png
+  |-- sidebar-bg-dark.jpg
+  |-- sidebar-bg-old-2.jpg
+  |-- sidebar-bg-old.jpg
+  |-- sidebar-bg.jpg
+  |-- vite.svg
+  |-- .env.local
+  |-- App.css
+  |-- App.tsx
+  |-- declarations.d.ts
+  |-- index.css
+  |-- main.tsx
+  |-- vite-env.d.ts
+    |-- table.ts
+    |-- react.svg
+    |-- PermissionRoute.tsx
+    |-- ProtectedRoute.tsx
+    |-- PublicRoute.tsx
+      |-- Can.tsx
+      |-- ColumnVisibilityManager.tsx
+      |-- ConfirmDialog.tsx
+      |-- ExpandableText.tsx
+      |-- FancyBox.tsx
+      |-- FilterModal.tsx
+      |-- Footer.tsx
+      |-- FormHolderSheet.tsx
+      |-- FormInputs.tsx
+      |-- FullPageLoader.tsx
+      |-- GlobalLoader.tsx
+      |-- LanguageSwitcher.tsx
+      |-- Loader.tsx
+      |-- Modal.tsx
+      |-- ModalCore.tsx
+      |-- SuccessMessage.tsx
+      |-- Table.tsx
+      |-- ThemeToggleButton.tsx
+      |-- ToastContainer.tsx
+          |-- Breadcrumb.tsx
+          |-- Header.tsx
+          |-- Logo.tsx
+          |-- Main.tsx
+          |-- Nav.tsx
+          |-- RouteProgress.tsx
+          |-- Sidebar.tsx
+          |-- SidebarMobileSheet.tsx
+          |-- UserDropdown.tsx
+      |-- avatar.tsx
+      |-- badge.tsx
+      |-- button.tsx
+      |-- card.tsx
+      |-- checkbox.tsx
+      |-- command.tsx
+      |-- dialog.tsx
+      |-- dropdown-menu.tsx
+      |-- input.tsx
+      |-- label.tsx
+      |-- popover.tsx
+      |-- scroll-area.tsx
+      |-- select.tsx
+      |-- sheet.tsx
+      |-- table.tsx
+      |-- textarea.tsx
+    |-- index.ts
+    |-- useDebounce.ts
+    |-- useDeleteWithConfirm.ts
+    |-- useDetailModal.ts
+    |-- useEditSheet.ts
+    |-- useMediaQuery.ts
+    |-- useProfilePicture.ts
+    |-- useRealtimeTranslations.ts
+    |-- useRedux.ts
+    |-- useRefreshAuth.ts
+    |-- useRefreshTranslations.ts
+    |-- useSelect.ts
+    |-- useTable.ts
+    |-- useTranslations.ts
+    |-- AdminLayout.tsx
+    |-- authCheck.ts
+    |-- axios.ts
+    |-- dispatch.ts
+    |-- exportTable.ts
+    |-- formatDate.ts
+    |-- generateQRImage.ts
+    |-- helpers.ts
+    |-- printTable.ts
+    |-- refreshColumnSettings.ts
+    |-- utils.ts
+      |-- index.ts
+      |-- types.ts
+        |-- index.ts
+        |-- passwordReset.ts
+        |-- LogoutButton.tsx
+        |-- ForgotPasswordPage.tsx
+        |-- LoginPage.tsx
+        |-- ResetPasswordPage.tsx
+        |-- VerifyEmailPage.tsx
+        |-- Dashboard.tsx
+        |-- DashboardPage.tsx
+        |-- types.ts
+          |-- index.ts
+          |-- index.ts
+          |-- AddOption.tsx
+          |-- EditOption.tsx
+          |-- OptionDetail.tsx
+          |-- OptionFilterForm.tsx
+          |-- Options.tsx
+          |-- OptionsPage.tsx
+          |-- index.ts
+          |-- AddPermission.tsx
+          |-- AddRole.tsx
+          |-- EditPermission.tsx
+          |-- EditRole.tsx
+          |-- PermissionDetail.tsx
+          |-- PermissionFilterForm.tsx
+          |-- Permissions.tsx
+          |-- RoleDetail.tsx
+          |-- RoleFilterForm.tsx
+          |-- Roles.tsx
+          |-- PermissionsPage.tsx
+          |-- RolesPage.tsx
+          |-- index.ts
+          |-- AddTranslation.tsx
+          |-- EditTranslation.tsx
+          |-- TranslationDetail.tsx
+          |-- TranslationFilterForm.tsx
+          |-- Translations.tsx
+          |-- TranslationsPage.tsx
+          |-- index.ts
+          |-- LogDetail.tsx
+          |-- LogFilterForm.tsx
+          |-- UserLogs.tsx
+          |-- UserLogsPage.tsx
+          |-- index.ts
+          |-- Add.tsx
+          |-- ChangePassword.tsx
+          |-- Edit.tsx
+          |-- ProfileEdit.tsx
+          |-- UserDetail.tsx
+          |-- UserFilterForm.tsx
+          |-- Users.tsx
+          |-- VerifyPasswordChange.tsx
+          |-- ChangePasswordPage.tsx
+          |-- ProfileEditPage.tsx
+          |-- UsersPage.tsx
+          |-- VerifyPasswordChangePage.tsx
+    |-- NotFound.tsx
+    |-- Unauthorized.tsx
+    |-- store.ts
+      |-- permissionSelector.ts
+      |-- authSlice.ts
+      |-- dashboardSlice.ts
+      |-- languageSlice.ts
+      |-- loaderSlice.ts
+      |-- sidebarSlice.ts
+      |-- tableColumnSettingsSlice.ts
+      |-- themeSlice.ts
+      |-- toastSlice.ts
+    |-- api.ts
+    |-- index.tsx
+    |-- index.ts
+    |-- option.ts
+    |-- react-table.d.ts
+    |-- role-permission.ts
+    |-- translation.ts
