@@ -30,7 +30,6 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import DOMPurify from 'dompurify';
 import Loader from '@/components/custom/Loader';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface MailDetailProps {
   mailId: number;
@@ -40,10 +39,31 @@ interface MailDetailProps {
   onReply: () => void;
 }
 
+// Remote storage URL from environment
+const REMOTE_STORAGE_URL = import.meta.env.VITE_REMOTE_STORAGE_URL || 'https://shopfiles.pigeonic.com';
+
+// Helper function to get full file URL (handles both local and remote paths)
+const getFullFileUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // If it's already a full URL (starts with http), return as is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // If it's a relative path, prepend the remote storage URL
+  if (url.startsWith('/uploads/')) {
+    return `${REMOTE_STORAGE_URL}${url}`;
+  }
+  
+  return url;
+};
+
 // Helper function to get file name from URL
 const getFileNameFromUrl = (url: string): string => {
   try {
-    const urlObj = new URL(url);
+    const fullUrl = getFullFileUrl(url);
+    const urlObj = new URL(fullUrl);
     const pathname = urlObj.pathname;
     const fileName = pathname.split('/').pop() || '';
     // Remove timestamp prefix if present (format: timestamp_filename.ext)
@@ -186,8 +206,8 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
   };
 
   const handleDownloadAttachment = (url: string, fileName: string) => {
-    // Open in new tab - simplest approach
-    window.open(url, '_blank');
+    const fullUrl = getFullFileUrl(url);
+    window.open(fullUrl, '_blank');
   };
 
   const visibleAttachments = showAllAttachments 
@@ -283,7 +303,8 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {visibleAttachments.map((attachment, index) => {
-                    const fileName = getFileNameFromUrl(attachment);
+                    const fullUrl = getFullFileUrl(attachment);
+                    const fileName = getFileNameFromUrl(fullUrl);
                     const displayName = truncateFileName(fileName);
                     const fileExtension = getFileExtension(fileName);
                     
