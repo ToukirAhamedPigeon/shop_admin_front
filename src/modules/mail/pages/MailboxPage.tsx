@@ -28,36 +28,35 @@ export default function MailboxPage() {
 
   const loadStatistics = useCallback(async () => {
     try {
-      console.log('Loading statistics...');
       const response = await getMailStatistics();
-      console.log('Statistics response:', response.data);
       setStatistics(response.data);
     } catch (error) {
       console.error('Failed to load statistics:', error);
-      // Don't show toast for statistics errors
     }
   }, []);
 
-  useEffect(() => {
+  // Separate function to refresh just the list (not statistics)
+  const refreshList = useCallback(() => {
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
+  // Separate function to refresh statistics (lightweight)
+  const refreshStatistics = useCallback(() => {
     loadStatistics();
-  }, [loadStatistics, refreshKey]);
+  }, [loadStatistics]);
 
   const handleFetchEmails = async () => {
     setRefreshing(true);
     try {
       await fetchEmails();
       dispatchShowToast({ type: 'success', message: 'Emails fetched successfully' });
-      refreshData();
+      refreshList();
+      refreshStatistics();
     } catch (error) {
       dispatchShowToast({ type: 'danger', message: 'Failed to fetch emails' });
     } finally {
       setRefreshing(false);
     }
-  };
-
-  const refreshData = () => {
-    setRefreshKey(prev => prev + 1);
-    loadStatistics();
   };
 
   const handleReply = (mail: Mail) => {
@@ -117,7 +116,7 @@ export default function MailboxPage() {
             setReplyTo(undefined);
             setShowCompose(true);
           }}
-          onRefresh={refreshData}
+          onRefresh={refreshStatistics}
           refreshing={refreshing}
         />
         
@@ -126,7 +125,8 @@ export default function MailboxPage() {
           mailbox={selectedMailbox}
           onSelectMail={setSelectedMail}
           selectedMail={selectedMail}
-          onRefresh={refreshData}
+          onRefreshList={refreshList}
+          onRefreshStatistics={refreshStatistics}
         />
       </div>
 
@@ -136,7 +136,10 @@ export default function MailboxPage() {
           setShowCompose(false);
           setReplyTo(undefined);
         }}
-        onSent={refreshData}
+        onSent={() => {
+          refreshList();
+          refreshStatistics();
+        }}
         replyTo={replyTo}
       />
 
@@ -145,7 +148,10 @@ export default function MailboxPage() {
           mailId={selectedMail.id}
           open={!!selectedMail}
           onClose={() => setSelectedMail(null)}
-          onRefresh={refreshData}
+          onRefresh={() => {
+            refreshList();
+            refreshStatistics();
+          }}
           onReply={() => handleReply(selectedMail)}
         />
       )}

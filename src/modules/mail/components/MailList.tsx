@@ -30,12 +30,45 @@ interface MailListProps {
   mailbox: MailboxType;
   onSelectMail: (mail: Mail) => void;
   selectedMail: Mail | null;
-  onRefresh: () => void;
+  onRefreshList: () => void;  // For full list refresh (rare)
+  onRefreshStatistics: () => void;  // For statistics only
 }
 
 const ITEMS_PER_PAGE = 20;
 
-export default function MailList({ mailbox, onSelectMail, selectedMail, onRefresh }: MailListProps) {
+// Helper to get the display value for sender/recipient based on mailbox and mail type
+const getSenderDisplay = (mail: Mail, mailbox: MailboxType): string => {
+  switch (mailbox) {
+    case 'sent':
+      return mail.toMail;
+    case 'inbox':
+      return mail.fromMail;
+    case 'starred':
+    case 'trash':
+    default:
+      if (mail.isSent) {
+        return mail.toMail;
+      } else {
+        return mail.fromMail;
+      }
+  }
+};
+
+// Helper to get column header based on mailbox type
+const getSenderColumnHeader = (mailbox: MailboxType): string => {
+  switch (mailbox) {
+    case 'sent':
+      return 'To';
+    case 'inbox':
+      return 'From';
+    case 'starred':
+    case 'trash':
+    default:
+      return 'From/To';
+  }
+};
+
+export default function MailList({ mailbox, onSelectMail, selectedMail, onRefreshList, onRefreshStatistics }: MailListProps) {
   const [mails, setMails] = useState<Mail[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -78,21 +111,46 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
 
   const handleStarClick = useCallback(async (e: React.MouseEvent, mail: Mail) => {
     e.stopPropagation();
+    
+    // Save original state for rollback
+    const originalStarred = mail.isStarred;
+    
+    // Optimistically update local state
+    setMails(prevMails => 
+      prevMails.map(m => 
+        m.id === mail.id ? { ...m, isStarred: !m.isStarred } : m
+      )
+    );
+    
     try {
       await toggleStar(mail.id);
-      onRefresh();
-      loadMails();
+      // Only refresh statistics, NOT the full list
+      onRefreshStatistics();
     } catch (error) {
+      // Revert on error
+      setMails(prevMails => 
+        prevMails.map(m => 
+          m.id === mail.id ? { ...m, isStarred: originalStarred } : m
+        )
+      );
       dispatchShowToast({ type: 'danger', message: 'Failed to update star status' });
     }
-  }, [onRefresh, loadMails]);
+  }, [onRefreshStatistics]);
 
   const handleMailClick = useCallback((mail: Mail) => {
     if (!mail.isRead && !mail.isSent) {
+      // Optimistically update local state
+      setMails(prevMails => 
+        prevMails.map(m => 
+          m.id === mail.id ? { ...m, isRead: true } : m
+        )
+      );
       markAsRead(mail.id).catch(console.error);
+      // Refresh statistics to update unread count
+      onRefreshStatistics();
     }
     onSelectMail(mail);
-  }, [onSelectMail]);
+  }, [onSelectMail, onRefreshStatistics]);
 
   const handleSelectChange = useCallback((id: number, checked: boolean | string) => {
     const isChecked = typeof checked === 'boolean' ? checked : checked === 'true';
@@ -130,19 +188,37 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
       await bulkMailAction(actionDialog.ids, actionDialog.action);
       dispatchShowToast({ type: 'success', message: `Bulk ${actionDialog.action} completed` });
       setSelectedIds(new Set());
-      onRefresh();
-      loadMails();
+      // Full refresh needed for bulk actions
+      onRefreshList();
+      onRefreshStatistics();
     } catch (error) {
       dispatchShowToast({ type: 'danger', message: `Bulk ${actionDialog.action} failed` });
     } finally {
       setBulkActionLoading(false);
       setActionDialog(null);
     }
-  }, [actionDialog, onRefresh, loadMails]);
+  }, [actionDialog, onRefreshList, onRefreshStatistics]);
+
+  const handleMoveToTrash = useCallback(async (mail: Mail) => {
+    // Optimistically remove from current list
+    setMails(prevMails => prevMails.filter(m => m.id !== mail.id));
+    
+    try {
+      await moveToTrash(mail.id);
+      onRefreshStatistics();
+      // Reload to ensure consistency
+      loadMails();
+    } catch (error) {
+      // Reload on error to restore
+      loadMails();
+      dispatchShowToast({ type: 'danger', message: 'Failed to move to trash' });
+    }
+  }, [loadMails, onRefreshStatistics]);
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const selectedCount = selectedIds.size;
   const isTrashView = mailbox === 'trash';
+  const senderColumnHeader = getSenderColumnHeader(mailbox);
 
   if (loading) {
     return (
@@ -213,7 +289,7 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
               </TableHead>
               <TableHead className="w-10"></TableHead>
               <TableHead className="w-10"></TableHead>
-              <TableHead>From/To</TableHead>
+              <TableHead>{senderColumnHeader}</TableHead>
               <TableHead>Subject</TableHead>
               <TableHead className="w-32">Date</TableHead>
             </TableRow>
@@ -243,8 +319,8 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
                     />
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <button onClick={(e) => handleStarClick(e, mail)} className="focus:outline-none">
-                      <Star className={cn("w-4 h-4", mail.isStarred ? "fill-yellow-400 text-yellow-400" : "text-gray-400 hover:text-yellow-400")} />
+                    <button onClick={(e) => handleStarClick(e, mail)} className="focus:outline-none cursor-pointer">
+                      <Star className={cn("w-4 h-4 transition-colors", mail.isStarred ? "fill-yellow-400 text-yellow-400" : "text-gray-400 hover:text-yellow-400")} />
                     </button>
                   </TableCell>
                   <TableCell>
@@ -255,7 +331,7 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
                     )}
                   </TableCell>
                   <TableCell className={cn(!mail.isRead && !mail.isSent ? "font-semibold" : "")}>
-                    {mailbox === 'sent' ? mail.toMail : mail.fromMail}
+                    {getSenderDisplay(mail, mailbox)}
                   </TableCell>
                   <TableCell className={cn(!mail.isRead && !mail.isSent ? "font-semibold" : "")}>
                     {mail.subject}
