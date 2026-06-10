@@ -21,10 +21,11 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { dispatchShowToast } from '@/lib/dispatch';
-import { getMails, bulkMailAction, toggleStar, moveToTrash, restoreFromTrash, markAsRead, markAsUnread } from '../api';
+import { getMails, bulkMailAction, toggleStar, moveToTrash, markAsRead } from '../api';
 import type { Mail, MailboxType, MailFilterRequest } from '../types';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import Loader from '@/components/custom/Loader';
+import { capitalize } from '@/lib/helpers';
 
 interface MailListProps {
   mailbox: MailboxType;
@@ -382,9 +383,9 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
           open={actionDialog.open}
           onCancel={() => setActionDialog(null)}
           onConfirm={executeBulkAction}
-          title={`Bulk ${actionDialog.action}`}
+          title={`Bulk ${capitalize(actionDialog.action)}`}
           variant={actionDialog.action === 'delete' ? 'destructive' : 'warning'}
-          confirmLabel={actionDialog.action}
+          confirmLabel={capitalize(actionDialog.action)}
           loading={bulkActionLoading}
         >
           <p>Are you sure you want to {actionDialog.action} {actionDialog.ids.length} selected message(s)?</p>
