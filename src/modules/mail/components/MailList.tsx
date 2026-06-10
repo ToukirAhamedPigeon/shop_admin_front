@@ -1,5 +1,5 @@
 // src/modules/mail/components/MailList.tsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { format } from 'date-fns';
 import { 
   Star, 
@@ -26,18 +26,19 @@ import type { Mail, MailboxType, MailFilterRequest } from '../types';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import Loader from '@/components/custom/Loader';
 import { capitalize } from '@/lib/helpers';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface MailListProps {
   mailbox: MailboxType;
   onSelectMail: (mail: Mail) => void;
   selectedMail: Mail | null;
-  onRefreshList: () => void;  // For full list refresh (rare)
-  onRefreshStatistics: () => void;  // For statistics only
+  onRefreshList: () => void;
+  onRefreshStatistics: () => void;
 }
 
 const ITEMS_PER_PAGE = 20;
 
-// Helper to get the display value for sender/recipient based on mailbox and mail type
+// Helper functions
 const getSenderDisplay = (mail: Mail, mailbox: MailboxType): string => {
   switch (mailbox) {
     case 'sent':
@@ -47,37 +48,178 @@ const getSenderDisplay = (mail: Mail, mailbox: MailboxType): string => {
     case 'starred':
     case 'trash':
     default:
-      if (mail.isSent) {
-        return mail.toMail;
-      } else {
-        return mail.fromMail;
-      }
+      return mail.isSent ? mail.toMail : mail.fromMail;
   }
 };
 
-// Helper to get column header based on mailbox type
 const getSenderColumnHeader = (mailbox: MailboxType): string => {
   switch (mailbox) {
-    case 'sent':
-      return 'To';
-    case 'inbox':
-      return 'From';
-    case 'starred':
-    case 'trash':
-    default:
-      return 'From/To';
+    case 'sent': return 'To';
+    case 'inbox': return 'From';
+    default: return 'From/To';
   }
 };
 
-export default function MailList({ mailbox, onSelectMail, selectedMail, onRefreshList, onRefreshStatistics }: MailListProps) {
+// Separate component for the search input to prevent re-renders
+const SearchInputComponent = memo(({ 
+  value, 
+  onChange, 
+  placeholder 
+}: { 
+  value: string; 
+  onChange: (value: string) => void; 
+  placeholder: string;
+}) => {
+  // Use local state for immediate input feedback
+  const [localValue, setLocalValue] = useState(value);
+  
+  // Update local value when prop changes (from reset)
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+    onChange(newValue);
+  };
+  
+  return (
+    <Input
+      placeholder={placeholder}
+      value={localValue}
+      onChange={handleChange}
+      className="flex-1"
+    />
+  );
+});
+
+SearchInputComponent.displayName = 'SearchInputComponent';
+
+// Separate component for the email list table to prevent re-renders of the search input
+const EmailTable = memo(({ 
+  mails, 
+  mailbox, 
+  selectedMail, 
+  selectedIds, 
+  onMailClick, 
+  onStarClick, 
+  onSelectChange, 
+  onSelectAll,
+  loading 
+}: { 
+  mails: Mail[];
+  mailbox: MailboxType;
+  selectedMail: Mail | null;
+  selectedIds: Set<number>;
+  onMailClick: (mail: Mail) => void;
+  onStarClick: (e: React.MouseEvent, mail: Mail) => void;
+  onSelectChange: (id: number, checked: boolean | string) => void;
+  onSelectAll: (checked: boolean | string) => void;
+  loading: boolean;
+}) => {
+  const senderColumnHeader = getSenderColumnHeader(mailbox);
+  
+  return (
+    <div className="flex-1 overflow-auto relative">
+      {loading && mails.length > 0 && (
+        <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 z-10 flex items-center justify-center">
+          <Loader type="circular" size={32} />
+        </div>
+      )}
+      <Table>
+        <TableHeader className="sticky top-0 bg-gray-50 dark:bg-gray-700 z-20">
+          <TableRow>
+            <TableHead className="w-10">
+              <Checkbox
+                checked={selectedIds.size === mails.length && mails.length > 0}
+                onCheckedChange={onSelectAll}
+              />
+            </TableHead>
+            <TableHead className="w-10"></TableHead>
+            <TableHead className="w-10"></TableHead>
+            <TableHead>{senderColumnHeader}</TableHead>
+            <TableHead>Subject</TableHead>
+            <TableHead className="w-32">Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {mails.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                No messages in {mailbox}
+              </TableCell>
+            </TableRow>
+          ) : (
+            mails.map((mail) => (
+              <TableRow
+                key={mail.id}
+                onClick={() => onMailClick(mail)}
+                className={cn(
+                  "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors",
+                  selectedMail?.id === mail.id && "bg-primary/5",
+                  !mail.isRead && !mail.isSent && "font-semibold bg-blue-50/30 dark:bg-blue-950/20"
+                )}
+              >
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedIds.has(mail.id)}
+                    onCheckedChange={(checked) => onSelectChange(mail.id, checked)}
+                  />
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <button onClick={(e) => onStarClick(e, mail)} className="focus:outline-none cursor-pointer">
+                    <Star className={cn("w-4 h-4 transition-colors", mail.isStarred ? "fill-yellow-400 text-yellow-400" : "text-gray-400 hover:text-yellow-400")} />
+                  </button>
+                </TableCell>
+                <TableCell>
+                  {!mail.isRead && !mail.isSent ? (
+                    <MailOpen className="w-4 h-4 text-blue-500" />
+                  ) : (
+                    <MailIcon className="w-4 h-4 text-gray-400" />
+                  )}
+                </TableCell>
+                <TableCell className={cn(!mail.isRead && !mail.isSent ? "font-semibold" : "")}>
+                  {getSenderDisplay(mail, mailbox)}
+                </TableCell>
+                <TableCell className={cn(!mail.isRead && !mail.isSent ? "font-semibold" : "")}>
+                  {mail.subject}
+                </TableCell>
+                <TableCell className="text-gray-500 text-sm whitespace-nowrap">
+                  {format(new Date(mail.createdAt), 'MMM dd, yyyy')}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+});
+
+EmailTable.displayName = 'EmailTable';
+
+export default function MailList({ 
+  mailbox, 
+  onSelectMail, 
+  selectedMail, 
+  onRefreshList, 
+  onRefreshStatistics 
+}: MailListProps) {
   const [mails, setMails] = useState<Mail[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [searchValue, setSearchValue] = useState('');
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [actionDialog, setActionDialog] = useState<{ open: boolean; action: string; ids: number[] } | null>(null);
+  
+  // Debounce search for API calls
+  const debouncedSearch = useDebounce(searchValue, 500);
+  
+  const isInitialMount = useRef(true);
+  const isTrashView = mailbox === 'trash';
 
   const loadMails = useCallback(async () => {
     setLoading(true);
@@ -86,7 +228,7 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
         page,
         limit: ITEMS_PER_PAGE,
         mailbox,
-        q: search || undefined,
+        q: debouncedSearch || undefined,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       };
@@ -99,40 +241,45 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
     } finally {
       setLoading(false);
     }
-  }, [page, mailbox, search]);
+  }, [page, mailbox, debouncedSearch]);
 
+  // Load mails when dependencies change
   useEffect(() => {
-    loadMails();
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      loadMails();
+    } else {
+      loadMails();
+    }
   }, [loadMails]);
 
+  // Reset page when mailbox changes
   useEffect(() => {
     setSelectedIds(new Set());
     setPage(1);
+    setSearchValue(''); // Reset search when mailbox changes
   }, [mailbox]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchValue(value);
+    // Reset to first page when search changes
+    setPage(1);
+  }, []);
 
   const handleStarClick = useCallback(async (e: React.MouseEvent, mail: Mail) => {
     e.stopPropagation();
-    
-    // Save original state for rollback
     const originalStarred = mail.isStarred;
     
-    // Optimistically update local state
     setMails(prevMails => 
-      prevMails.map(m => 
-        m.id === mail.id ? { ...m, isStarred: !m.isStarred } : m
-      )
+      prevMails.map(m => m.id === mail.id ? { ...m, isStarred: !m.isStarred } : m)
     );
     
     try {
       await toggleStar(mail.id);
-      // Only refresh statistics, NOT the full list
       onRefreshStatistics();
     } catch (error) {
-      // Revert on error
       setMails(prevMails => 
-        prevMails.map(m => 
-          m.id === mail.id ? { ...m, isStarred: originalStarred } : m
-        )
+        prevMails.map(m => m.id === mail.id ? { ...m, isStarred: originalStarred } : m)
       );
       dispatchShowToast({ type: 'danger', message: 'Failed to update star status' });
     }
@@ -140,14 +287,10 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
 
   const handleMailClick = useCallback((mail: Mail) => {
     if (!mail.isRead && !mail.isSent) {
-      // Optimistically update local state
       setMails(prevMails => 
-        prevMails.map(m => 
-          m.id === mail.id ? { ...m, isRead: true } : m
-        )
+        prevMails.map(m => m.id === mail.id ? { ...m, isRead: true } : m)
       );
       markAsRead(mail.id).catch(console.error);
-      // Refresh statistics to update unread count
       onRefreshStatistics();
     }
     onSelectMail(mail);
@@ -157,11 +300,8 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
     const isChecked = typeof checked === 'boolean' ? checked : checked === 'true';
     setSelectedIds(prev => {
       const newSet = new Set(prev);
-      if (isChecked) {
-        newSet.add(id);
-      } else {
-        newSet.delete(id);
-      }
+      if (isChecked) newSet.add(id);
+      else newSet.delete(id);
       return newSet;
     });
   }, []);
@@ -189,7 +329,6 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
       await bulkMailAction(actionDialog.ids, actionDialog.action);
       dispatchShowToast({ type: 'success', message: `Bulk ${actionDialog.action} completed` });
       setSelectedIds(new Set());
-      // Full refresh needed for bulk actions
       onRefreshList();
       onRefreshStatistics();
     } catch (error) {
@@ -201,16 +340,13 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
   }, [actionDialog, onRefreshList, onRefreshStatistics]);
 
   const handleMoveToTrash = useCallback(async (mail: Mail) => {
-    // Optimistically remove from current list
     setMails(prevMails => prevMails.filter(m => m.id !== mail.id));
     
     try {
       await moveToTrash(mail.id);
       onRefreshStatistics();
-      // Reload to ensure consistency
       loadMails();
     } catch (error) {
-      // Reload on error to restore
       loadMails();
       dispatchShowToast({ type: 'danger', message: 'Failed to move to trash' });
     }
@@ -218,10 +354,8 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const selectedCount = selectedIds.size;
-  const isTrashView = mailbox === 'trash';
-  const senderColumnHeader = getSenderColumnHeader(mailbox);
 
-  if (loading) {
+  if (loading && mails.length === 0) {
     return (
       <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm flex items-center justify-center">
         <Loader type="circular" size={48} />
@@ -234,11 +368,10 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
       {/* Header with search and actions */}
       <div className="p-4 border-b dark:border-gray-700">
         <div className="flex gap-2">
-          <Input
+          <SearchInputComponent
+            value={searchValue}
+            onChange={handleSearchChange}
             placeholder="Search emails..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1"
           />
           {selectedCount > 0 && (
             <div className="flex gap-2">
@@ -277,75 +410,18 @@ export default function MailList({ mailbox, onSelectMail, selectedMail, onRefres
         </div>
       </div>
 
-      {/* Email List */}
-      <div className="flex-1 overflow-auto">
-        <Table>
-          <TableHeader className="sticky top-0 bg-gray-50 dark:bg-gray-700">
-            <TableRow>
-              <TableHead className="w-10">
-                <Checkbox
-                  checked={selectedIds.size === mails.length && mails.length > 0}
-                  onCheckedChange={handleSelectAll}
-                />
-              </TableHead>
-              <TableHead className="w-10"></TableHead>
-              <TableHead className="w-10"></TableHead>
-              <TableHead>{senderColumnHeader}</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead className="w-32">Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mails.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-gray-500">
-                  No messages in {mailbox}
-                </TableCell>
-              </TableRow>
-            ) : (
-              mails.map((mail) => (
-                <TableRow
-                  key={mail.id}
-                  onClick={() => handleMailClick(mail)}
-                  className={cn(
-                    "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors",
-                    selectedMail?.id === mail.id && "bg-primary/5",
-                    !mail.isRead && !mail.isSent && "font-semibold bg-blue-50/30 dark:bg-blue-950/20"
-                  )}
-                >
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={selectedIds.has(mail.id)}
-                      onCheckedChange={(checked) => handleSelectChange(mail.id, checked)}
-                    />
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <button onClick={(e) => handleStarClick(e, mail)} className="focus:outline-none cursor-pointer">
-                      <Star className={cn("w-4 h-4 transition-colors", mail.isStarred ? "fill-yellow-400 text-yellow-400" : "text-gray-400 hover:text-yellow-400")} />
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    {!mail.isRead && !mail.isSent ? (
-                      <MailOpen className="w-4 h-4 text-blue-500" />
-                    ) : (
-                      <MailIcon className="w-4 h-4 text-gray-400" />
-                    )}
-                  </TableCell>
-                  <TableCell className={cn(!mail.isRead && !mail.isSent ? "font-semibold" : "")}>
-                    {getSenderDisplay(mail, mailbox)}
-                  </TableCell>
-                  <TableCell className={cn(!mail.isRead && !mail.isSent ? "font-semibold" : "")}>
-                    {mail.subject}
-                  </TableCell>
-                  <TableCell className="text-gray-500 text-sm whitespace-nowrap">
-                    {format(new Date(mail.createdAt), 'MMM dd, yyyy')}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {/* Email Table - Separated component */}
+      <EmailTable
+        mails={mails}
+        mailbox={mailbox}
+        selectedMail={selectedMail}
+        selectedIds={selectedIds}
+        onMailClick={handleMailClick}
+        onStarClick={handleStarClick}
+        onSelectChange={handleSelectChange}
+        onSelectAll={handleSelectAll}
+        loading={loading}
+      />
 
       {/* Pagination */}
       {totalPages > 1 && (
