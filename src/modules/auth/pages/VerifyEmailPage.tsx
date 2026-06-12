@@ -4,91 +4,68 @@ import type { RootState } from "@/redux/store";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
-import { ThemeToggleButton } from "@/components/custom/ThemeToggleButton";
 import FullPageLoader from "@/components/custom/FullPageLoader";
 import SuccessMessage from "@/components/custom/SuccessMessage";
 import { verifyEmail } from "@/modules/auth/api";
 import { dispatchShowToast } from "@/lib/dispatch";
+import AuthBackground from "@/modules/auth/components/AuthBackground";
+import AuthHeader from "@/modules/auth/components/AuthHeader";
+import { ShieldAlert } from "lucide-react";
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
 
-  const { theme } = useSelector((state: RootState) => ({
-    theme: state.theme.current,
-  }));
-
+  const { theme } = useSelector((state: RootState) => ({ theme: state.theme.current }));
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     const verify = async () => {
       if (!token) {
-        dispatchShowToast({
-          type: "danger",
-          message: "Invalid verification link",
-        });
+        dispatchShowToast({ type: "danger", message: "Invalid verification link" });
         setLoading(false);
         return;
       }
-
       try {
         const res = await verifyEmail(token);
         setSuccess(true);
-
-        dispatchShowToast({
-          type: "success",
-          message: res.data || "Email verified successfully",
-        });
-
+        dispatchShowToast({ type: "success", message: res.data || "Email verified successfully" });
         setTimeout(() => navigate("/login"), 5000);
       } catch (err: any) {
-        dispatchShowToast({
-          type: "danger",
-          message: err.response?.data || "Verification failed",
-        });
+        dispatchShowToast({ type: "danger", message: err.response?.data || "Verification failed" });
       } finally {
         setLoading(false);
       }
     };
-
     verify();
   }, [token, navigate]);
 
-  if (loading) {
-    return <FullPageLoader message="Verifying Email..." type="bars" />;
-  }
+  if (loading) return <FullPageLoader message="Verifying Email..." type="bars" />;
 
   return (
-    <div
-        className={`fixed inset-0 flex items-center justify-center
-                    bg-no-repeat bg-cover bg-center
-                    transition-colors duration-500
-                    ${
-                        theme === "light"
-                        ? "bg-[url('/login-bg.jpg')]"
-                        : "bg-[url('/login-bg-dark.jpg')]"
-                    }`}
-    >
-      <motion.div
-        className="absolute top-4 right-10 z-20 flex items-center gap-3"
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 0.6 }}
-      >
-        <LanguageSwitcher />
-        <ThemeToggleButton />
-      </motion.div>
+    <AuthBackground theme={theme}>
+      <AuthHeader />
 
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.2 }}
-        className="relative z-10"
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+        className="w-full max-w-sm"
       >
-        <Card className="min-w-[340px] md:min-w-96 shadow-xl backdrop-blur-lg bg-white/90 dark:bg-gray-800/80 border border-white/40 dark:border-gray-700/40 rounded-2xl overflow-hidden transition-colors duration-500">
+        <Card
+          className="shadow-2xl border-0 rounded-2xl overflow-hidden"
+          style={{
+            background: theme === 'dark' ? 'rgba(12, 18, 40, 0.82)' : 'rgba(255, 255, 255, 0.88)',
+            backdropFilter: 'blur(24px) saturate(1.4)',
+            boxShadow: theme === 'dark'
+              ? '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(100,140,255,0.12)'
+              : '0 8px 40px rgba(10,30,80,0.18), 0 0 0 1px rgba(255,255,255,0.7)',
+          }}
+        >
+          <div className="h-0.5 w-full" style={{ background: 'linear-gradient(to right, rgba(100,120,255,0.6), rgba(180,100,255,0.4), rgba(100,120,255,0.6))' }} />
+
           <CardContent className="p-8 text-center">
             {success ? (
               <SuccessMessage
@@ -96,16 +73,29 @@ export default function VerifyEmailPage() {
                 message="Your email has been verified. Redirecting to Login..."
               />
             ) : (
-              <div>
-                <h2 className="text-xl font-semibold text-red-600">
+              <div className="flex flex-col items-center gap-4">
+                <div
+                  className="p-3 rounded-2xl"
+                  style={{
+                    background: 'rgba(220,40,40,0.1)',
+                    border: '1px solid rgba(220,80,80,0.25)',
+                  }}
+                >
+                  <ShieldAlert className="w-12 h-12 text-red-500" />
+                </div>
+                <h2
+                  className="text-xl font-bold"
+                  style={{ color: theme === 'dark' ? '#fca5a5' : '#b91c1c', letterSpacing: '-0.01em' }}
+                >
                   Email Verification Failed
                 </h2>
-                <p className="mt-3 text-gray-600 dark:text-gray-300">
-                  The verification link is invalid or expired.
+                <p style={{ color: theme === 'dark' ? 'rgba(160,180,220,0.7)' : 'rgba(80,80,120,0.7)' }} className="text-sm">
+                  The verification link is invalid or has expired.
                 </p>
                 <button
                   onClick={() => navigate("/login")}
-                  className="mt-5 text-blue-600 hover:underline"
+                  className="text-sm font-medium transition-colors mt-1"
+                  style={{ color: theme === 'dark' ? '#a0b0f0' : '#4060c0' }}
                 >
                   Go to Login
                 </button>
@@ -114,6 +104,6 @@ export default function VerifyEmailPage() {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
+    </AuthBackground>
   );
 }

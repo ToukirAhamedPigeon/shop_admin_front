@@ -9,16 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PasswordInput } from "@/components/custom/FormInputs";
 import { motion } from "framer-motion";
-import LanguageSwitcher from "@/components/custom/LanguageSwitcher";
-import { ThemeToggleButton } from "@/components/custom/ThemeToggleButton";
 import api from "@/lib/axios";
 import { ResetPasswordApi } from "@/routes/api";
 import { useTranslations } from "@/hooks/useTranslations";
 import FullPageLoader from "@/components/custom/FullPageLoader";
 import SuccessMessage from "@/components/custom/SuccessMessage";
 import { dispatchShowToast } from "@/lib/dispatch";
+import AuthBackground from "@/modules/auth/components/AuthBackground";
+import AuthHeader from "@/modules/auth/components/AuthHeader";
+import { KeyRound, ArrowLeft } from "lucide-react";
 
-// ---------------- ZOD SCHEMA ----------------
 const resetPasswordSchema = z
   .object({
     password: z.string().min(6, "Password too short"),
@@ -33,41 +33,25 @@ type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
-  const { theme } = useSelector((state: RootState) => ({
-    theme: state.theme.current,
-  }));
+  const { theme } = useSelector((state: RootState) => ({ theme: state.theme.current }));
   const { token } = useParams<{ token: string }>();
   const { t } = useTranslations();
-
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ResetPasswordForm>({
+  const { register, handleSubmit, formState: { errors } } = useForm<ResetPasswordForm>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
   const onSubmit = async (data: ResetPasswordForm) => {
     setLoading(true);
-
     try {
-      await api.post(ResetPasswordApi.url, {
-        token,
-        password: data.password, // Only send password!
-      });
-
+      await api.post(ResetPasswordApi.url, { token, password: data.password });
       setSuccess(true);
       dispatchShowToast({ type: "success", message: "Password reset successfully." });
-
       setTimeout(() => navigate("/login"), 5000);
     } catch (err: any) {
-      dispatchShowToast({
-          type: "danger",
-          message: err.response?.data?.message || "Failed to reset password",
-        });
+      dispatchShowToast({ type: "danger", message: err.response?.data?.message || "Failed to reset password" });
     } finally {
       setLoading(false);
     }
@@ -75,111 +59,113 @@ export default function ResetPasswordPage() {
 
   return (
     <>
-      {loading && (
-        <FullPageLoader message="Resetting Password..." type="bars" />
-      )}
-      <div
-        className="fixed inset-0 flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat transition-colors duration-500
-                 bg-white dark:bg-gray-900"
-        style={{
-          backgroundImage:
-            theme === "light"
-              ? "url('/login-bg.jpg')"
-              : "url('/login-bg-dark.jpg')",
-        }}
-      >
-        {/* Language & Theme */}
+      {loading && <FullPageLoader message="Resetting Password..." type="bars" />}
+      <AuthBackground theme={theme}>
+        <AuthHeader />
+
         <motion.div
-          className="absolute top-4 right-10 z-20 flex items-center gap-3"
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.6 }}
+          initial={{ opacity: 0, y: 24, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+          className="w-full max-w-sm"
         >
-          <LanguageSwitcher />
-          <ThemeToggleButton />
-        </motion.div>
+          <Card
+            className="shadow-2xl border-0 rounded-2xl overflow-hidden"
+            style={{
+              background: theme === 'dark' ? 'rgba(12, 18, 40, 0.82)' : 'rgba(255, 255, 255, 0.88)',
+              backdropFilter: 'blur(24px) saturate(1.4)',
+              boxShadow: theme === 'dark'
+                ? '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(100,140,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06)'
+                : '0 8px 40px rgba(10,30,80,0.18), 0 0 0 1px rgba(255,255,255,0.7)',
+            }}
+          >
+            <div className="h-0.5 w-full" style={{ background: 'linear-gradient(to right, rgba(100,120,255,0.6), rgba(180,100,255,0.4), rgba(100,120,255,0.6))' }} />
 
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#141e30]/90 to-[#243b55]/90 dark:from-[#0f1a2a]/90 dark:to-[#1b2a3f]/90 z-0" />
-
-        {/* Blurred blobs */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute w-[600px] h-[600px] bg-yellow-500 rounded-full blur-[160px] opacity-30 top-[-150px] left-[-100px] dark:bg-yellow-400/30" />
-          <div className="absolute w-[400px] h-[400px] bg-red-400 rounded-full blur-[120px] opacity-20 bottom-[-120px] right-[-80px] dark:bg-red-500/20" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_0%,transparent_70%)] dark:bg-[radial-gradient(circle,rgba(255,255,255,0.02)_0%,transparent_80%)]" />
-        </div>
-
-        {/* Card */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, ease: "easeOut", delay: 0.3 }}
-          className="relative z-10"
-        >
-          <Card className="min-w-[340px] md:min-w-96 shadow-xl backdrop-blur-lg bg-white/90 dark:bg-gray-800/80 border border-white/40 dark:border-gray-700/40 rounded-2xl overflow-hidden transition-colors duration-500">
-          {success ? (
-            <SuccessMessage
-              title="Password Reset Successfully"
-              message="Your password has been updated. Redirecting to Login page..."
-            />
-          ) : (
-            <CardContent className="p-8">
-              <div className="flex flex-col items-center mb-6">
-                <img src="/logo.png" alt="App Logo" className="mb-2 w-14 h-14" />
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-wide">
-                  {t("common.resetPassword", "Reset Password")}
-                </h1>
-              </div>
-
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                {/* PASSWORD */}
-                <PasswordInput
-                  id="password"
-                  label="password"
-                  labelFallback="New Password"
-                  isHidden={true}
-                  inputClassName="bg-white dark:bg-gray-700 text-black dark:text-white"
-                  placeholderFallback="Enter new password"
-                  {...register("password")}
-                  error={errors.password?.message}
-                />
-
-                {/* CONFIRM PASSWORD */}
-                <PasswordInput
-                  id="confirmPassword"
-                  label="confirm password"
-                  labelFallback="Confirm Password"
-                  isHidden={true}
-                  inputClassName="bg-white dark:bg-gray-700 text-black dark:text-white"
-                  placeholderFallback="Re-enter password"
-                  {...register("confirmPassword")}
-                  error={errors.confirmPassword?.message}
-                />
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-700 dark:hover:bg-gray-200 text-white dark:text-black transition duration-200"
+            {success ? (
+              <SuccessMessage
+                title="Password Reset Successfully"
+                message="Your password has been updated. Redirecting to Login page..."
+              />
+            ) : (
+              <CardContent className="p-8">
+                <motion.div
+                  className="flex flex-col items-center mb-7"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
                 >
-                  {loading ? "Resetting Password..." : "Reset Password"}
-                </Button>
+                  <div
+                    className="mb-3 p-3 rounded-2xl"
+                    style={{
+                      background: theme === 'dark' ? 'rgba(100,130,255,0.12)' : 'rgba(60,100,220,0.08)',
+                      border: '1px solid rgba(100,140,255,0.2)',
+                    }}
+                  >
+                    <KeyRound className="w-10 h-10" style={{ color: theme === 'dark' ? '#8090e0' : '#5060c0' }} />
+                  </div>
+                  <h1
+                    className="text-2xl font-bold tracking-tight"
+                    style={{ color: theme === 'dark' ? '#e8eeff' : '#1a2a50', letterSpacing: '-0.02em' }}
+                  >
+                    {t("common.resetPassword", "Reset Password")}
+                  </h1>
+                  <p className="text-sm mt-1" style={{ color: theme === 'dark' ? 'rgba(160,180,220,0.7)' : 'rgba(60,80,140,0.6)' }}>
+                    Enter your new password below
+                  </p>
+                </motion.div>
 
-                {/* Back to Login */}
-                <div className="text-center mt-2">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <PasswordInput
+                    id="password"
+                    label="password"
+                    labelFallback="New Password"
+                    isHidden={true}
+                    inputClassName="h-10 rounded-xl text-sm"
+                    placeholderFallback="Enter new password"
+                    {...register("password")}
+                    error={errors.password?.message}
+                  />
+
+                  <PasswordInput
+                    id="confirmPassword"
+                    label="confirm password"
+                    labelFallback="Confirm Password"
+                    isHidden={true}
+                    inputClassName="h-10 rounded-xl text-sm"
+                    placeholderFallback="Re-enter password"
+                    {...register("confirmPassword")}
+                    error={errors.confirmPassword?.message}
+                  />
+
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-10 rounded-xl font-semibold text-sm transition-all duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, #4060e0 0%, #7040c8 100%)',
+                      boxShadow: '0 4px 16px rgba(80,80,220,0.35)',
+                      border: 'none',
+                      color: '#fff',
+                    }}
+                  >
+                    {loading ? "Resetting..." : "Reset Password"}
+                  </Button>
+
                   <button
                     type="button"
                     onClick={() => navigate("/login")}
-                    className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+                    className="w-full flex items-center justify-center gap-1.5 text-sm mt-1 transition-colors"
+                    style={{ color: theme === 'dark' ? 'rgba(140,160,220,0.8)' : 'rgba(60,90,180,0.8)' }}
                   >
-                    {t("common.backToLogin", "Go Back to Login")}
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    {t("common.backToLogin", "Back to Login")}
                   </button>
-                </div>
-              </form>
-            </CardContent>
-          )}
+                </form>
+              </CardContent>
+            )}
           </Card>
         </motion.div>
-      </div>
+      </AuthBackground>
     </>
   );
 }
