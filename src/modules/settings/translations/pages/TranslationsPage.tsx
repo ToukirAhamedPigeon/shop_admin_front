@@ -1,9 +1,16 @@
+// src/modules/settings/translations/pages/TranslationsPage.tsx
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb'
 import Translations from '../components/Translations'
+import { motion } from 'framer-motion'
 
 export default function TranslationsPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col gap-4"
+    >
       <Breadcrumb
         title="common.translations.title"
         defaultTitle="Translations"
@@ -24,6 +31,6 @@ export default function TranslationsPage() {
       />
 
       <Translations />
-    </div>
+    </motion.div>
   )
 }

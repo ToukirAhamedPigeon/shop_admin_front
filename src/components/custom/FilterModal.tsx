@@ -1,3 +1,4 @@
+// src/components/custom/FilterModal.tsx - Enhanced version
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
@@ -9,7 +10,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { useTranslations } from '@/hooks/useTranslations';
+import { useTranslations } from '@/hooks/useTranslations'
+import { Filter, RotateCcw, X } from 'lucide-react'
 
 interface FilterModalProps<T> {
   tableId: string
@@ -56,8 +58,6 @@ export function FilterModal<T>({
     }
   }, [open, initialFilters])
 
-  
-
   const isFilterApplied = () =>
     JSON.stringify(filterValues) !== JSON.stringify(initialFilters)
 
@@ -67,40 +67,62 @@ export function FilterModal<T>({
     onClose()
   }
 
-  // 🔹 Updated Reset: call form's handleReset if exists
   const handleReset = () => {
-    // 🔹 Reset the form first
     resetRef.current?.()
-
-    // 🔹 Reset modal-level state
     setFilterValues(initialFilters)
-
-    // 🔹 Clear persisted filters
     localStorage.removeItem(LOCAL_KEY)
   }
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent
-        className="min-w-[95%] max-h-[80%] sm:min-w-[60%] shadow-[0_0_10px_rgba(0,0,0,0.25)] sm:shadow-[-10px_0_20px_-10px_rgba(0,0,0,0.25)] bg-gradient-to-br from-white via-gray-100 to-white dark:bg-[#1b2a3f] dark:from-[#1b2a3f] dark:via-[#2a405a] dark:to-[#385470]"
-      >
-        <DialogHeader>
-          <DialogTitle>{t(title)}</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-2xl overflow-hidden rounded-2xl p-0 shadow-2xl border-0">
+        <div className="relative bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+          {/* Decorative top border */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500" />
 
-        <div className="py-4 px-2 overflow-y-auto dark:text-white">{renderForm(filterValues, setFilterValues, resetRef)}</div>
+          <div className="p-6">
+            <DialogHeader className="mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10">
+                  <Filter className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <DialogTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                  {t(title)}
+                </DialogTitle>
+              </div>
+            </DialogHeader>
 
-        <DialogFooter className="flex flex-row justify-center sm:justify-end gap-2 dark:text-white">
-          <Button variant="outline" onClick={handleReset}>
-            {t('Reset')}
-          </Button>
-          <Button onClick={handleApply}>
-            {t('Apply Filters')}
-          </Button>
-          <Button variant="destructive" onClick={onClose}>
-            {t('Close')}
-          </Button>
-        </DialogFooter>
+            <div className="py-4 max-h-[60vh] overflow-y-auto">
+              {renderForm(filterValues, setFilterValues, resetRef)}
+            </div>
+
+            <DialogFooter className="flex flex-row justify-end gap-3 mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                className="gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {t('Reset')}
+              </Button>
+              <Button
+                onClick={handleApply}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                {t('Apply Filters')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={onClose}
+                className="gap-2"
+              >
+                <X className="w-4 h-4" />
+                {t('Close')}
+              </Button>
+            </DialogFooter>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

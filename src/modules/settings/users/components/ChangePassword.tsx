@@ -1,3 +1,4 @@
+// src/modules/profile/ChangePassword.tsx
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,6 +10,7 @@ import { dispatchShowToast } from "@/lib/dispatch"
 import { Button } from "@/components/ui/button"
 import { PasswordInput } from "@/components/custom/FormInputs"
 import { useTranslations } from "@/hooks/useTranslations"
+import { Key, Shield, Mail, CheckCircle, ArrowLeft, Loader2 } from "lucide-react"
 
 // Schema for password change request
 export const changePasswordSchema = z.object({
@@ -36,13 +38,13 @@ export const changePasswordSchema = z.object({
 
 export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>
 
-
 export default function ChangePassword() {
   const { t } = useTranslations()
   const [submitLoading, setSubmitLoading] = useState(false)
   const [step, setStep] = useState<'form' | 'verification'>('form')
   const userId = useAppSelector((state) => state.auth.user?.id)
   const userEmail = useAppSelector((state) => state.auth.user?.email)
+  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   const {
     register,
@@ -58,7 +60,6 @@ export default function ChangePassword() {
     }
   })
 
-  // Step 1: Request password change (send verification email)
   const onSubmit = async (data: ChangePasswordFormValues) => {
     setSubmitLoading(true)
     try {
@@ -84,7 +85,6 @@ export default function ChangePassword() {
     }
   }
 
-  // Step 2: Handle verification from email link
   const handleVerifyToken = async (token: string) => {
     setSubmitLoading(true)
     try {
@@ -94,7 +94,6 @@ export default function ChangePassword() {
         type: "success", 
         message: t("Password changed successfully") 
       })
-      
     } catch (err: any) {
       dispatchShowToast({
         type: "danger",
@@ -105,53 +104,98 @@ export default function ChangePassword() {
     }
   }
 
-  // If this is the verification page (accessed via email link)
-  // You'll need to extract token from URL in the parent component
   if (step === 'verification') {
     return (
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="p-6 space-y-4 max-w-md mx-auto"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-md mx-auto"
       >
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
-            <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </div>
+        <div
+          className="relative rounded-2xl backdrop-blur-xl transition-all duration-300 p-6"
+          style={{
+            background: isDarkMode
+              ? 'rgba(17, 24, 39, 0.4)'
+              : 'rgba(255, 255, 255, 0.55)',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
+            boxShadow: isDarkMode
+              ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
+              : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
+          }}
+        >
+          {/* Animated gradient border overlay */}
+          <div
+            className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
+            style={{
+              background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
+            }}
+          />
           
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
-            {t("Check Your Email")}
-          </h3>
-          
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-            {t("We've sent a verification link to")}
-          </p>
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-6">
-            {userEmail}
-          </p>
-          
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-left">
-            <p className="text-xs text-blue-800 dark:text-blue-200 mb-2">
-              <strong>{t("Next steps:")}</strong>
-            </p>
-            <ol className="text-xs text-blue-700 dark:text-blue-300 list-decimal pl-4 space-y-1">
-              <li>{t("Click the link in the email we sent you")}</li>
-              <li>{t("Your password will be changed immediately")}</li>
-              <li>{t("You can continue using the app with your new password")}</li>
-            </ol>
-          </div>
-          
-          <p className="text-xs text-slate-500 mt-6">
-            {t("Didn't receive the email?")}{" "}
-            <button
-              onClick={() => setStep('form')}
-              className="text-blue-600 hover:underline font-medium"
+          {/* Colored accent line at top */}
+          <div
+            className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#14b8a6' : '#14b8a6'}, ${isDarkMode ? '#0d9488' : '#0d9488'}, transparent)`,
+            }}
+          />
+
+          <div className="relative z-10 text-center space-y-6">
+            {/* Success Icon */}
+            <div className="flex justify-center">
+              <div className="p-3 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20">
+                <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent mb-2">
+                {t("Check Your Email")}
+              </h3>
+              
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                {t("We've sent a verification link to")}
+              </p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 bg-gray-100/50 dark:bg-gray-800/50 inline-block px-3 py-1 rounded-lg">
+                {userEmail}
+              </p>
+            </div>
+            
+            {/* Next Steps Card */}
+            <div
+              className="p-4 rounded-xl text-left backdrop-blur-sm"
+              style={{
+                background: isDarkMode
+                  ? 'rgba(0, 0, 0, 0.2)'
+                  : 'rgba(255, 255, 255, 0.4)',
+                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.5)'}`,
+              }}
             >
-              {t("Try again")}
-            </button>
-          </p>
+              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-2">
+                <Mail className="w-3 h-3" />
+                {t("Next steps:")}
+              </p>
+              <ol className="text-xs text-gray-700 dark:text-gray-300 list-decimal pl-4 space-y-2">
+                <li>{t("Click the verification link in the email we sent you")}</li>
+                <li>{t("Your password will be changed immediately")}</li>
+                <li>{t("You can continue using the app with your new password")}</li>
+              </ol>
+            </div>
+            
+            {/* Try Again Link */}
+            <div className="pt-2">
+              <p className="text-xs text-gray-500">
+                {t("Didn't receive the email?")}{" "}
+                <button
+                  onClick={() => setStep('form')}
+                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline inline-flex items-center gap-1 transition-colors"
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  {t("Try again")}
+                </button>
+              </p>
+            </div>
+          </div>
         </div>
       </motion.div>
     )
@@ -159,83 +203,142 @@ export default function ChangePassword() {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
       className="max-w-md mx-auto"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
-        <div className="text-center mb-6">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/20 mb-4">
-            <svg className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-            {t("Change Password")}
-          </h2>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
-            {t("A verification email will be sent to confirm this change")}
-          </span>
-        </div>
-
-        <PasswordInput
-          id="current_password"
-          label={t("Current Password")}
-          placeholder={t("Enter current password")}
-          isRequiredStar={true}
-          isHidden={true}
-          {...register('current_password')}
-          error={errors.current_password?.message}
+      <div
+        className="relative rounded-2xl backdrop-blur-xl transition-all duration-300 p-6"
+        style={{
+          background: isDarkMode
+            ? 'rgba(17, 24, 39, 0.4)'
+            : 'rgba(255, 255, 255, 0.55)',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
+          boxShadow: isDarkMode
+            ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
+            : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
+        }}
+      >
+        {/* Animated gradient border overlay */}
+        <div
+          className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
+          }}
+        />
+        
+        {/* Colored accent line at top - Amber/Orange theme */}
+        <div
+          className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#f59e0b' : '#f97316'}, ${isDarkMode ? '#d97706' : '#ea580c'}, transparent)`,
+          }}
         />
 
-        <PasswordInput
-          id="new_password"
-          label={t("New Password")}
-          placeholder={t("Enter new password")}
-          isRequiredStar={true}
-          isHidden={true}
-          {...register('new_password')}
-          error={errors.new_password?.message}
-          helperText={t("Password must contain uppercase, lowercase, number and special character")}
-        />
+        <div className="relative z-10">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Header Section */}
+            <div className="text-center space-y-3 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
+              <div className="flex justify-center">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10">
+                  <Key className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+                </div>
+              </div>
+              
+              <div>
+                <h2 className="text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+                  {t("Change Password")}
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {t("A verification email will be sent to confirm this change")}
+                </p>
+              </div>
+            </div>
 
-        <PasswordInput
-          id="confirm_new_password"
-          label={t("Confirm New Password")}
-          placeholder={t("Confirm new password")}
-          isRequiredStar={true}
-          isHidden={true}
-          {...register('confirm_new_password')}
-          error={errors.confirm_new_password?.message}
-          helperText={t("Passwords must match")}
-        />
+            {/* Password Fields */}
+            <div className="space-y-4">
+              <PasswordInput
+                id="current_password"
+                label={t("Current Password")}
+                placeholder={t("Enter your current password")}
+                isRequiredStar={true}
+                isHidden={true}
+                {...register('current_password')}
+                error={errors.current_password?.message}
+              />
 
-        <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg mt-4">
-          <p className="text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2">
-            <span className="font-bold">⚠️</span>
-            <span>{t("For security, you'll need to verify this change via email. Your password won't be changed until you click the verification link.")}</span>
-          </p>
+              <div className="relative">
+                <PasswordInput
+                  id="new_password"
+                  label={t("New Password")}
+                  placeholder={t("Enter new password")}
+                  isRequiredStar={true}
+                  isHidden={true}
+                  {...register('new_password')}
+                  error={errors.new_password?.message}
+                  helperText={t("Password must contain uppercase, lowercase, number and special character")}
+                />
+              </div>
+
+              <PasswordInput
+                id="confirm_new_password"
+                label={t("Confirm New Password")}
+                placeholder={t("Confirm your new password")}
+                isRequiredStar={true}
+                isHidden={true}
+                {...register('confirm_new_password')}
+                error={errors.confirm_new_password?.message}
+                helperText={t("Passwords must match")}
+              />
+            </div>
+
+            {/* Security Note */}
+            <div
+              className="p-4 rounded-xl backdrop-blur-sm"
+              style={{
+                background: isDarkMode
+                  ? 'rgba(0, 0, 0, 0.2)'
+                  : 'rgba(255, 255, 255, 0.4)',
+                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.5)'}`,
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                    {t("Security Notice")}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {t("For security, you'll need to verify this change via email. Your password won't be changed until you click the verification link.")}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+              <Button 
+                type="submit" 
+                className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 w-full sm:w-auto"
+                disabled={submitLoading}
+              >
+                {submitLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {t("Sending...")}
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    {t("Send Verification Email")}
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
         </div>
-
-        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 border-t border-gray-300 pt-4">
-          <Button 
-            type="submit" 
-            className="bg-amber-600 text-white hover:bg-amber-700 w-full sm:w-auto" 
-            disabled={submitLoading}
-          >
-            {submitLoading ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                {t("Sending...")}
-              </span>
-            ) : t("Send Verification")}
-          </Button>
-        </div>
-      </form>
+      </div>
     </motion.div>
   )
 }

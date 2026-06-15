@@ -1,3 +1,4 @@
+// src/components/custom/ConfirmDialog.tsx
 'use client'
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -13,8 +14,10 @@ import {
   RotateCcw, 
   ShieldAlert,
   FileWarning,
-  Archive
+  Archive,
+  X
 } from 'lucide-react';
+import { useAppSelector } from '@/hooks/useRedux';
 
 interface ConfirmDialogProps {
   open: boolean
@@ -60,8 +63,8 @@ const ConfirmDialog = ({
   cancelButtonClassName = ''
 }: ConfirmDialogProps) => {
   const { t } = useTranslations();
+  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
-  // Get icon based on variant
   const getDefaultIcon = () => {
     switch (variant) {
       case 'destructive':
@@ -77,73 +80,61 @@ const ConfirmDialog = ({
     }
   };
 
-  // Get variant styles
   const getVariantStyles = () => {
     switch (variant) {
       case 'destructive':
         return {
-          iconBg: 'bg-red-100 dark:bg-red-900/30',
+          iconBg: 'bg-gradient-to-br from-red-500/20 to-rose-500/20',
           iconColor: 'text-red-600 dark:text-red-400',
           titleColor: 'text-red-600 dark:text-red-400',
-          borderTop: 'border-t-red-500',
-          gradient: 'from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10'
+          gradient: 'from-red-500/10 via-rose-500/5 to-red-500/10',
+          buttonGradient: 'from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700',
+          borderGlow: 'rgba(239, 68, 68, 0.5)'
         };
       case 'success':
         return {
-          iconBg: 'bg-green-100 dark:bg-green-900/30',
+          iconBg: 'bg-gradient-to-br from-green-500/20 to-emerald-500/20',
           iconColor: 'text-green-600 dark:text-green-400',
           titleColor: 'text-green-600 dark:text-green-400',
-          borderTop: 'border-t-green-500',
-          gradient: 'from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10'
+          gradient: 'from-green-500/10 via-emerald-500/5 to-green-500/10',
+          buttonGradient: 'from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700',
+          borderGlow: 'rgba(34, 197, 94, 0.5)'
         };
       case 'warning':
         return {
-          iconBg: 'bg-yellow-100 dark:bg-yellow-900/30',
+          iconBg: 'bg-gradient-to-br from-yellow-500/20 to-amber-500/20',
           iconColor: 'text-yellow-600 dark:text-yellow-400',
           titleColor: 'text-yellow-600 dark:text-yellow-400',
-          borderTop: 'border-t-yellow-500',
-          gradient: 'from-yellow-50 to-yellow-100/50 dark:from-yellow-950/20 dark:to-yellow-900/10'
+          gradient: 'from-yellow-500/10 via-amber-500/5 to-yellow-500/10',
+          buttonGradient: 'from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700',
+          borderGlow: 'rgba(234, 179, 8, 0.5)'
         };
       case 'info':
         return {
-          iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+          iconBg: 'bg-gradient-to-br from-blue-500/20 to-indigo-500/20',
           iconColor: 'text-blue-600 dark:text-blue-400',
           titleColor: 'text-blue-600 dark:text-blue-400',
-          borderTop: 'border-t-blue-500',
-          gradient: 'from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10'
+          gradient: 'from-blue-500/10 via-indigo-500/5 to-blue-500/10',
+          buttonGradient: 'from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700',
+          borderGlow: 'rgba(59, 130, 246, 0.5)'
         };
       default:
         return {
-          iconBg: 'bg-gray-100 dark:bg-gray-800',
+          iconBg: 'bg-gradient-to-br from-gray-500/20 to-gray-600/20',
           iconColor: 'text-gray-600 dark:text-gray-400',
           titleColor: 'text-gray-900 dark:text-gray-100',
-          borderTop: 'border-t-gray-500',
-          gradient: 'from-gray-50 to-gray-100/50 dark:from-gray-950/20 dark:to-gray-900/10'
+          gradient: 'from-gray-500/10 via-gray-600/5 to-gray-500/10',
+          buttonGradient: 'from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800',
+          borderGlow: 'rgba(107, 114, 128, 0.5)'
         };
     }
   };
 
   const variantStyles = getVariantStyles();
 
-  // Button variants
-  const getConfirmButtonVariant = () => {
-    if (variant === 'success') return 'bg-green-600 hover:bg-green-700 text-white';
-    if (variant === 'warning') return 'bg-yellow-600 hover:bg-yellow-700 text-white';
-    if (variant === 'info') return 'bg-blue-600 hover:bg-blue-700 text-white';
-    return 'bg-red-600 hover:bg-red-700 text-white';
-  };
-
-  const getPermanentDeleteButtonVariant = () => {
-    return permanentDeleteVariant === 'warning' 
-      ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
-      : 'bg-red-700 hover:bg-red-800 text-white';
-  };
-
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-      <DialogContent 
-        className="max-w-md overflow-hidden p-0 rounded-2xl shadow-2xl border-0 [&>button]:hidden"
-      >
+      <DialogContent className="max-w-md overflow-hidden p-0 rounded-2xl shadow-2xl border-0 [&>button]:hidden">
         <AnimatePresence>
           {open && (
             <motion.div
@@ -151,20 +142,34 @@ const ConfirmDialog = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className={`relative bg-gradient-to-br ${variantStyles.gradient}`}
+              className={`relative backdrop-blur-xl rounded-2xl overflow-hidden`}
+              style={{
+                background: isDarkMode
+                  ? 'rgba(17, 24, 39, 0.95)'
+                  : 'rgba(255, 255, 255, 0.95)',
+                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
+              }}
             >
+              {/* Animated gradient border */}
+              <div
+                className="absolute inset-0 opacity-30"
+                style={{
+                  background: `radial-gradient(circle at 50% 0%, ${variantStyles.borderGlow}, transparent 70%)`,
+                }}
+              />
+              
               {/* Decorative top border */}
-              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${variantStyles.borderTop} opacity-60`} />
+              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-${variant === 'destructive' ? 'red' : variant === 'success' ? 'green' : variant === 'warning' ? 'yellow' : 'blue'}-500 to-transparent`} />
 
-              <div className="p-6">
+              <div className="p-6 relative z-10">
                 <DialogHeader className="space-y-4">
                   <div className="flex items-start gap-4">
-                    {/* Icon */}
+                    {/* Animated Icon */}
                     <motion.div
                       initial={{ scale: 0, rotate: -180 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ duration: 0.3, type: "spring", stiffness: 260, damping: 20 }}
-                      className={`flex-shrink-0 w-12 h-12 rounded-full ${variantStyles.iconBg} flex items-center justify-center`}
+                      className={`flex-shrink-0 w-14 h-14 rounded-2xl ${variantStyles.iconBg} backdrop-blur-sm flex items-center justify-center shadow-lg`}
                     >
                       {icon || (
                         <div className={variantStyles.iconColor}>
@@ -175,10 +180,18 @@ const ConfirmDialog = ({
 
                     {/* Title */}
                     <div className="flex-1">
-                      <DialogTitle className={`text-xl font-bold ${variantStyles.titleColor} mb-2`}>
+                      <DialogTitle className={`text-2xl font-bold ${variantStyles.titleColor} mb-2`}>
                         {t(title)}
                       </DialogTitle>
                     </div>
+
+                    {/* Close button */}
+                    <button
+                      onClick={onCancel}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
                 </DialogHeader>
 
@@ -196,7 +209,7 @@ const ConfirmDialog = ({
                 </div>
 
                 {/* Action Buttons */}
-                <DialogFooter className="mt-6 pt-4 flex gap-3 sm:justify-end">
+                <DialogFooter className="mt-8 pt-4 flex gap-3 sm:justify-end">
                   {showCancelButton && (
                     <motion.div
                       initial={{ opacity: 0, x: 20 }}
@@ -207,7 +220,7 @@ const ConfirmDialog = ({
                         variant="outline"
                         onClick={onCancel}
                         disabled={loading}
-                        className={`rounded-full px-6 border-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 ${cancelButtonClassName}`}
+                        className={`rounded-xl px-6 border-2 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-300 hover:scale-105 ${cancelButtonClassName}`}
                       >
                         {t(cancelLabel)}
                       </Button>
@@ -223,7 +236,7 @@ const ConfirmDialog = ({
                       <Button
                         onClick={onPermanentDelete}
                         disabled={loading}
-                        className={`rounded-full px-6 shadow-lg hover:shadow-xl transition-all duration-200 ${getPermanentDeleteButtonVariant()} ${confirmButtonClassName}`}
+                        className={`rounded-xl px-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-r ${variantStyles.buttonGradient} text-white ${confirmButtonClassName}`}
                       >
                         {loading ? (
                           <>
@@ -252,7 +265,7 @@ const ConfirmDialog = ({
                       <Button
                         onClick={onConfirm}
                         disabled={loading}
-                        className={`rounded-full px-6 shadow-lg hover:shadow-xl transition-all duration-200 ${getConfirmButtonVariant()} ${confirmButtonClassName}`}
+                        className={`rounded-xl px-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-r ${variantStyles.buttonGradient} text-white ${confirmButtonClassName}`}
                       >
                         {loading ? (
                           <>

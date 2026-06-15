@@ -25,6 +25,7 @@ import { dispatchShowToast } from '@/lib/dispatch';
 import RichTextEditor from '@/components/custom/RichTextEditor';
 import type { MailTemplate } from '../types';
 import { cn } from '@/lib/utils';
+import GlassCard from '@/components/custom/GlassCard';
 
 const schema = z.object({
   toMail: z.string().min(1, 'Recipient is required').email('Invalid email format'),
@@ -296,10 +297,13 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
 
   return (
     <Dialog open={open} onOpenChange={handleDiscard}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="cursor-default">New Message</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+        <GlassCard variant="primary" padding="lg" className="border-0 shadow-none rounded-2xl">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              New Message
+            </DialogTitle>
+          </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Hidden file input - accepts all file types */}
@@ -492,6 +496,7 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
                 </div>
               )}
         </form>
+         </GlassCard>
       </DialogContent>
     </Dialog>
   );

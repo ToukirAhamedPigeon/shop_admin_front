@@ -1,5 +1,4 @@
 // app/(dashboard)/admin/permissions/Permissions.tsx
-
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import {
   flexRender,
@@ -50,6 +49,7 @@ import { deletePermission, restorePermission, getPermissionDeleteInfo, getPermis
 import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle } from 'lucide-react'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { cn } from '@/lib/utils'
+import { useAppSelector } from '@/hooks/useRedux'
 
 interface DeleteInfoResponse {
   canBePermanent: boolean
@@ -74,19 +74,18 @@ const getSelectColumn = (): ColumnDef<IPermission> => ({
     
     return (
       <div 
-        className="flex justify-center cursor-pointer"
+        className="flex justify-center cursor-pointer group"
         onClick={(e) => {
           e.stopPropagation()
-          // Use the table's built-in method to toggle all rows on the current page
           table.toggleAllPageRowsSelected(!isAllSelected)
         }}
       >
-        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
           isAllSelected
-            ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 dark:from-blue-400 dark:to-indigo-500 dark:border-blue-400'
             : isSomeSelected
               ? 'bg-blue-200 border-blue-400 dark:bg-blue-800 dark:border-blue-600'
-              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
+              : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md'
         }`}>
           {isAllSelected && (
             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -106,16 +105,16 @@ const getSelectColumn = (): ColumnDef<IPermission> => ({
     return (
       <div className="flex justify-center">
         <div 
-          className="cursor-pointer"
+          className="cursor-pointer group"
           onClick={(e) => {
             e.stopPropagation()
             row.toggleSelected(!isSelected)
           }}
         >
-          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
             isSelected
-              ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
-              : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
+              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 dark:from-blue-400 dark:to-indigo-500 dark:border-blue-400'
+              : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md'
           }`}>
             {isSelected && (
               <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -208,11 +207,12 @@ const getDataColumns = ({
   {
     header: 'Name',
     accessorKey: 'name',
-    cell: ({ getValue }) => <span className="font-medium">{getValue() as string}</span>
+    cell: ({ getValue }) => <span className="font-medium text-gray-700 dark:text-gray-300">{getValue() as string}</span>
   },
   {
     header: 'Guard Name',
     accessorKey: 'guardName',
+    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
   },
   {
     header: 'Roles',
@@ -229,13 +229,13 @@ const getDataColumns = ({
   {
     header: 'Active',
     accessorKey: 'isActive',
-    cell: ({ getValue }) => getValue() ? 'Yes' : <span className="text-red-500">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-green-600">Yes</span> : <span className="text-red-500">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
     header: 'Deleted',
     accessorKey: 'isDeleted',
-    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : 'No',
+    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-gray-600 dark:text-gray-400">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
@@ -255,6 +255,7 @@ const getDataColumns = ({
 /* ---------------------------------- */
 export default function Permissions() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '')
+  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   const {
     isModalOpen,
@@ -403,8 +404,6 @@ export default function Permissions() {
     enableTrashView: true,
     minLoadingTime: 1000
   })
-
-  // Debug: Log data when it changes
 
   /* ---------------- Delete Eligibility Check ---------------- */
   const checkDeleteEligibility = useCallback(async (id: string): Promise<boolean> => {
@@ -735,7 +734,6 @@ export default function Permissions() {
     },
     enableRowSelection: true,
     onRowSelectionChange: (updater) => {
-      console.log('=== ON ROW SELECTION CHANGE ===')
       let newSelection: Record<string, boolean>
       
       if (typeof updater === 'function') {
@@ -744,8 +742,6 @@ export default function Permissions() {
         newSelection = updater
       }
       
-      console.log('New selection:', newSelection)
-      
       const filteredSelection = Object.keys(newSelection).reduce((acc, key) => {
         if (isValidId(key) && newSelection[key]) {
           acc[key] = newSelection[key]
@@ -753,14 +749,12 @@ export default function Permissions() {
         return acc
       }, {} as Record<string, boolean>)
       
-      console.log('Filtered selection:', filteredSelection)
       setSelectedRowIds(filteredSelection)
     },
     onSortingChange: (updater) => {
       const newSorting = typeof updater === 'function' ? updater(sorting) : updater
       setSorting(newSorting)
       
-      // Only fetch data if sorting by columns other than 'select'
       const isSelectColumnSort = newSorting.length > 0 && newSorting[0].id === 'select'
       if (!isSelectColumnSort) {
         fetchData()
@@ -833,87 +827,100 @@ export default function Permissions() {
         isFilterActive={isFilterActive}
       />
       
-      {/* TABLE */}
-      <TableWithLoader loading={loading} id="printable-permission-table">
-        {showEmptyState ? (
-          <EmptyState 
-            message={showTrash ? "No deleted permissions found" : "No permissions found"}
-            suggestion={showTrash ? "Deleted permissions will appear here once you move them to trash." : "Try adjusting your search or filter criteria to see more results."}
-          />
-        ) : (
-          <table className="table-auto w-full text-left border border-collapse">
-            <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    const isSortable = header.column.getCanSort()
-                    
-                    return (
-                      <th
-                        key={header.id}
-                        className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-                        onClick={(event) => {
-                          if (isSortable) {
-                            const handler = header.column.getToggleSortingHandler()
-                            if (handler) handler(event)
-                          }
-                        }}
-                        style={{ cursor: isSortable ? 'pointer' : 'default' }}
-                      >
-                        <div className="flex justify-between items-center w-full">
-                          <span className="flex-1 text-center">
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                          </span>
-                          {isSortable && (
-                            <span className="ml-2 relative">
-                              {header.column.getIsSorted() === 'asc' ? (
-                                <FaSortUp size={12} />
-                              ) : header.column.getIsSorted() === 'desc' ? (
-                                <FaSortDown size={12} />
-                              ) : (
-                                <FaSort size={12} />
-                              )}
-                              {header.column.id === 'select' && header.column.getIsSorted() && (
-                                <span className="absolute -top-1 -right-2 text-xs text-blue-500" title="Frontend sorting (no API call)">
-                                  ⚡
-                                </span>
+      {/* TABLE - Glass Design */}
+      <div className="relative rounded-xl overflow-hidden border border-gray-200/30 dark:border-gray-700/30">
+        <TableWithLoader loading={loading} id="printable-permission-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
+          {showEmptyState ? (
+            <EmptyState 
+              message={showTrash ? "No deleted permissions found" : "No permissions found"}
+              suggestion={showTrash ? "Deleted permissions will appear here once you move them to trash." : "Try adjusting your search or filter criteria to see more results."}
+            />
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 z-20">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id} className="border-b border-gray-200/50 dark:border-gray-700/50">
+                    {headerGroup.headers.map((header) => {
+                      const isSortable = header.column.getCanSort()
+                      
+                      return (
+                        <th
+                          key={header.id}
+                          className={`p-4 text-center font-semibold ${header.column.columnDef.meta?.customClassName || ''}`}
+                          style={{
+                            background: isDarkMode
+                              ? 'linear-gradient(135deg, #1e293b, #0f172a)'
+                              : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+                            backdropFilter: 'blur(8px)',
+                            cursor: isSortable ? 'pointer' : 'default'
+                          }}
+                          onClick={(event) => {
+                            if (isSortable) {
+                              const handler = header.column.getToggleSortingHandler()
+                              if (handler) handler(event)
+                            }
+                          }}
+                        >
+                          <div className="flex justify-between items-center w-full gap-2">
+                            <span className="flex-1 text-center text-gray-800 dark:text-gray-200 font-semibold">
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
                               )}
                             </span>
-                          )}
-                        </div>
-                      </th>
-                    )
-                  })}
-                </tr>
-              ))}
-            </thead>
-
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className={cn(
-                  "border-b dark:border-gray-700 transition-colors",
-                  row.getIsSelected() && "bg-blue-200 dark:bg-blue-950/70"
-                )}>
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </TableWithLoader>
+                            {isSortable && (
+                              <span className="relative">
+                                {header.column.getIsSorted() === 'asc' ? (
+                                  <FaSortUp className="text-purple-600 dark:text-purple-400" size={12} />
+                                ) : header.column.getIsSorted() === 'desc' ? (
+                                  <FaSortDown className="text-purple-600 dark:text-purple-400" size={12} />
+                                ) : (
+                                  <FaSort className="text-gray-500 dark:text-gray-500" size={12} />
+                                )}
+                                {header.column.id === 'select' && header.column.getIsSorted() && (
+                                  <span className="absolute -top-1 -right-2 text-xs text-blue-500" title="Frontend sorting (no API call)">
+                                    ⚡
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map((row, index) => (
+                  <tr 
+                    key={row.id} 
+                    className={cn(
+                      "transition-all duration-200",
+                      "border-b border-gray-200/40 dark:border-gray-700/30",
+                      index !== table.getRowModel().rows.length - 1 && "border-b",
+                      row.getIsSelected() && "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 dark:from-blue-500/5 dark:to-indigo-500/5",
+                      !row.getIsSelected() && "hover:bg-white/20 dark:hover:bg-white/5"
+                    )}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        className={`p-4 text-gray-700 dark:text-gray-300 ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </TableWithLoader>
+      </div>
 
       {!showEmptyState && !showErrorState && totalCount > 0 && (
         <TablePaginationFooter
@@ -926,7 +933,7 @@ export default function Permissions() {
         />
       )}
 
-      {/* Permission Detail Modal */}
+      {/* All modals remain the same */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -940,7 +947,6 @@ export default function Permissions() {
         )}
       </Modal>
 
-      {/* Column Manager */}
       {showColumnModal && (
         <ColumnVisibilityManager<IPermission>
           tableId="permissionTable"
@@ -951,7 +957,6 @@ export default function Permissions() {
         />
       )}
 
-      {/* Filter Modal */}
       <FilterModal
         tableId="permissionTable"
         title="Filter Permissions"
@@ -962,7 +967,8 @@ export default function Permissions() {
             if ((key === 'from' || key === 'to') && value === '') {
               acc[key] = null
             } else {
-              acc[key] = value            }
+              acc[key] = value
+            }
             return acc
           }, {} as Record<string, any>)
           
@@ -989,7 +995,6 @@ export default function Permissions() {
         )}
       />
 
-      {/* Add Permission Sheet */}
       {showAddButton && (
         <FormHolderSheet
           open={isSheetOpen}
@@ -1001,7 +1006,6 @@ export default function Permissions() {
         </FormHolderSheet>
       )}
 
-      {/* Soft Delete Confirmation Dialog */}
       <ConfirmDialog
         open={softDeleteDialogOpen}
         onCancel={cancelDelete}
@@ -1024,7 +1028,6 @@ export default function Permissions() {
         </div>
       </ConfirmDialog>
 
-      {/* Permanent Delete Confirmation Dialog */}
       <ConfirmDialog
         open={permanentDeleteDialogOpen}
         onCancel={cancelDelete}
@@ -1042,22 +1045,9 @@ export default function Permissions() {
               Warning: This action cannot be undone!
             </p>
           </div>
-          
           <p className="text-gray-700 dark:text-gray-300">
-            This will permanently delete the permission and all associated data including:
+            This will permanently delete the permission and all associated data.
           </p>
-          
-          <ul className="space-y-2 ml-4">
-            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              Role-permission assignments
-            </li>
-            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              User-permission assignments
-            </li>
-          </ul>
-
           {deleteInfo?.message && deleteInfo.canBePermanent === false && (
             <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
               <p className="text-sm text-gray-600 dark:text-gray-400">{deleteInfo.message}</p>
@@ -1066,7 +1056,6 @@ export default function Permissions() {
         </div>
       </ConfirmDialog>
 
-      {/* Restore Confirmation Dialog */}
       {showRestore && (
         <ConfirmDialog
           open={restoreDialogOpen}
@@ -1083,13 +1072,12 @@ export default function Permissions() {
               Are you sure you want to restore this permission?
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              The permission will be moved back to active permissions with all its role assignments.
+              The permission will be moved back to active permissions.
             </p>
           </div>
         </ConfirmDialog>
       )}
 
-      {/* Error Dialog */}
       <ConfirmDialog
         open={errorDialogOpen}
         onCancel={() => setErrorDialogOpen(false)}
@@ -1107,7 +1095,6 @@ export default function Permissions() {
               {errorDetails?.message || "This permission has existing related records"}
             </p>
           </div>
-          
           <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Please move this permission to trash instead, or manually remove the related records first.
@@ -1116,7 +1103,6 @@ export default function Permissions() {
         </div>
       </ConfirmDialog>
 
-      {/* Edit Permission Sheet */}
       {showEdit && (
         <FormHolderSheet
           open={isEditSheetOpen}
@@ -1134,7 +1120,6 @@ export default function Permissions() {
         </FormHolderSheet>
       )}
 
-      {/* Bulk Delete Confirmation Dialog */}
       <ConfirmDialog
         open={bulkDeleteDialogOpen}
         onCancel={() => setBulkDeleteDialogOpen(false)}
@@ -1155,7 +1140,6 @@ export default function Permissions() {
         </div>
       </ConfirmDialog>
 
-      {/* Bulk Restore Confirmation Dialog */}
       <ConfirmDialog
         open={bulkRestoreDialogOpen}
         onCancel={() => setBulkRestoreDialogOpen(false)}
@@ -1176,7 +1160,6 @@ export default function Permissions() {
         </div>
       </ConfirmDialog>
 
-      {/* Bulk Permanent Delete Confirmation Dialog */}
       <ConfirmDialog
         open={bulkPermanentDeleteDialogOpen}
         onCancel={() => setBulkPermanentDeleteDialogOpen(false)}

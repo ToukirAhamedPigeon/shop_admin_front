@@ -1,8 +1,10 @@
+// src/modules/settings/translations/components/TranslationFilterForm.tsx
 import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { CustomSelect } from '@/components/custom/FormInputs';
 import DateTimeInput from '@/components/custom/FormInputs';
 import { useTranslations } from '@/hooks/useTranslations';
+import { Filter, Calendar, Layers } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'translationFilters';
 
@@ -111,48 +113,69 @@ export default function TranslationFilterForm({
   };
 
   return (
-    <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-      <div className="flex flex-col md:flex-row gap-4">
-        <DateTimeInput
-          id="startDate"
-          label="From Date"
-          model="Translation"
-          name="startDate"
-          value={watch('startDate') ? new Date(watch('startDate')!) : null}
-          setValue={handleDateChange}
-          placeholder={t('Select start date')}
-          showTime={false}
-          showResetButton={true}
-        />
+    <div className="space-y-6">
+      {/* Header */}
+      {/* */}
 
-        <DateTimeInput
-          id="endDate"
-          label="To Date"
-          model="Translation"
-          name="endDate"
-          value={watch('endDate') ? new Date(watch('endDate')!) : null}
-          setValue={handleDateChange}
-          placeholder={t('Select end date')}
-          showTime={false}
-          showResetButton={true}
-        />
-      </div>
+      <div className="space-y-5">
+        {/* Date Range Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('Date Range')}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DateTimeInput
+              id="startDate"
+              label="From Date"
+              model="Translation"
+              name="startDate"
+              value={watch('startDate') ? new Date(watch('startDate')!) : null}
+              setValue={handleDateChange}
+              placeholder={t('Select start date')}
+              showTime={false}
+              showResetButton={true}
+            />
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <CustomSelect<TranslationFilters>
-          id="modules"
-          label="Modules"
-          name="modules"
-          apiUrl="/options/translationModules"
-          optionValueKey="value"
-          optionLabelKeys={['label']}
-          multiple
-          setValue={setValue}
-          model="Translation"
-          value={watch('modules')}
-          placeholder={t('Select Module(s)')}
-        />
+            <DateTimeInput
+              id="endDate"
+              label="To Date"
+              model="Translation"
+              name="endDate"
+              value={watch('endDate') ? new Date(watch('endDate')!) : null}
+              setValue={handleDateChange}
+              placeholder={t('Select end date')}
+              showTime={false}
+              showResetButton={true}
+            />
+          </div>
+        </div>
+
+        {/* Modules Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Layers className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('Modules')}
+            </span>
+          </div>
+          <CustomSelect<TranslationFilters>
+            id="modules"
+            label=""
+            name="modules"
+            apiUrl="/options/translationModules"
+            optionValueKey="value"
+            optionLabelKeys={['label']}
+            multiple
+            setValue={setValue}
+            model="Translation"
+            value={watch('modules')}
+            placeholder={t('Select Module(s)')}
+          />
+        </div>
       </div>
-    </form>
+    </div>
   );
 }

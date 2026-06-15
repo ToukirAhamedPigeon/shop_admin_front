@@ -1,4 +1,6 @@
 // src/modules/mail/components/MailList.tsx
+// Fixed TypeScript error for onSelectAll
+
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { format } from 'date-fns';
 import { 
@@ -6,19 +8,13 @@ import {
   Mail as MailIcon, 
   MailOpen, 
   Trash2, 
-  RotateCcw
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { getMails, bulkMailAction, toggleStar, moveToTrash, markAsRead } from '../api';
@@ -27,6 +23,7 @@ import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import Loader from '@/components/custom/Loader';
 import { capitalize } from '@/lib/helpers';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useAppSelector } from '@/hooks/useRedux';
 
 interface MailListProps {
   mailbox: MailboxType;
@@ -70,10 +67,9 @@ const SearchInputComponent = memo(({
   onChange: (value: string) => void; 
   placeholder: string;
 }) => {
-  // Use local state for immediate input feedback
   const [localValue, setLocalValue] = useState(value);
+  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
-  // Update local value when prop changes (from reset)
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
@@ -85,18 +81,42 @@ const SearchInputComponent = memo(({
   };
   
   return (
-    <Input
-      placeholder={placeholder}
-      value={localValue}
-      onChange={handleChange}
-      className="flex-1"
-    />
+    <div className="relative flex-1 group">
+      <Input
+        placeholder={placeholder}
+        value={localValue}
+        onChange={handleChange}
+        className="w-full pl-10 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-gray-200 dark:border-gray-700 rounded-xl shadow-sm transition-all duration-300 focus:outline-none focus:ring-0 group-focus-within:border-transparent"
+      />
+      {/* Gradient border on focus */}
+      <div className="absolute inset-0 rounded-xl pointer-events-none transition-all duration-300 opacity-0 group-focus-within:opacity-100"
+        style={{
+          background: isDarkMode
+            ? 'linear-gradient(135deg, #818cf8, #c084fc, #f472b6)'
+            : 'linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899)',
+          padding: '2px',
+          borderRadius: '0.75rem',
+          mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          WebkitMaskComposite: 'xor',
+          maskComposite: 'exclude',
+        }}
+      />
+      <svg
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 transition-colors duration-300 group-focus-within:text-purple-500 dark:group-focus-within:text-purple-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </div>
   );
 });
 
 SearchInputComponent.displayName = 'SearchInputComponent';
 
-// Separate component for the email list table to prevent re-renders of the search input
+// Separate component for the email list table
 const EmailTable = memo(({ 
   mails, 
   mailbox, 
@@ -115,84 +135,151 @@ const EmailTable = memo(({
   onMailClick: (mail: Mail) => void;
   onStarClick: (e: React.MouseEvent, mail: Mail) => void;
   onSelectChange: (id: number, checked: boolean | string) => void;
-  onSelectAll: (checked: boolean | string) => void;
+  onSelectAll: (checked: boolean | string) => void;  // Fixed: accepts boolean | string
   loading: boolean;
 }) => {
   const senderColumnHeader = getSenderColumnHeader(mailbox);
+  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
   return (
     <div className="flex-1 overflow-auto relative">
       {loading && mails.length > 0 && (
-        <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 z-10 flex items-center justify-center">
-          <Loader type="circular" size={32} />
+        <div className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-md z-10 flex items-center justify-center">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-2xl">
+            <Loader type="bars" size={32} />
+          </div>
         </div>
       )}
-      <Table>
-        <TableHeader className="sticky top-0 bg-gray-50 dark:bg-gray-700 z-20">
-          <TableRow>
-            <TableHead className="w-10">
-              <Checkbox
-                checked={selectedIds.size === mails.length && mails.length > 0}
-                onCheckedChange={onSelectAll}
-              />
-            </TableHead>
-            <TableHead className="w-10"></TableHead>
-            <TableHead className="w-10"></TableHead>
-            <TableHead>{senderColumnHeader}</TableHead>
-            <TableHead>Subject</TableHead>
-            <TableHead className="w-32">Date</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {mails.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-12 text-gray-500">
-                No messages in {mailbox}
-              </TableCell>
-            </TableRow>
-          ) : (
-            mails.map((mail) => (
-              <TableRow
-                key={mail.id}
-                onClick={() => onMailClick(mail)}
-                className={cn(
-                  "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors",
-                  selectedMail?.id === mail.id && "bg-primary/5",
-                  !mail.isRead && !mail.isSent && "font-semibold bg-blue-50/30 dark:bg-blue-950/20"
-                )}
-              >
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    checked={selectedIds.has(mail.id)}
-                    onCheckedChange={(checked) => onSelectChange(mail.id, checked)}
-                  />
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <button onClick={(e) => onStarClick(e, mail)} className="focus:outline-none cursor-pointer">
-                    <Star className={cn("w-4 h-4 transition-colors", mail.isStarred ? "fill-yellow-400 text-yellow-400" : "text-gray-400 hover:text-yellow-400")} />
-                  </button>
-                </TableCell>
-                <TableCell>
-                  {!mail.isRead && !mail.isSent ? (
-                    <MailOpen className="w-4 h-4 text-blue-500" />
-                  ) : (
-                    <MailIcon className="w-4 h-4 text-gray-400" />
+      
+      <div className="overflow-x-auto rounded-xl">
+        <table className="w-full text-left border-collapse">
+          <thead className="sticky top-0 z-20">
+            <tr className="border-b border-gray-200/50 dark:border-gray-700/50">
+              <th className="p-4 text-center w-10">
+                <div 
+                  className="flex justify-center cursor-pointer group"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Fixed: Pass boolean directly to onSelectAll
+                    onSelectAll(selectedIds.size !== mails.length);
+                  }}
+                >
+                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                    selectedIds.size === mails.length && mails.length > 0
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 dark:from-blue-400 dark:to-indigo-500 dark:border-blue-400'
+                      : selectedIds.size > 0
+                        ? 'bg-blue-200 border-blue-400 dark:bg-blue-800 dark:border-blue-600'
+                        : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md'
+                  }`}>
+                    {selectedIds.size === mails.length && mails.length > 0 && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    {selectedIds.size > 0 && selectedIds.size !== mails.length && (
+                      <div className="w-2 h-0.5 bg-blue-600 dark:bg-blue-400" />
+                    )}
+                  </div>
+                </div>
+              </th>
+              <th className="p-4 text-center w-10"></th>
+              <th className="p-4 text-center w-10"></th>
+              <th className="p-4 font-semibold text-gray-700 dark:text-gray-200" style={{
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, #1e293b, #0f172a)'
+                  : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+                backdropFilter: 'blur(8px)',
+              }}>{senderColumnHeader}</th>
+              <th className="p-4 font-semibold text-gray-700 dark:text-gray-200" style={{
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, #1e293b, #0f172a)'
+                  : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+                backdropFilter: 'blur(8px)',
+              }}>Subject</th>
+              <th className="p-4 text-center font-semibold text-gray-700 dark:text-gray-200 w-32" style={{
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, #1e293b, #0f172a)'
+                  : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+                backdropFilter: 'blur(8px)',
+              }}>Date</th>
+             </tr>
+          </thead>
+          <tbody>
+            {mails.length === 0 ? (
+              <tr className="border-b border-gray-200/40 dark:border-gray-700/30">
+                <td colSpan={6} className="p-4 text-center text-gray-500 dark:text-gray-400 py-12">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <MailIcon className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+                    <p>No messages in {mailbox}</p>
+                  </div>
+                 </td>
+               </tr>
+            ) : (
+              mails.map((mail, index) => (
+                <tr 
+                  key={mail.id}
+                  onClick={() => onMailClick(mail)}
+                  className={cn(
+                    "transition-all duration-200 cursor-pointer",
+                    "border-b border-gray-200/40 dark:border-gray-700/30",
+                    index !== mails.length - 1 && "border-b",
+                    selectedMail?.id === mail.id && "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 dark:from-blue-500/5 dark:to-indigo-500/5",
+                    !mail.isRead && !mail.isSent && "bg-blue-50/30 dark:bg-blue-950/20",
+                    !selectedMail || selectedMail?.id !== mail.id && "hover:bg-white/20 dark:hover:bg-white/5"
                   )}
-                </TableCell>
-                <TableCell className={cn(!mail.isRead && !mail.isSent ? "font-semibold" : "")}>
-                  {getSenderDisplay(mail, mailbox)}
-                </TableCell>
-                <TableCell className={cn(!mail.isRead && !mail.isSent ? "font-semibold" : "")}>
-                  {mail.subject}
-                </TableCell>
-                <TableCell className="text-gray-500 text-sm whitespace-nowrap">
-                  {format(new Date(mail.createdAt), 'MMM dd, yyyy')}
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+                >
+                  <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-center">
+                      <div className="cursor-pointer group">
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                          selectedIds.has(mail.id)
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 dark:from-blue-400 dark:to-indigo-500 dark:border-blue-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md'
+                        }`}>
+                          {selectedIds.has(mail.id) && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                   </td>
+                  <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      onClick={(e) => onStarClick(e, mail)} 
+                      className="focus:outline-none cursor-pointer group transition-all duration-200 hover:scale-110"
+                    >
+                      <Star className={cn(
+                        "w-4 h-4 transition-all duration-200", 
+                        mail.isStarred 
+                          ? "fill-yellow-400 text-yellow-400" 
+                          : "text-gray-400 group-hover:text-yellow-400"
+                      )} />
+                    </button>
+                   </td>
+                  <td className="p-4 text-center">
+                    {!mail.isRead && !mail.isSent ? (
+                      <MailOpen className="w-4 h-4 text-blue-500" />
+                    ) : (
+                      <MailIcon className="w-4 h-4 text-gray-400" />
+                    )}
+                   </td>
+                  <td className={cn("p-4 text-gray-700 dark:text-gray-300", !mail.isRead && !mail.isSent ? "font-semibold" : "")}>
+                    {getSenderDisplay(mail, mailbox)}
+                   </td>
+                  <td className={cn("p-4 text-gray-700 dark:text-gray-300 max-w-[300px] truncate", !mail.isRead && !mail.isSent ? "font-semibold" : "")}>
+                    {mail.subject}
+                   </td>
+                  <td className="p-4 text-gray-500 dark:text-gray-400 text-sm whitespace-nowrap text-center">
+                    {format(new Date(mail.createdAt), 'MMM dd, yyyy')}
+                   </td>
+                 </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 });
@@ -214,8 +301,8 @@ export default function MailList({
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [actionDialog, setActionDialog] = useState<{ open: boolean; action: string; ids: number[] } | null>(null);
+  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
-  // Debounce search for API calls
   const debouncedSearch = useDebounce(searchValue, 500);
   
   const isInitialMount = useRef(true);
@@ -243,7 +330,6 @@ export default function MailList({
     }
   }, [page, mailbox, debouncedSearch]);
 
-  // Load mails when dependencies change
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -253,16 +339,14 @@ export default function MailList({
     }
   }, [loadMails]);
 
-  // Reset page when mailbox changes
   useEffect(() => {
     setSelectedIds(new Set());
     setPage(1);
-    setSearchValue(''); // Reset search when mailbox changes
+    setSearchValue('');
   }, [mailbox]);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchValue(value);
-    // Reset to first page when search changes
     setPage(1);
   }, []);
 
@@ -306,6 +390,7 @@ export default function MailList({
     });
   }, []);
 
+  // Fixed: onSelectAll now accepts boolean | string to match the expected type
   const handleSelectAll = useCallback((checked: boolean | string) => {
     const isChecked = typeof checked === 'boolean' ? checked : checked === 'true';
     if (isChecked) {
@@ -339,35 +424,56 @@ export default function MailList({
     }
   }, [actionDialog, onRefreshList, onRefreshStatistics]);
 
-  const handleMoveToTrash = useCallback(async (mail: Mail) => {
-    setMails(prevMails => prevMails.filter(m => m.id !== mail.id));
-    
-    try {
-      await moveToTrash(mail.id);
-      onRefreshStatistics();
-      loadMails();
-    } catch (error) {
-      loadMails();
-      dispatchShowToast({ type: 'danger', message: 'Failed to move to trash' });
-    }
-  }, [loadMails, onRefreshStatistics]);
-
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const selectedCount = selectedIds.size;
 
   if (loading && mails.length === 0) {
     return (
-      <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm flex items-center justify-center">
+      <div className="flex-1 rounded-xl overflow-hidden border border-gray-200/30 dark:border-gray-700/30 flex items-center justify-center"
+        style={{
+          background: isDarkMode
+            ? 'rgba(17, 24, 39, 0.4)'
+            : 'rgba(255, 255, 255, 0.55)',
+          backdropFilter: 'blur(12px)',
+        }}>
         <Loader type="circular" size={48} />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden flex flex-col">
+    <div 
+      className="flex-1 rounded-xl overflow-hidden flex flex-col relative"
+      style={{
+        background: isDarkMode
+          ? 'rgba(17, 24, 39, 0.4)'
+          : 'rgba(255, 255, 255, 0.55)',
+        backdropFilter: 'blur(12px)',
+        border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
+        boxShadow: isDarkMode
+          ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
+          : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
+      }}
+    >
+      {/* Animated gradient border overlay */}
+      <div
+        className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
+        style={{
+          background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
+        }}
+      />
+      
+      {/* Colored accent line at top */}
+      <div
+        className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#6366f1' : '#818cf8'}, ${isDarkMode ? '#a855f7' : '#c084fc'}, transparent)`,
+        }}
+      />
+
       {/* Header with search and actions */}
-      <div className="p-4 border-b dark:border-gray-700">
-        <div className="flex gap-2">
+      <div className="relative z-10 p-4 border-b border-gray-200/30 dark:border-gray-700/30">
+        <div className="flex gap-3">
           <SearchInputComponent
             value={searchValue}
             onChange={handleSearchChange}
@@ -380,6 +486,7 @@ export default function MailList({
                   variant="destructive" 
                   size="sm"
                   onClick={() => handleBulkAction('trash')}
+                  className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
                   Trash ({selectedCount})
@@ -387,10 +494,9 @@ export default function MailList({
               ) : (
                 <>
                   <Button 
-                    variant="default"
                     size="sm"
                     onClick={() => handleBulkAction('restore')}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
                   >
                     <RotateCcw className="w-4 h-4 mr-1" />
                     Restore ({selectedCount})
@@ -399,6 +505,7 @@ export default function MailList({
                     variant="destructive" 
                     size="sm"
                     onClick={() => handleBulkAction('delete')}
+                    className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800"
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
                     Delete ({selectedCount})
@@ -410,7 +517,7 @@ export default function MailList({
         </div>
       </div>
 
-      {/* Email Table - Separated component */}
+      {/* Email Table */}
       <EmailTable
         mails={mails}
         mailbox={mailbox}
@@ -425,8 +532,8 @@ export default function MailList({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="p-4 border-t dark:border-gray-700 flex justify-between items-center">
-          <span className="text-sm text-gray-500">
+        <div className="relative z-10 p-4 border-t border-gray-200/30 dark:border-gray-700/30 flex justify-between items-center">
+          <span className="text-sm text-gray-600 dark:text-gray-400 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm px-3 py-1.5 rounded-lg">
             Showing {((page - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(page * ITEMS_PER_PAGE, totalCount)} of {totalCount}
           </span>
           <div className="flex gap-2">
@@ -435,10 +542,12 @@ export default function MailList({
               size="sm"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
+              className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
             >
+              <ChevronLeft className="w-4 h-4 mr-1" />
               Previous
             </Button>
-            <span className="px-3 py-1 text-sm">
+            <span className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg">
               Page {page} of {totalPages}
             </span>
             <Button
@@ -446,8 +555,10 @@ export default function MailList({
               size="sm"
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
+              className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
             >
               Next
+              <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         </div>

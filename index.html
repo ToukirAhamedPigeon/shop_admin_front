@@ -6,6 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.ico" />
     <title>AIMS</title>
+    <!-- Add this in the <head> section of your index.html -->
+    <style>
+      /* Force Chrome to use custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: linear-gradient(135deg, #667eea20, #764ba220);
+        border-radius: 10px;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea, #764ba2, #8b5cf6);
+        border-radius: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #764ba2, #8b5cf6, #a855f7);
+      }
+      
+      /* Dark mode */
+      .dark ::-webkit-scrollbar-track {
+        background: linear-gradient(135deg, #1e1b4b, #2e1065);
+      }
+      
+      .dark ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #818cf8, #c084fc, #a78bfa);
+      }
+    </style>
   </head>
   <body>
     <div id="datepicker-portal"></div>

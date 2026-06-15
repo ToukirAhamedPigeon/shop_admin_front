@@ -1,5 +1,4 @@
 // app/(dashboard)/admin/users/Users.tsx
-
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import {
   flexRender,
@@ -8,8 +7,6 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
-  type OnChangeFn,
 } from '@tanstack/react-table'
 import { motion } from 'framer-motion'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
@@ -201,11 +198,31 @@ const getAllColumns = ({
     meta: { customClassName: 'text-center', tdClassName: 'text-center min-w-[120px]' },
     enableSorting: false,
   },
-  { header: 'Name', accessorKey: 'name' },
-  { header: 'Username', accessorKey: 'username' },
-  { header: 'Email', accessorKey: 'email' },
-  { header: 'Mobile', accessorKey: 'mobileNo' },
-  { header: 'NID', accessorKey: 'nid' },
+  { 
+    header: 'Name', 
+    accessorKey: 'name',
+    cell: ({ getValue }) => <span className="font-medium text-gray-700 dark:text-gray-300">{getValue() as string}</span>
+  },
+  { 
+    header: 'Username', 
+    accessorKey: 'username',
+    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
+  },
+  { 
+    header: 'Email', 
+    accessorKey: 'email',
+    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
+  },
+  { 
+    header: 'Mobile', 
+    accessorKey: 'mobileNo',
+    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
+  },
+  { 
+    header: 'NID', 
+    accessorKey: 'nid',
+    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
+  },
   { 
     header: 'Gender', 
     accessorKey: 'gender', 
@@ -220,7 +237,7 @@ const getAllColumns = ({
         <>
           {getCustomDateTime(getValue() as string, 'YYYY-MM-DD')}
           <br />
-          <small>
+          <small className="text-gray-500 dark:text-gray-400">
             ({getPassedTime(getCustomDateTime(getValue() as string, 'YYYY-MM-DD') as string, 'yearsOnly')})
           </small>
         </>
@@ -229,18 +246,18 @@ const getAllColumns = ({
   { 
     header: 'Email Verification', 
     accessorKey: 'emailVerifiedAt', 
-    cell: ({ getValue }) => getValue() ? <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-700 dark:text-gray-200">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-red-500 font-semibold">Not Verified</span> 
+    cell: ({ getValue }) => getValue() ? <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-500 dark:text-gray-400">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-red-500 font-semibold">Not Verified</span> 
   },
   { 
     header: 'Active', 
     accessorKey: 'isActive', 
-    cell: ({ getValue }) => getValue() ? 'Yes' : <span className="text-red-500">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-green-600">Yes</span> : <span className="text-red-500">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   { 
     header: 'Deleted', 
     accessorKey: 'isDeleted', 
-    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : 'No',
+    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-gray-600 dark:text-gray-400">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   { 
@@ -255,14 +272,65 @@ const getAllColumns = ({
     cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
-  { header: 'Roles', accessorKey: 'roles', cell: ({ getValue }) => (getValue() as string[] | undefined)?.join(', ') || <span className="text-gray-400">-</span> },
-  { header: 'Permissions', accessorKey: 'permissions', cell: ({ getValue }) => { const perms = getValue() as string[] | undefined; return perms?.length ? <ExpandableText text={perms.join(', ')} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span> }, meta: { customClassName: 'text-left min-w-[300px]' } },
-  { header: 'Address', accessorKey: 'address', cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, meta: { customClassName: 'text-left min-w-[300px]' } },
-  { header: 'Bio', accessorKey: 'bio', cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, meta: { customClassName: 'text-left min-w-[300px]' } },
-  { header: 'Last Updated At', accessorKey: 'updatedAt', cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { header: 'Created At', accessorKey: 'createdAt', cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { header: 'Created By', accessorKey: 'createdByName', cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> },
-  { header: 'Updated By', accessorKey: 'updatedByName', cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> },
+  { 
+    header: 'Roles', 
+    accessorKey: 'roles', 
+    cell: ({ getValue }) => {
+      const roles = getValue() as string[] | undefined;
+      return roles?.length ? (
+        <div className="flex flex-wrap gap-1">
+          {roles.map((role, idx) => (
+            <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200">
+              {role}
+            </span>
+          ))}
+        </div>
+      ) : <span className="text-gray-400">-</span>
+    }
+  },
+  { 
+    header: 'Permissions', 
+    accessorKey: 'permissions', 
+    cell: ({ getValue }) => { 
+      const perms = getValue() as string[] | undefined; 
+      return perms?.length ? (
+        <ExpandableText text={perms.join(', ')} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" />
+      ) : <span className="text-gray-400">-</span>
+    }, 
+    meta: { customClassName: 'text-left min-w-[300px]' } 
+  },
+  { 
+    header: 'Address', 
+    accessorKey: 'address', 
+    cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, 
+    meta: { customClassName: 'text-left min-w-[300px]' } 
+  },
+  { 
+    header: 'Bio', 
+    accessorKey: 'bio', 
+    cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, 
+    meta: { customClassName: 'text-left min-w-[300px]' } 
+  },
+  { 
+    header: 'Last Updated At', 
+    accessorKey: 'updatedAt', 
+    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-' 
+  },
+  { 
+    header: 'Created At', 
+    accessorKey: 'createdAt', 
+    cell: ({ getValue }) => getValue() ? getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss') : '-' 
+  },
+  { 
+    header: 'Created By', 
+    accessorKey: 'createdByName', 
+    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> 
+  },
+  { 
+    header: 'Updated By', 
+    accessorKey: 'updatedByName', 
+    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> 
+  },
 ]
 
 /* ---------------------------------- */
@@ -271,6 +339,7 @@ const getAllColumns = ({
 export default function Users() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '')
   const authroles = useAppSelector((state) => state.auth.user?.roles || [])
+  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   const {
     isModalOpen,
@@ -332,8 +401,6 @@ export default function Users() {
     closeEdit: closeEditSheet
   } = useEditSheet<IUser>()
 
-
- 
   /* ---------------- Stable Fetcher ---------------- */
   const stableFetcher = useCallback(
     async ({
@@ -612,7 +679,6 @@ export default function Users() {
   }, [restoreId, fetchData])
 
   /* ---------------- Stable Columns ---------------- */
-  // Create data columns using useCallback or useMemo with stable dependencies
   const dataColumns = useMemo(() => getAllColumns({
     pageIndex,
     pageSize,
@@ -643,10 +709,9 @@ export default function Users() {
     showPermanentDelete
   ])
 
-  
   const selectColumn: ColumnDef<IUser> = useMemo(() => ({
     id: 'select',
-    accessorFn: (row) => row.id, // This is the key fix - provides a value for sorting
+    accessorFn: (row) => row.id,
     header: ({ table }) => <SelectAllCheckbox<IUser> table={table} />,
     cell: ({ row }) => {
       const isSelected = row.getIsSelected()
@@ -656,17 +721,17 @@ export default function Users() {
       const hasDeveloperRole = user.roles?.includes('developer') || 
                                 (user as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')
       
-      const isValidGuid = (id: string): boolean => {
+      const isValidGuidFunc = (id: string): boolean => {
         const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         return guidRegex.test(id);
       }
       
-      const isDisabled = hasDeveloperRole || !userId || !isValidGuid(userId)
+      const isDisabled = hasDeveloperRole || !userId || !isValidGuidFunc(userId)
       
       return (
         <div className="flex justify-center">
           <div 
-            className={isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
+            className={isDisabled ? 'cursor-not-allowed' : 'cursor-pointer group'}
             onClick={(e) => {
               e.stopPropagation()
               if (!isDisabled) {
@@ -675,12 +740,12 @@ export default function Users() {
             }}
             title={isDisabled ? (hasDeveloperRole ? "Cannot select users with Developer role" : "Invalid user ID") : ""}
           >
-            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${!isDisabled && 'group-hover:scale-110'} ${
               isDisabled
                 ? 'bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-600 opacity-60'
                 : isSelected
-                  ? 'bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500'
-                  : 'border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500'
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 dark:from-blue-400 dark:to-indigo-500 dark:border-blue-400'
+                  : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md'
             }`}>
               {isSelected && !isDisabled && (
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -704,7 +769,6 @@ export default function Users() {
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
   }), [])
 
-  // Combine columns - also use useMemo
   const allColumns = useMemo(() => {
     return [selectColumn, ...dataColumns]
   }, [selectColumn, dataColumns])
@@ -720,11 +784,11 @@ export default function Users() {
 
   /* ---------------- Load Column Settings ---------------- */
   useEffect(() => {
-  if (!userId) return
+    if (!userId) return
 
-  let mounted = true
+    let mounted = true
 
-  const loadColumnSettings = async () => {
+    const loadColumnSettings = async () => {
       try {
         const { visibleColumns } = await refreshColumnSettings<IUser>(
           'userTable',
@@ -747,59 +811,53 @@ export default function Users() {
     }
   }, [userId])
 
-  // Update getSelectedIds to filter invalid IDs
   const getSelectedIds = useCallback(() => {
-      const selectedIds = Object.keys(selectedRowIds).filter(id => selectedRowIds[id]);
-      // Filter out invalid GUIDs
-      const validIds = selectedIds.filter(isValidGuid);
-      
-      if (validIds.length !== selectedIds.length) {
-        console.warn('Filtered out invalid IDs:', selectedIds.filter(id => !isValidGuid(id)));
-      }
+    const selectedIds = Object.keys(selectedRowIds).filter(id => selectedRowIds[id])
+    const validIds = selectedIds.filter(isValidGuid)
     
-    return validIds;
-  }, [selectedRowIds]);
+    if (validIds.length !== selectedIds.length) {
+      console.warn('Filtered out invalid IDs:', selectedIds.filter(id => !isValidGuid(id)))
+    }
+    
+    return validIds
+  }, [selectedRowIds])
 
-    // Update bulk delete handler
   const handleBulkDelete = useCallback(() => {
-    const selectedIds = getSelectedIds();
+    const selectedIds = getSelectedIds()
     if (selectedIds.length === 0) {
       dispatchShowToast({
         type: "warning",
         message: "No valid users selected for deletion"
-      });
-      return;
+      })
+      return
     }
-    setBulkDeleteDialogOpen(true);
-  }, [getSelectedIds]);
+    setBulkDeleteDialogOpen(true)
+  }, [getSelectedIds])
 
-  // Update bulk restore handler
   const handleBulkRestore = useCallback(() => {
-    const selectedIds = getSelectedIds();
+    const selectedIds = getSelectedIds()
     if (selectedIds.length === 0) {
       dispatchShowToast({
         type: "warning",
         message: "No valid users selected for restore"
-      });
-      return;
+      })
+      return
     }
-    setBulkRestoreDialogOpen(true);
-  }, [getSelectedIds]);
+    setBulkRestoreDialogOpen(true)
+  }, [getSelectedIds])
 
-  // Update bulk permanent delete handler
   const handleBulkPermanentDelete = useCallback(() => {
-    const selectedIds = getSelectedIds();
+    const selectedIds = getSelectedIds()
     if (selectedIds.length === 0) {
       dispatchShowToast({
         type: "warning",
         message: "No valid users selected for permanent deletion"
-      });
-      return;
+      })
+      return
     }
-    setBulkPermanentDeleteDialogOpen(true);
-  }, [getSelectedIds]);
+    setBulkPermanentDeleteDialogOpen(true)
+  }, [getSelectedIds])
 
-  // Execute bulk soft delete
   const executeBulkSoftDelete = useCallback(async () => {
     const selectedIds = getSelectedIds()
     if (selectedIds.length === 0) return
@@ -812,8 +870,8 @@ export default function Users() {
         message: `${selectedIds.length} user(s) moved to trash successfully`
       })
       setBulkDeleteDialogOpen(false)
-      setSelectedRowIds({}) // Clear selection
-      fetchData() // Refresh table
+      setSelectedRowIds({})
+      fetchData()
     } catch (error: any) {
       console.error('Bulk soft delete failed:', error)
       dispatchShowToast({
@@ -825,7 +883,6 @@ export default function Users() {
     }
   }, [getSelectedIds, fetchData])
 
-  // Execute bulk restore
   const executeBulkRestore = useCallback(async () => {
     const selectedIds = getSelectedIds()
     if (selectedIds.length === 0) return
@@ -838,8 +895,8 @@ export default function Users() {
         message: `${selectedIds.length} user(s) restored successfully`
       })
       setBulkRestoreDialogOpen(false)
-      setSelectedRowIds({}) // Clear selection
-      fetchData() // Refresh table
+      setSelectedRowIds({})
+      fetchData()
     } catch (error: any) {
       console.error('Bulk restore failed:', error)
       dispatchShowToast({
@@ -851,12 +908,10 @@ export default function Users() {
     }
   }, [getSelectedIds, fetchData])
 
-  // Execute bulk permanent delete
   const executeBulkPermanentDelete = useCallback(async () => {
     const selectedIds = getSelectedIds()
     if (selectedIds.length === 0) return
     
-    // Filter out developer users from bulk permanent delete
     const developerUsers = data.filter(user => 
       selectedIds.includes(user.id) && 
       (user.roles?.includes('developer') || 
@@ -879,8 +934,8 @@ export default function Users() {
         message: `${selectedIds.length} user(s) permanently deleted successfully`
       })
       setBulkPermanentDeleteDialogOpen(false)
-      setSelectedRowIds({}) // Clear selection
-      fetchData() // Refresh table
+      setSelectedRowIds({})
+      fetchData()
     } catch (error: any) {
       console.error('Bulk permanent delete failed:', error)
       dispatchShowToast({
@@ -892,107 +947,99 @@ export default function Users() {
     }
   }, [getSelectedIds, fetchData, data])
 
-
-    /* ---------------- Initial Fetch ---------------- */
-    useEffect(() => {
-      if (!hasFetchedRef.current) {
-        fetchData()
-        hasFetchedRef.current = true
-      }
-    }, [fetchData])
-
-    /* ---------------- Filters Fetch ---------------- */
-    useEffect(() => {
-      if (!hasFetchedRef.current) return
-      
-      if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
-        return
-      }
-      setPageIndex(0)
+  /* ---------------- Initial Fetch ---------------- */
+  useEffect(() => {
+    if (!hasFetchedRef.current) {
       fetchData()
-      prevFiltersRef.current = filters
+      hasFetchedRef.current = true
+    }
+  }, [fetchData])
+
+  /* ---------------- Filters Fetch ---------------- */
+  useEffect(() => {
+    if (!hasFetchedRef.current) return
+    
+    if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
+      return
+    }
+    setPageIndex(0)
+    fetchData()
+    prevFiltersRef.current = filters
+    
+  }, [filters, fetchData])
+
+  /* ---------------- Visible Column IDs ---------------- */
+  const visibleIds = useMemo(
+    () => visible.map(c => c.id ?? ((c as any).accessorKey ?? '')),
+    [visible]
+  )
+
+  const isFilterActive = useMemo(
+    () =>
+      Object.values(filters).some(
+        v => v && (Array.isArray(v) ? v.length > 0 : true)
+      ),
+    [filters]
+  )
+
+  /* ---------------- Table Instance ---------------- */
+  const table = useReactTable<IUser>({
+    data,
+    columns: visible,
+    getRowId: (row) => row.id,
+    enableSorting: true,
+    state: {
+      sorting,
+      pagination: {
+        pageIndex,
+        pageSize
+      },
+      rowSelection: selectedRowIds,
+    },
+    enableRowSelection: (row) => {
+      const user = row.original
+      const hasDeveloperRole = user.roles?.includes('developer') || 
+                                (user as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')
+      return !hasDeveloperRole
+    },
+    onRowSelectionChange: (updater) => {
+      let newSelection: Record<string, boolean>
       
-    }, [filters, fetchData])
-
-    /* ---------------- Visible Column IDs ---------------- */
-    const visibleIds = useMemo(
-      () => visible.map(c => c.id ?? ((c as any).accessorKey ?? '')),
-      [visible]
-    )
-
-    const isFilterActive = useMemo(
-      () =>
-        Object.values(filters).some(
-          v => v && (Array.isArray(v) ? v.length > 0 : true)
-        ),
-      [filters]
-    )
-
-    /* ---------------- Table Instance ---------------- */
-
-    const table = useReactTable<IUser>({
-      data,
-      columns: visible,
-      getRowId: (row) => row.id,
-      enableSorting: true,
-      state: {
-        sorting,
-        pagination: {
-          pageIndex,
-          pageSize
-        },
-        rowSelection: selectedRowIds,
-      },
-      enableRowSelection: (row) => {
-        const user = row.original
-        const hasDeveloperRole = user.roles?.includes('developer') || 
-                                  (user as any).roleNames?.split(',').map((r: string) => r.trim()).includes('developer')
-        return !hasDeveloperRole
-      },
-      onRowSelectionChange: (updater) => {
-        let newSelection: Record<string, boolean>;
-        
-        if (typeof updater === 'function') {
-          newSelection = updater(selectedRowIds);
-        } else {
-          newSelection = updater;
+      if (typeof updater === 'function') {
+        newSelection = updater(selectedRowIds)
+      } else {
+        newSelection = updater
+      }
+      
+      const filteredSelection = Object.keys(newSelection).reduce((acc, key) => {
+        if (isValidGuid(key) && newSelection[key]) {
+          acc[key] = newSelection[key]
         }
-        
-        const isValidGuid = (id: string): boolean => {
-          const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          return guidRegex.test(id);
-        };
-        
-        const filteredSelection = Object.keys(newSelection).reduce((acc, key) => {
-          if (isValidGuid(key) && newSelection[key]) {
-            acc[key] = newSelection[key];
-          }
-          return acc;
-        }, {} as Record<string, boolean>);
-        
-        setSelectedRowIds(filteredSelection);
-      },
-      onSortingChange: (updater) => {
-        const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
-        setSorting(newSorting);
-        
-        // Only fetch data if sorting by columns other than 'select'
-        const isSelectColumnSort = newSorting.length > 0 && newSorting[0].id === 'select';
-        if (!isSelectColumnSort) {
-          fetchData();
-        }
-      },
-      manualPagination: true,
-      manualSorting: false,
-      pageCount: Math.ceil(totalCount / pageSize),
-      getCoreRowModel: getCoreRowModel(),
-      getSortedRowModel: getSortedRowModel(),
-      getPaginationRowModel: getPaginationRowModel(),
-    })
+        return acc
+      }, {} as Record<string, boolean>)
+      
+      setSelectedRowIds(filteredSelection)
+    },
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === 'function' ? updater(sorting) : updater
+      setSorting(newSorting)
+      
+      const isSelectColumnSort = newSorting.length > 0 && newSorting[0].id === 'select'
+      if (!isSelectColumnSort) {
+        fetchData()
+      }
+    },
+    manualPagination: true,
+    manualSorting: false,
+    pageCount: Math.ceil(totalCount / pageSize),
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  })
 
-    const handleResetSorting = useCallback(() => {
-      setSorting([])
-    }, [setSorting])
+  const handleResetSorting = useCallback(() => {
+    setSorting([])
+  }, [setSorting])
 
   /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0
@@ -1049,53 +1096,60 @@ export default function Users() {
         isFilterActive={isFilterActive}
       />
       
-      {/* TABLE */}
-      <TableWithLoader 
-          loading={loading}
-          id="printable-user-table"
-        >
+      {/* TABLE - Glass Design */}
+      <div className="relative rounded-xl overflow-hidden border border-gray-200/30 dark:border-gray-700/30">
+        <TableWithLoader loading={loading} id="printable-user-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showEmptyState ? (
             <EmptyState 
               message={showTrash ? "No deleted users found" : "No users found"}
               suggestion={showTrash ? "Deleted users will appear here once you move them to trash." : "Try adjusting your search or filter criteria to see more results."}
             />
           ) : (
-            <table className="table-auto w-full text-left border border-collapse">
-              <thead className="sticky -top-1 z-10 bg-gray-200 dark:bg-gray-700">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 z-20">
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
+                  <tr key={headerGroup.id} className="border-b border-gray-200/50 dark:border-gray-700/50">
                     {headerGroup.headers.map((header) => {
                       const isSortable = header.column.getCanSort()
                       
                       return (
                         <th
-                            key={header.id}
-                            className={`p-2 border text-center ${header.column.columnDef.meta?.customClassName || ''}`}
-                            onClick={(event) => {
-                              if (isSortable) {
-                                const handler = header.column.getToggleSortingHandler()
-                                if (handler) {
-                                  handler(event)
-                                }
-                              }
-                            }}
-                            style={{ cursor: isSortable ? 'pointer' : 'default' }}
-                          >
-                          <div className="flex justify-between items-center w-full">
-                            <span className="flex-1 text-center">
+                          key={header.id}
+                          className={`p-4 text-center font-semibold ${header.column.columnDef.meta?.customClassName || ''}`}
+                          style={{
+                            background: isDarkMode
+                              ? 'linear-gradient(135deg, #1e293b, #0f172a)'
+                              : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+                            backdropFilter: 'blur(8px)',
+                            cursor: isSortable ? 'pointer' : 'default'
+                          }}
+                          onClick={(event) => {
+                            if (isSortable) {
+                              const handler = header.column.getToggleSortingHandler()
+                              if (handler) handler(event)
+                            }
+                          }}
+                        >
+                          <div className="flex justify-between items-center w-full gap-2">
+                            <span className="flex-1 text-center text-gray-800 dark:text-gray-200 font-semibold">
                               {flexRender(
                                 header.column.columnDef.header,
                                 header.getContext()
                               )}
                             </span>
                             {isSortable && (
-                              <span className="ml-2">
+                              <span className="relative">
                                 {header.column.getIsSorted() === 'asc' ? (
-                                  <FaSortUp size={12} />
+                                  <FaSortUp className="text-purple-600 dark:text-purple-400" size={12} />
                                 ) : header.column.getIsSorted() === 'desc' ? (
-                                  <FaSortDown size={12} />
+                                  <FaSortDown className="text-purple-600 dark:text-purple-400" size={12} />
                                 ) : (
-                                  <FaSort size={12} />
+                                  <FaSort className="text-gray-500 dark:text-gray-500" size={12} />
+                                )}
+                                {header.column.id === 'select' && header.column.getIsSorted() && (
+                                  <span className="absolute -top-1 -right-2 text-xs text-blue-500" title="Frontend sorting (no API call)">
+                                    ⚡
+                                  </span>
                                 )}
                               </span>
                             )}
@@ -1108,15 +1162,21 @@ export default function Users() {
               </thead>
 
               <tbody>
-                {table.getRowModel().rows.map((row) => (
-                    <tr key={row.id} className={cn(
-                      "border-b dark:border-gray-700 transition-colors",
-                      row.getIsSelected() && "bg-blue-200 dark:bg-blue-950/70"
-                    )}>
+                {table.getRowModel().rows.map((row, index) => (
+                  <tr 
+                    key={row.id} 
+                    className={cn(
+                      "transition-all duration-200",
+                      "border-b border-gray-200/40 dark:border-gray-700/30",
+                      index !== table.getRowModel().rows.length - 1 && "border-b",
+                      row.getIsSelected() && "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 dark:from-blue-500/5 dark:to-indigo-500/5",
+                      !row.getIsSelected() && "hover:bg-white/20 dark:hover:bg-white/5"
+                    )}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className={`p-2 border ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                        className={`p-4 text-gray-700 dark:text-gray-300 ${cell.column.columnDef.meta?.tdClassName || ''}`}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -1130,18 +1190,18 @@ export default function Users() {
             </table>
           )}
         </TableWithLoader>
+      </div>
 
-        {/* Remove the old empty state condition here since it's now inside the table */}
-        {!showEmptyState && !showErrorState && totalCount > 0 && (
-          <TablePaginationFooter
-            pageIndex={pageIndex}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            grandTotalCount={grandTotalCount}
-            setPageIndex={setPageIndex}
-            setPageSize={setPageSize}
-          />
-        )}
+      {!showEmptyState && !showErrorState && totalCount > 0 && (
+        <TablePaginationFooter
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          totalCount={totalCount}
+          grandTotalCount={grandTotalCount}
+          setPageIndex={setPageIndex}
+          setPageSize={setPageSize}
+        />
+      )}
 
       <Modal
         isOpen={isModalOpen}
@@ -1193,7 +1253,7 @@ export default function Users() {
             onResetRef={resetRef}
             onClose={() => setFilterModalOpen(false)}
             showTrash={showTrash}
-            onShowTrashChange={(newShowTrash) => {
+            onShowTrashChange={(newShowTrash: boolean) => {
               if (newShowTrash && !showTrash) {
                 handleTrashClick();
               } else if (!newShowTrash && showTrash) {
@@ -1263,27 +1323,8 @@ export default function Users() {
           </div>
           
           <p className="text-gray-700 dark:text-gray-300">
-            This will permanently delete the user and all associated data including:
+            This will permanently delete the user and all associated data.
           </p>
-          
-          <ul className="space-y-2 ml-4">
-            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              Profile image file
-            </li>
-            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              Role and permission assignments
-            </li>
-            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              Email verification records
-            </li>
-            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              All activity logs
-            </li>
-          </ul>
 
           {deleteInfo?.message && !deleteInfo.canBePermanent && (
             <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
