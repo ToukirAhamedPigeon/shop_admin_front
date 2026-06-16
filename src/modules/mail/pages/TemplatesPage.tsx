@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb';
 import GlassCard from '@/components/custom/GlassCard';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, Copy, FileText, Mail, Calendar, User, Globe, Lock } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Mail, Calendar, User, Globe, Lock } from 'lucide-react';
 import { 
   Table, 
   TableBody, 
@@ -50,6 +50,7 @@ export default function TemplatesPage() {
     description: '',
     isGlobal: false,
   });
+  const [validationErrors, setValidationErrors] = useState<{ name?: string; subject?: string }>({});
 
   const hasCreatePermission = can(['create-admin-mail-templates']);
   const hasEditPermission = can(['update-admin-mail-templates']);
@@ -73,6 +74,7 @@ export default function TemplatesPage() {
   }, [loadTemplates]);
 
   const handleOpenDialog = (template?: MailTemplate) => {
+    setValidationErrors({});
     if (template) {
       setEditingTemplate(template);
       setFormData({
@@ -95,7 +97,27 @@ export default function TemplatesPage() {
     setDialogOpen(true);
   };
 
+  const validateForm = (): boolean => {
+    const errors: { name?: string; subject?: string } = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Template name is required';
+    }
+    if (!formData.subject.trim()) {
+      errors.subject = 'Template subject is required';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = async () => {
+    // Validate before sending
+    if (!validateForm()) {
+      dispatchShowToast({ type: 'danger', message: 'Please fix validation errors' });
+      return;
+    }
+
     try {
       if (editingTemplate) {
         await updateTemplate(editingTemplate.id, formData);
@@ -107,7 +129,10 @@ export default function TemplatesPage() {
       setDialogOpen(false);
       loadTemplates();
     } catch (error: any) {
-      dispatchShowToast({ type: 'danger', message: error.response?.data?.message || 'Failed to save template' });
+      dispatchShowToast({ 
+        type: 'danger', 
+        message: error.response?.data?.message || 'Failed to save template' 
+      });
     }
   };
 
@@ -125,7 +150,6 @@ export default function TemplatesPage() {
     }
   };
 
-  // Statistics for templates
   const globalCount = templates.filter(t => t.isGlobal).length;
   const personalCount = templates.filter(t => !t.isGlobal).length;
 
@@ -350,19 +374,31 @@ export default function TemplatesPage() {
                 <Label className="text-sm font-semibold">Template Name *</Label>
                 <Input
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    if (validationErrors.name) setValidationErrors({ ...validationErrors, name: undefined });
+                  }}
                   placeholder="e.g., Welcome Email, Order Confirmation"
-                  className="mt-1"
+                  className={cn("mt-1", validationErrors.name && "border-red-500")}
                 />
+                {validationErrors.name && (
+                  <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>
+                )}
               </div>
               <div>
                 <Label className="text-sm font-semibold">Subject *</Label>
                 <Input
                   value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, subject: e.target.value });
+                    if (validationErrors.subject) setValidationErrors({ ...validationErrors, subject: undefined });
+                  }}
                   placeholder="Email subject"
-                  className="mt-1"
+                  className={cn("mt-1", validationErrors.subject && "border-red-500")}
                 />
+                {validationErrors.subject && (
+                  <p className="text-red-500 text-xs mt-1">{validationErrors.subject}</p>
+                )}
               </div>
               <div>
                 <Label className="text-sm font-semibold">Email Body *</Label>
@@ -388,6 +424,7 @@ export default function TemplatesPage() {
                   id="isGlobal"
                   checked={formData.isGlobal}
                   onCheckedChange={(checked) => setFormData({ ...formData, isGlobal: !!checked })}
+                  className="cursor-pointer"
                 />
                 <Label htmlFor="isGlobal" className="cursor-pointer font-medium">
                   Make this template available to all users (Global)

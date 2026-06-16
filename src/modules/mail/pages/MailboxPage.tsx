@@ -12,8 +12,9 @@ import { getMailStatistics, fetchEmails } from '../api';
 import { can } from '@/lib/authCheck';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Mail as MailIcon, Inbox, Send, Star, Trash2 } from 'lucide-react';
+import { RefreshCw, Mail as MailIcon, Inbox, Send, Star, Trash2, Menu, X, ChevronLeft } from 'lucide-react';
 import { useTranslations } from '@/hooks/useTranslations';
+import { cn } from '@/lib/utils';
 
 export default function MailboxPage() {
   const { t } = useTranslations();
@@ -24,8 +25,23 @@ export default function MailboxPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [replyTo, setReplyTo] = useState<{ id: number; toMail: string; subject: string; fromMail: string } | undefined>();
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   const hasMailPermissions = can(['read-admin-mails']);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setShowMobileSidebar(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const loadStatistics = useCallback(async () => {
     try {
@@ -73,6 +89,23 @@ export default function MailboxPage() {
     loadStatistics();
   }, [loadStatistics]);
 
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showMobileSidebar && isMobile) {
+        const sidebar = document.getElementById('mobile-sidebar');
+        const toggleButton = document.getElementById('sidebar-toggle');
+        if (sidebar && toggleButton) {
+          if (!sidebar.contains(e.target as Node) && !toggleButton.contains(e.target as Node)) {
+            setShowMobileSidebar(false);
+          }
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMobileSidebar, isMobile]);
+
   if (!hasMailPermissions) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -85,7 +118,6 @@ export default function MailboxPage() {
     );
   }
 
-  // Quick stats for sidebar display
   const quickStats = [
     { label: 'Inbox', value: statistics?.totalReceived || 0, icon: <Inbox className="w-4 h-4" />, color: 'text-blue-500' },
     { label: 'Sent', value: statistics?.totalSent || 0, icon: <Send className="w-4 h-4" />, color: 'text-emerald-500' },
@@ -98,47 +130,70 @@ export default function MailboxPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col gap-4 h-full"
+      className="flex flex-col gap-4 h-full relative"
     >
-      {/* Header Section */}
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Breadcrumb
           title="common.mail.title"
           showTitle={true}
           items={[{ label: "common.mail.title", href: "/mail" }]}
           className="pb-0"
         />
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button onClick={handleFetchEmails} disabled={refreshing} variant="outline" size="sm" className="cursor-pointer">
+        <div className="flex items-center gap-2">
+          <Button onClick={handleFetchEmails} disabled={refreshing} variant="outline" size="sm" className="cursor-pointer hidden sm:flex">
             <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Fetch Emails
           </Button>
-        </motion.div>
+          <Button 
+            onClick={handleFetchEmails} 
+            disabled={refreshing} 
+            variant="outline" 
+            size="sm" 
+            className="cursor-pointer flex sm:hidden"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          
+          {/* Mobile Sidebar Toggle Button */}
+          <Button 
+            id="sidebar-toggle"
+            variant="ghost" 
+            size="sm" 
+            className="lg:hidden cursor-pointer p-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMobileSidebar(!showMobileSidebar);
+            }}
+          >
+            {showMobileSidebar ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
+        </div>
       </div>
 
-      {/* Quick Stats Row */}
+      {/* Quick Stats - Responsive */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
         <GlassCard variant="primary" padding="sm">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
             {quickStats.map((stat, index) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.15 + index * 0.05 }}
-                className="flex items-center justify-between p-3 rounded-xl bg-black/5 dark:bg-white/5"
+                className="flex items-center justify-between p-2 sm:p-3 rounded-xl bg-black/5 dark:bg-white/5"
               >
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1 text-gray-800 dark:text-gray-100">
+                  <p className="text-lg sm:text-2xl font-bold mt-1 text-gray-800 dark:text-gray-100">
                     {stat.value}
                   </p>
                 </div>
-                <div className={`p-2 rounded-lg bg-${stat.color.split('-')[1]}-100/50 dark:bg-${stat.color.split('-')[1]}-900/30 ${stat.color}`}>
+                <div className={`p-1.5 sm:p-2 rounded-lg bg-${stat.color.split('-')[1]}-100/50 dark:bg-${stat.color.split('-')[1]}-900/30 ${stat.color}`}>
                   {stat.icon}
                 </div>
               </motion.div>
@@ -147,29 +202,51 @@ export default function MailboxPage() {
         </GlassCard>
       </motion.div>
 
-      {/* Main Mail Section */}
-      <div className="flex gap-4 h-[calc(100vh-280px)] min-h-[500px]">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-72 flex-shrink-0"
+      {/* Main Mail Section - Responsive */}
+      <div className="flex gap-4 h-[calc(100vh-280px)] min-h-[400px] relative">
+        {/* Mobile Sidebar Overlay */}
+        {showMobileSidebar && isMobile && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+            onClick={() => setShowMobileSidebar(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <div
+          id="mobile-sidebar"
+          className={cn(
+            "lg:w-64 xl:w-72 flex-shrink-0",
+            "absolute lg:relative z-40",
+            "w-[280px] lg:w-64 xl:w-72",
+            "transform transition-all duration-300 ease-in-out",
+            showMobileSidebar || !isMobile ? "translate-x-0" : "-translate-x-full",
+            !isMobile && "opacity-100",
+            isMobile && !showMobileSidebar && "opacity-0 pointer-events-none",
+            isMobile && showMobileSidebar && "opacity-100 pointer-events-auto"
+          )}
         >
           <GlassCard variant="secondary" padding="sm" className="h-full">
             <MailSidebar
               selectedMailbox={selectedMailbox}
-              onSelectMailbox={setSelectedMailbox}
+              onSelectMailbox={(mailbox) => {
+                setSelectedMailbox(mailbox);
+                if (isMobile) setShowMobileSidebar(false);
+              }}
               statistics={statistics}
               onCompose={() => {
                 setReplyTo(undefined);
                 setShowCompose(true);
+                if (isMobile) setShowMobileSidebar(false);
               }}
               onRefresh={refreshStatistics}
               refreshing={refreshing}
+              isMobile={isMobile}
             />
           </GlassCard>
-        </motion.div>
+        </div>
 
+        {/* Mail List */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -184,6 +261,7 @@ export default function MailboxPage() {
               selectedMail={selectedMail}
               onRefreshList={refreshList}
               onRefreshStatistics={refreshStatistics}
+              isMobile={isMobile}
             />
           </GlassCard>
         </motion.div>

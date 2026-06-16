@@ -23,6 +23,7 @@ interface MailSidebarProps {
   onCompose: () => void;
   onRefresh?: () => void;
   refreshing?: boolean;
+  isMobile?: boolean; // Added this property
 }
 
 const mailboxes: { id: MailboxType; label: string; icon: React.ReactNode; countKey?: keyof MailStatistics; gradient?: string }[] = [
@@ -38,7 +39,8 @@ export default function MailSidebar({
   statistics, 
   onCompose, 
   onRefresh, 
-  refreshing 
+  refreshing,
+  isMobile = false
 }: MailSidebarProps) {
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -54,15 +56,18 @@ export default function MailSidebar({
   };
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-3 sm:gap-4 h-full p-1 sm:p-0">
       {/* Compose Button */}
       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
         <Button 
           onClick={onCompose} 
-          className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg"
+          className={cn(
+            "w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg",
+            isMobile ? "text-sm py-1.5" : ""
+          )}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Compose Message
+          <Plus className={cn("w-4 h-4", isMobile ? "mr-1" : "mr-2")} />
+          {isMobile ? "Compose" : "Compose Message"}
         </Button>
       </motion.div>
 
@@ -71,7 +76,7 @@ export default function MailSidebar({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-1"
+        className="space-y-0.5 sm:space-y-1"
       >
         {mailboxes.map((mailbox) => (
           <motion.button
@@ -79,24 +84,25 @@ export default function MailSidebar({
             variants={itemVariants}
             onClick={() => onSelectMailbox(mailbox.id)}
             className={cn(
-              "w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer",
+              "w-full flex items-center justify-between px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl transition-all duration-200 cursor-pointer",
               selectedMailbox === mailbox.id
                 ? "bg-gradient-to-r from-primary/15 to-primary/5 text-primary shadow-sm"
-                : "hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300"
+                : "hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300",
+              isMobile ? "text-sm" : ""
             )}
           >
-            <span className="flex items-center gap-3">
+            <span className="flex items-center gap-2 sm:gap-3">
               <span className={cn(
                 "transition-colors",
                 selectedMailbox === mailbox.id ? "text-primary" : "text-gray-500"
               )}>
                 {mailbox.icon}
               </span>
-              <span className="font-medium">{mailbox.label}</span>
+              <span className="font-medium">{isMobile ? mailbox.label.slice(0, 4) : mailbox.label}</span>
             </span>
             {mailbox.countKey && statistics && (
               <span className={cn(
-                "text-xs px-2 py-0.5 rounded-full font-semibold",
+                "text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-semibold",
                 selectedMailbox === mailbox.id
                   ? "bg-primary/20 text-primary"
                   : "bg-gray-200/70 dark:bg-gray-700/70 text-gray-600 dark:text-gray-400"
@@ -116,16 +122,19 @@ export default function MailSidebar({
             size="sm" 
             onClick={onRefresh} 
             disabled={refreshing}
-            className="w-full mt-2"
+            className={cn(
+              "w-full mt-1 sm:mt-2",
+              isMobile ? "text-xs py-1" : ""
+            )}
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-1" : "mr-2", refreshing ? 'animate-spin' : '')} />
+            {!isMobile && "Refresh"}
           </Button>
         </motion.div>
       )}
 
       {/* Statistics Section */}
-      {statistics && (
+      {statistics && !isMobile && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -152,7 +161,7 @@ export default function MailSidebar({
                 <div className="p-1 rounded bg-purple-100/50 dark:bg-purple-800/30">
                   <TrendingUp className="w-3 h-3 text-purple-500" />
                 </div>
-                <span className="text-xs text-gray-600 dark:text-gray-400">Total Messages</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">Total</span>
               </div>
               <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
                 {statistics.totalReceived + statistics.totalSent}

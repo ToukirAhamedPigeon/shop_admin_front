@@ -1,6 +1,4 @@
 // src/modules/mail/components/MailList.tsx
-// Fixed TypeScript error for onSelectAll
-
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { format } from 'date-fns';
 import { 
@@ -14,7 +12,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { getMails, bulkMailAction, toggleStar, moveToTrash, markAsRead } from '../api';
@@ -31,11 +28,11 @@ interface MailListProps {
   selectedMail: Mail | null;
   onRefreshList: () => void;
   onRefreshStatistics: () => void;
+  isMobile?: boolean;
 }
 
 const ITEMS_PER_PAGE = 20;
 
-// Helper functions
 const getSenderDisplay = (mail: Mail, mailbox: MailboxType): string => {
   switch (mailbox) {
     case 'sent':
@@ -57,15 +54,16 @@ const getSenderColumnHeader = (mailbox: MailboxType): string => {
   }
 };
 
-// Separate component for the search input to prevent re-renders
 const SearchInputComponent = memo(({ 
   value, 
   onChange, 
-  placeholder 
+  placeholder,
+  isMobile 
 }: { 
   value: string; 
   onChange: (value: string) => void; 
   placeholder: string;
+  isMobile?: boolean;
 }) => {
   const [localValue, setLocalValue] = useState(value);
   const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
@@ -86,9 +84,11 @@ const SearchInputComponent = memo(({
         placeholder={placeholder}
         value={localValue}
         onChange={handleChange}
-        className="w-full pl-10 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-gray-200 dark:border-gray-700 rounded-xl shadow-sm transition-all duration-300 focus:outline-none focus:ring-0 group-focus-within:border-transparent"
+        className={cn(
+          "w-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-gray-200 dark:border-gray-700 rounded-xl shadow-sm transition-all duration-300 focus:outline-none focus:ring-0 group-focus-within:border-transparent",
+          isMobile ? "pl-8 text-sm h-9" : "pl-10 h-10"
+        )}
       />
-      {/* Gradient border on focus */}
       <div className="absolute inset-0 rounded-xl pointer-events-none transition-all duration-300 opacity-0 group-focus-within:opacity-100"
         style={{
           background: isDarkMode
@@ -103,7 +103,10 @@ const SearchInputComponent = memo(({
         }}
       />
       <svg
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 transition-colors duration-300 group-focus-within:text-purple-500 dark:group-focus-within:text-purple-400"
+        className={cn(
+          "absolute top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 transition-colors duration-300 group-focus-within:text-purple-500 dark:group-focus-within:text-purple-400",
+          isMobile ? "left-2.5" : "left-3"
+        )}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -116,7 +119,6 @@ const SearchInputComponent = memo(({
 
 SearchInputComponent.displayName = 'SearchInputComponent';
 
-// Separate component for the email list table
 const EmailTable = memo(({ 
   mails, 
   mailbox, 
@@ -126,7 +128,8 @@ const EmailTable = memo(({
   onStarClick, 
   onSelectChange, 
   onSelectAll,
-  loading 
+  loading,
+  isMobile
 }: { 
   mails: Mail[];
   mailbox: MailboxType;
@@ -135,14 +138,15 @@ const EmailTable = memo(({
   onMailClick: (mail: Mail) => void;
   onStarClick: (e: React.MouseEvent, mail: Mail) => void;
   onSelectChange: (id: number, checked: boolean | string) => void;
-  onSelectAll: (checked: boolean | string) => void;  // Fixed: accepts boolean | string
+  onSelectAll: (checked: boolean | string) => void;
   loading: boolean;
+  isMobile?: boolean;
 }) => {
   const senderColumnHeader = getSenderColumnHeader(mailbox);
   const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
   return (
-    <div className="flex-1 overflow-auto relative">
+    <div className="flex-1 overflow-auto relative" style={{ maxHeight: isMobile ? 'calc(100vh - 420px)' : 'calc(100vh - 380px)', minHeight: '200px' }}>
       {loading && mails.length > 0 && (
         <div className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-md z-10 flex items-center justify-center">
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-2xl">
@@ -151,20 +155,19 @@ const EmailTable = memo(({
         </div>
       )}
       
-      <div className="overflow-x-auto rounded-xl">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse text-sm sm:text-base">
           <thead className="sticky top-0 z-20">
             <tr className="border-b border-gray-200/50 dark:border-gray-700/50">
-              <th className="p-4 text-center w-10">
+              <th className="p-2 sm:p-4 text-center w-8 sm:w-10">
                 <div 
                   className="flex justify-center cursor-pointer group"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Fixed: Pass boolean directly to onSelectAll
                     onSelectAll(selectedIds.size !== mails.length);
                   }}
                 >
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                  <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
                     selectedIds.size === mails.length && mails.length > 0
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 dark:from-blue-400 dark:to-indigo-500 dark:border-blue-400'
                       : selectedIds.size > 0
@@ -172,48 +175,57 @@ const EmailTable = memo(({
                         : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md'
                   }`}>
                     {selectedIds.size === mails.length && mails.length > 0 && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                     {selectedIds.size > 0 && selectedIds.size !== mails.length && (
-                      <div className="w-2 h-0.5 bg-blue-600 dark:bg-blue-400" />
+                      <div className="w-1.5 h-0.5 bg-blue-600 dark:bg-blue-400" />
                     )}
                   </div>
                 </div>
               </th>
-              <th className="p-4 text-center w-10"></th>
-              <th className="p-4 text-center w-10"></th>
-              <th className="p-4 font-semibold text-gray-700 dark:text-gray-200" style={{
+              <th className="p-2 sm:p-4 text-center w-8 sm:w-10"></th>
+              <th className="p-2 sm:p-4 text-center w-8 sm:w-10"></th>
+              <th className={cn(
+                "p-2 sm:p-4 font-semibold text-gray-700 dark:text-gray-200",
+                isMobile ? "text-xs" : "text-sm"
+              )} style={{
                 background: isDarkMode
                   ? 'linear-gradient(135deg, #1e293b, #0f172a)'
                   : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
                 backdropFilter: 'blur(8px)',
-              }}>{senderColumnHeader}</th>
-              <th className="p-4 font-semibold text-gray-700 dark:text-gray-200" style={{
+              }}>{isMobile ? senderColumnHeader.slice(0, 1) : senderColumnHeader}</th>
+              <th className={cn(
+                "p-2 sm:p-4 font-semibold text-gray-700 dark:text-gray-200",
+                isMobile ? "text-xs" : "text-sm"
+              )} style={{
                 background: isDarkMode
                   ? 'linear-gradient(135deg, #1e293b, #0f172a)'
                   : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
                 backdropFilter: 'blur(8px)',
-              }}>Subject</th>
-              <th className="p-4 text-center font-semibold text-gray-700 dark:text-gray-200 w-32" style={{
+              }}>{isMobile ? 'Subj' : 'Subject'}</th>
+              <th className={cn(
+                "p-2 sm:p-4 text-center font-semibold text-gray-700 dark:text-gray-200",
+                isMobile ? "text-xs w-20" : "text-sm w-32"
+              )} style={{
                 background: isDarkMode
                   ? 'linear-gradient(135deg, #1e293b, #0f172a)'
                   : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
                 backdropFilter: 'blur(8px)',
-              }}>Date</th>
-             </tr>
+              }}>{isMobile ? 'Date' : 'Date'}</th>
+            </tr>
           </thead>
           <tbody>
             {mails.length === 0 ? (
               <tr className="border-b border-gray-200/40 dark:border-gray-700/30">
                 <td colSpan={6} className="p-4 text-center text-gray-500 dark:text-gray-400 py-12">
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <MailIcon className="w-12 h-12 text-gray-300 dark:text-gray-600" />
-                    <p>No messages in {mailbox}</p>
+                    <MailIcon className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 dark:text-gray-600" />
+                    <p className="text-sm sm:text-base">No messages in {mailbox}</p>
                   </div>
-                 </td>
-               </tr>
+                </td>
+              </tr>
             ) : (
               mails.map((mail, index) => (
                 <tr 
@@ -228,53 +240,61 @@ const EmailTable = memo(({
                     !selectedMail || selectedMail?.id !== mail.id && "hover:bg-white/20 dark:hover:bg-white/5"
                   )}
                 >
-                  <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                  <td className="p-2 sm:p-4 text-center" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-center">
                       <div className="cursor-pointer group">
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                        <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
                           selectedIds.has(mail.id)
                             ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 dark:from-blue-400 dark:to-indigo-500 dark:border-blue-400'
                             : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md'
                         }`}>
                           {selectedIds.has(mail.id) && (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
                           )}
                         </div>
                       </div>
                     </div>
-                   </td>
-                  <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                  </td>
+                  <td className="p-2 sm:p-4 text-center" onClick={(e) => e.stopPropagation()}>
                     <button 
                       onClick={(e) => onStarClick(e, mail)} 
                       className="focus:outline-none cursor-pointer group transition-all duration-200 hover:scale-110"
                     >
                       <Star className={cn(
-                        "w-4 h-4 transition-all duration-200", 
+                        "w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-200", 
                         mail.isStarred 
                           ? "fill-yellow-400 text-yellow-400" 
                           : "text-gray-400 group-hover:text-yellow-400"
                       )} />
                     </button>
-                   </td>
-                  <td className="p-4 text-center">
+                  </td>
+                  <td className="p-2 sm:p-4 text-center">
                     {!mail.isRead && !mail.isSent ? (
-                      <MailOpen className="w-4 h-4 text-blue-500" />
+                      <MailOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
                     ) : (
-                      <MailIcon className="w-4 h-4 text-gray-400" />
+                      <MailIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
                     )}
-                   </td>
-                  <td className={cn("p-4 text-gray-700 dark:text-gray-300", !mail.isRead && !mail.isSent ? "font-semibold" : "")}>
-                    {getSenderDisplay(mail, mailbox)}
-                   </td>
-                  <td className={cn("p-4 text-gray-700 dark:text-gray-300 max-w-[300px] truncate", !mail.isRead && !mail.isSent ? "font-semibold" : "")}>
-                    {mail.subject}
-                   </td>
-                  <td className="p-4 text-gray-500 dark:text-gray-400 text-sm whitespace-nowrap text-center">
-                    {format(new Date(mail.createdAt), 'MMM dd, yyyy')}
-                   </td>
-                 </tr>
+                  </td>
+                  <td className={cn(
+                    "p-2 sm:p-4 text-gray-700 dark:text-gray-300",
+                    !mail.isRead && !mail.isSent ? "font-semibold" : "",
+                    isMobile ? "text-xs max-w-[60px] truncate" : "text-sm"
+                  )}>
+                    {isMobile ? getSenderDisplay(mail, mailbox).slice(0, 10) : getSenderDisplay(mail, mailbox)}
+                  </td>
+                  <td className={cn(
+                    "p-2 sm:p-4 text-gray-700 dark:text-gray-300",
+                    !mail.isRead && !mail.isSent ? "font-semibold" : "",
+                    isMobile ? "text-xs max-w-[80px] truncate" : "text-sm max-w-[300px] truncate"
+                  )}>
+                    {isMobile ? mail.subject.slice(0, 15) : mail.subject}
+                  </td>
+                  <td className="p-2 sm:p-4 text-gray-500 dark:text-gray-400 text-xs sm:text-sm whitespace-nowrap text-center">
+                    {isMobile ? format(new Date(mail.createdAt), 'MM/dd/yy') : format(new Date(mail.createdAt), 'MMM dd, yyyy')}
+                  </td>
+                </tr>
               ))
             )}
           </tbody>
@@ -291,7 +311,8 @@ export default function MailList({
   onSelectMail, 
   selectedMail, 
   onRefreshList, 
-  onRefreshStatistics 
+  onRefreshStatistics,
+  isMobile = false
 }: MailListProps) {
   const [mails, setMails] = useState<Mail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -390,7 +411,6 @@ export default function MailList({
     });
   }, []);
 
-  // Fixed: onSelectAll now accepts boolean | string to match the expected type
   const handleSelectAll = useCallback((checked: boolean | string) => {
     const isChecked = typeof checked === 'boolean' ? checked : checked === 'true';
     if (isChecked) {
@@ -436,7 +456,7 @@ export default function MailList({
             : 'rgba(255, 255, 255, 0.55)',
           backdropFilter: 'blur(12px)',
         }}>
-        <Loader type="circular" size={48} />
+        <Loader type="circular" size={isMobile ? 32 : 48} />
       </div>
     );
   }
@@ -455,7 +475,6 @@ export default function MailList({
           : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
       }}
     >
-      {/* Animated gradient border overlay */}
       <div
         className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
         style={{
@@ -463,7 +482,6 @@ export default function MailList({
         }}
       />
       
-      {/* Colored accent line at top */}
       <div
         className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
         style={{
@@ -471,44 +489,56 @@ export default function MailList({
         }}
       />
 
-      {/* Header with search and actions */}
-      <div className="relative z-10 p-4 border-b border-gray-200/30 dark:border-gray-700/30">
-        <div className="flex gap-3">
+      <div className="relative z-10 p-2 sm:p-4 border-b border-gray-200/30 dark:border-gray-700/30">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <SearchInputComponent
             value={searchValue}
             onChange={handleSearchChange}
             placeholder="Search emails..."
+            isMobile={isMobile}
           />
           {selectedCount > 0 && (
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2 flex-wrap">
               {!isTrashView ? (
                 <Button 
                   variant="destructive" 
-                  size="sm"
+                  size={isMobile ? "sm" : "sm"}
                   onClick={() => handleBulkAction('trash')}
-                  className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+                  className={cn(
+                    "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700",
+                    isMobile ? "text-xs px-2 py-1" : ""
+                  )}
                 >
-                  <Trash2 className="w-4 h-4 mr-1" />
-                  Trash ({selectedCount})
+                  <Trash2 className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
+                  {!isMobile && `Trash (${selectedCount})`}
+                  {isMobile && selectedCount}
                 </Button>
               ) : (
                 <>
                   <Button 
                     size="sm"
                     onClick={() => handleBulkAction('restore')}
-                    className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                    className={cn(
+                      "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white",
+                      isMobile ? "text-xs px-2 py-1" : ""
+                    )}
                   >
-                    <RotateCcw className="w-4 h-4 mr-1" />
-                    Restore ({selectedCount})
+                    <RotateCcw className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
+                    {!isMobile && `Restore (${selectedCount})`}
+                    {isMobile && selectedCount}
                   </Button>
                   <Button 
                     variant="destructive" 
                     size="sm"
                     onClick={() => handleBulkAction('delete')}
-                    className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800"
+                    className={cn(
+                      "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800",
+                      isMobile ? "text-xs px-2 py-1" : ""
+                    )}
                   >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete ({selectedCount})
+                    <Trash2 className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
+                    {!isMobile && `Delete (${selectedCount})`}
+                    {isMobile && selectedCount}
                   </Button>
                 </>
               )}
@@ -517,7 +547,6 @@ export default function MailList({
         </div>
       </div>
 
-      {/* Email Table */}
       <EmailTable
         mails={mails}
         mailbox={mailbox}
@@ -528,43 +557,48 @@ export default function MailList({
         onSelectChange={handleSelectChange}
         onSelectAll={handleSelectAll}
         loading={loading}
+        isMobile={isMobile}
       />
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="relative z-10 p-4 border-t border-gray-200/30 dark:border-gray-700/30 flex justify-between items-center">
-          <span className="text-sm text-gray-600 dark:text-gray-400 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-            Showing {((page - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(page * ITEMS_PER_PAGE, totalCount)} of {totalCount}
+        <div className="relative z-10 p-2 sm:p-4 border-t border-gray-200/30 dark:border-gray-700/30 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
+            {isMobile ? `${((page - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(page * ITEMS_PER_PAGE, totalCount)}` : `Showing ${((page - 1) * ITEMS_PER_PAGE) + 1} - ${Math.min(page * ITEMS_PER_PAGE, totalCount)} of ${totalCount}`}
           </span>
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2">
             <Button
               variant="outline"
-              size="sm"
+              size={isMobile ? "sm" : "sm"}
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+              className={cn(
+                "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200",
+                isMobile ? "text-xs px-2 py-1" : ""
+              )}
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Previous
+              <ChevronLeft className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
+              {!isMobile && "Previous"}
             </Button>
-            <span className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg">
-              Page {page} of {totalPages}
+            <span className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm text-gray-700 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg">
+              {isMobile ? `${page}/${totalPages}` : `Page ${page} of ${totalPages}`}
             </span>
             <Button
               variant="outline"
-              size="sm"
+              size={isMobile ? "sm" : "sm"}
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+              className={cn(
+                "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200",
+                isMobile ? "text-xs px-2 py-1" : ""
+              )}
             >
-              Next
-              <ChevronRight className="w-4 h-4 ml-1" />
+              {!isMobile && "Next"}
+              <ChevronRight className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "ml-0.5" : "ml-1")} />
             </Button>
           </div>
         </div>
       )}
 
-      {/* Bulk Action Confirmation Dialog */}
       {actionDialog && (
         <ConfirmDialog
           open={actionDialog.open}
