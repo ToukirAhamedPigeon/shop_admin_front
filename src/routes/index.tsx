@@ -23,6 +23,7 @@ import TranslationsPage from "@/modules/settings/translations/pages/Translations
 import OptionsPage from "@/modules/settings/options/pages/OptionsPage";
 import MailboxPage from "@/modules/mail/pages/MailboxPage";
 import TemplatesPage from "@/modules/mail/pages/TemplatesPage";
+import BackupPage from "@/modules/backup/pages/BackupPage";
 
 
 export default function AppRoutes() {
@@ -140,6 +141,14 @@ export default function AppRoutes() {
           element={
             <PermissionRoute anyOf={["read-admin-translations"]}>
               <TranslationsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="backup"
+          element={
+            <PermissionRoute anyOf={["read-admin-backups"]}>
+              <BackupPage />
             </PermissionRoute>
           }
         />

@@ -560,41 +560,47 @@ export default function MailList({
         isMobile={isMobile}
       />
 
-      {totalPages > 1 && (
-        <div className="relative z-10 p-2 sm:p-4 border-t border-gray-200/30 dark:border-gray-700/30 flex flex-col sm:flex-row justify-between items-center gap-2">
-          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
-            {isMobile ? `${((page - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(page * ITEMS_PER_PAGE, totalCount)}` : `Showing ${((page - 1) * ITEMS_PER_PAGE) + 1} - ${Math.min(page * ITEMS_PER_PAGE, totalCount)} of ${totalCount}`}
-          </span>
-          <div className="flex gap-1 sm:gap-2">
-            <Button
-              variant="outline"
-              size={isMobile ? "sm" : "sm"}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className={cn(
-                "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200",
-                isMobile ? "text-xs px-2 py-1" : ""
-              )}
-            >
-              <ChevronLeft className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
-              {!isMobile && "Previous"}
-            </Button>
-            <span className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm text-gray-700 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg">
-              {isMobile ? `${page}/${totalPages}` : `Page ${page} of ${totalPages}`}
+      {/* Pagination - Always visible if totalCount > ITEMS_PER_PAGE */}
+      {totalCount > ITEMS_PER_PAGE && (
+        <div className="relative z-10 p-2 sm:p-4 border-t border-gray-200/30 dark:border-gray-700/30 bg-white/20 dark:bg-black/20 backdrop-blur-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
+              {isMobile 
+                ? `${((page - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(page * ITEMS_PER_PAGE, totalCount)} of ${totalCount}`
+                : `Showing ${((page - 1) * ITEMS_PER_PAGE) + 1} - ${Math.min(page * ITEMS_PER_PAGE, totalCount)} of ${totalCount}`
+              }
             </span>
-            <Button
-              variant="outline"
-              size={isMobile ? "sm" : "sm"}
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className={cn(
-                "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200",
-                isMobile ? "text-xs px-2 py-1" : ""
-              )}
-            >
-              {!isMobile && "Next"}
-              <ChevronRight className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "ml-0.5" : "ml-1")} />
-            </Button>
+            <div className="flex gap-1 sm:gap-2">
+              <Button
+                variant="outline"
+                size={isMobile ? "sm" : "sm"}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className={cn(
+                  "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200",
+                  isMobile ? "text-xs px-2 py-1" : ""
+                )}
+              >
+                <ChevronLeft className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
+                {!isMobile && "Previous"}
+              </Button>
+              <span className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm text-gray-700 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg">
+                {isMobile ? `${page}/${Math.ceil(totalCount / ITEMS_PER_PAGE)}` : `Page ${page} of ${Math.ceil(totalCount / ITEMS_PER_PAGE)}`}
+              </span>
+              <Button
+                variant="outline"
+                size={isMobile ? "sm" : "sm"}
+                onClick={() => setPage(p => Math.min(Math.ceil(totalCount / ITEMS_PER_PAGE), p + 1))}
+                disabled={page === Math.ceil(totalCount / ITEMS_PER_PAGE)}
+                className={cn(
+                  "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200",
+                  isMobile ? "text-xs px-2 py-1" : ""
+                )}
+              >
+                {!isMobile && "Next"}
+                <ChevronRight className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "ml-0.5" : "ml-1")} />
+              </Button>
+            </div>
           </div>
         </div>
       )}

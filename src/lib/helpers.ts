@@ -109,4 +109,36 @@ export const formatNumber = (num: number, lang?: string) => {
     if (lang !== "bn") return num.toString()
     const bn = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"]
     return num.toString().replace(/\d/g, d => bn[Number(d)])
-  }
+}
+
+/**
+ * Format file size from bytes to human readable format
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// Also add a function to parse file size from string to bytes (useful for validation)
+export const parseFileSize = (size: string): number => {
+  const units: Record<string, number> = {
+    'B': 1,
+    'KB': 1024,
+    'MB': 1024 * 1024,
+    'GB': 1024 * 1024 * 1024,
+    'TB': 1024 * 1024 * 1024 * 1024
+  };
+  
+  const match = size.match(/^([\d.]+)\s*([A-Z]+)$/);
+  if (!match) return 0;
+  
+  const value = parseFloat(match[1]);
+  const unit = match[2].toUpperCase();
+  
+  return value * (units[unit] || 1);
+};

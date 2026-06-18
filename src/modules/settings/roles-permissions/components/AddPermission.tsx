@@ -174,57 +174,56 @@ export default function AddPermission({ fetchData, onClose }: AddPermissionProps
               />
             </div>
 
-            {/* Roles & Status Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="w-4 h-4 text-blue-500" />
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t('Role Assignment')}
-                  </label>
-                </div>
-                <CustomSelect<FormData>
-                  id="roles"
-                  label=""
-                  name="roles"
-                  setValue={setValue}
-                  model="Permission"
-                  apiUrl="/Options/roles"
-                  collection="Role"
-                  labelFields={['name']}
-                  valueFields={['name']}
-                  sortOrder="asc"
-                  isRequired={false}
-                  placeholder="Select Roles"
-                  multiple
-                  value={selectedRoles}
-                  error={errors.roles?.[0]}
-                />
+            {/* Roles */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="w-4 h-4 text-blue-500" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {t('Role Assignment')}
+                </label>
               </div>
+              <CustomSelect<FormData>
+                id="roles"
+                label=""  // Empty label to hide the built-in label
+                name="roles"
+                setValue={setValue}
+                model="Permission"
+                apiUrl="/Options/roles"
+                collection="Role"
+                labelFields={['name']}
+                valueFields={['name']}
+                sortOrder="asc"
+                isRequired={false}
+                placeholder="Select Roles"
+                multiple
+                value={selectedRoles}
+                error={errors.roles?.[0]}
+              />
+            </div>
 
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="w-4 h-4 text-emerald-500" />
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t('Status')}
-                  </label>
-                </div>
-                <CustomSelect<FormData>
-                  id="isActive"
-                  label=""
-                  name="isActive"
-                  placeholder="Select Current Status"
-                  isRequired
-                  options={[
-                    { label: 'Active', value: 'true' },
-                    { label: 'Inactive', value: 'false' }
-                  ]}
-                  error={errors.isActive}
-                  setValue={setValue}
-                  value={selectedIsActive}
-                  model="Permission"
-                />
+            {/* Status */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Activity className="w-4 h-4 text-emerald-500" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {t('Status')} <span className="text-red-500">*</span>
+                </label>
               </div>
+              <CustomSelect<FormData>
+                id="isActive"
+                label=""  // Empty label to hide the built-in label
+                name="isActive"
+                placeholder="Select Current Status"
+                isRequired={false}  // We handle the required indicator manually
+                options={[
+                  { label: 'Active', value: 'true' },
+                  { label: 'Inactive', value: 'false' }
+                ]}
+                error={errors.isActive}
+                setValue={setValue}
+                value={selectedIsActive}
+                model="Permission"
+              />
             </div>
 
             {/* Submit Actions */}

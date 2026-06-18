@@ -18,7 +18,8 @@ import {
   ListChecks,
   Mail,
   Inbox,
-  FileText
+  FileText,
+  Database 
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
@@ -87,6 +88,7 @@ const menuItems: MenuItem[] = [
       "read-admin-roles",
       "read-admin-permissions",
       "read-admin-user-logs",
+      "read-admin-backups",
       "read-admin-api-docs"
     ],
     children: [
@@ -161,6 +163,14 @@ const menuItems: MenuItem[] = [
         iconName: "History",
         basePath: "/settings/user-logs",
         permissions: ["read-admin-user-logs"],
+      },
+      {
+        label: "common.backup.title",
+        defaultLabel: "Backup",
+        icon: <Database size={22} className="mr-2" />,
+        iconName: "Database",
+        basePath: "/backup",
+        permissions: ["read-admin-backups"],
       },
       {
         label: "common.api_docs.title",

@@ -12,7 +12,7 @@ import { getMailStatistics, fetchEmails } from '../api';
 import { can } from '@/lib/authCheck';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Mail as MailIcon, Inbox, Send, Star, Trash2, Menu, X, ChevronLeft } from 'lucide-react';
+import { RefreshCw, Mail as MailIcon, Inbox, Send, Star, Trash2, Menu, X } from 'lucide-react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { cn } from '@/lib/utils';
 
@@ -133,7 +133,7 @@ export default function MailboxPage() {
       className="flex flex-col gap-4 h-full relative"
     >
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
         <Breadcrumb
           title="common.mail.title"
           showTitle={true}
@@ -176,6 +176,7 @@ export default function MailboxPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
+        className="flex-shrink-0"
       >
         <GlassCard variant="primary" padding="sm">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
@@ -202,8 +203,8 @@ export default function MailboxPage() {
         </GlassCard>
       </motion.div>
 
-      {/* Main Mail Section - Responsive */}
-      <div className="flex gap-4 h-[calc(100vh-280px)] min-h-[400px] relative">
+      {/* Main Mail Section - Responsive with increased height */}
+      <div className="flex gap-4 flex-1 min-h-0">
         {/* Mobile Sidebar Overlay */}
         {showMobileSidebar && isMobile && (
           <div 
@@ -251,9 +252,9 @@ export default function MailboxPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex-1 min-w-0"
+          className="flex-1 min-w-0 flex flex-col"
         >
-          <GlassCard variant="default" padding="none" className="h-full overflow-hidden">
+          <GlassCard variant="default" padding="none" className="flex-1 overflow-hidden">
             <MailList
               key={`${selectedMailbox}-${refreshKey}`}
               mailbox={selectedMailbox}
