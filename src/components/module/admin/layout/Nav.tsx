@@ -167,7 +167,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.backup.title",
         defaultLabel: "Backup",
-        icon: <Database size={22} className="mr-2" />,
+        icon: <Database size={18} className="mr-2" />,
         iconName: "Database",
         basePath: "/backup",
         permissions: ["read-admin-backups"],
@@ -227,6 +227,7 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
       ListChecks: { active: "text-green-600", inactive: "text-green-500" },
       History: { active: "text-orange-600", inactive: "text-orange-500" },
       FileCode: { active: "text-gray-600", inactive: "text-gray-500" },
+      Database: { active: "text-blue-600", inactive: "text-blue-500" },
     };
     
     const defaultColor = isActive 

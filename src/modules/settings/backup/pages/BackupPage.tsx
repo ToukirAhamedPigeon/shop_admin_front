@@ -6,13 +6,15 @@ import GlassCard from '@/components/custom/GlassCard';
 import BackupList from '../components/BackupList';
 import { Button } from '@/components/ui/button';
 import { Plus, RefreshCw, HardDrive, Database, Cloud, Server, CheckCircle } from 'lucide-react';
-import { getBackupStatistics, createBackup } from '../api';
-import type { BackupStatistics } from '../types';
+import { getBackupStatistics, createBackup, getStorageDestinations } from '../api';
+import type { BackupStatistics, StorageDestination } from '../types';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { formatFileSize } from '@/lib/helpers';
 import { can } from '@/lib/authCheck';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import { useAppSelector } from '@/hooks/useRedux';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 export default function BackupPage() {
   const [statistics, setStatistics] = useState<BackupStatistics | null>(null);
@@ -20,6 +22,8 @@ export default function BackupPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [backupDialogOpen, setBackupDialogOpen] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
+  const [storageDestinations, setStorageDestinations] = useState<StorageDestination[]>([]);
+  const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
   const hasCreatePermission = can(['create-admin-backups']);
@@ -30,6 +34,19 @@ export default function BackupPage() {
       setStatistics(response.data);
     } catch (error) {
       console.error('Failed to load statistics:', error);
+    }
+  }, []);
+
+  const loadStorageDestinations = useCallback(async () => {
+    try {
+      const response = await getStorageDestinations();
+      setStorageDestinations(response.data.destinations || []);
+      const remoteDest = response.data.destinations?.find(d => d.type === 'RemoteServer');
+      if (remoteDest) {
+        setSelectedDestinations(['RemoteServer']);
+      }
+    } catch (error) {
+      console.error('Failed to load storage destinations:', error);
     }
   }, []);
 
@@ -45,22 +62,52 @@ export default function BackupPage() {
   };
 
   const handleCreateBackup = async () => {
+    if (selectedDestinations.length === 0) {
+      dispatchShowToast({ type: 'warning', message: 'Please select at least one storage destination' });
+      return;
+    }
+
     setBackupLoading(true);
     try {
-      await createBackup({});
+      // isManual will be handled by backend default (true)
+      await createBackup({ 
+        storageDestinations: selectedDestinations
+      });
       dispatchShowToast({ type: 'success', message: 'Backup created successfully' });
       setBackupDialogOpen(false);
       handleRefresh();
-    } catch (error) {
-      dispatchShowToast({ type: 'danger', message: 'Failed to create backup' });
+    } catch (error: any) {
+      dispatchShowToast({ type: 'danger', message: error.response?.data?.message || 'Failed to create backup' });
     } finally {
       setBackupLoading(false);
+    }
+  };
+
+  const handleOpenDialog = () => {
+    loadStorageDestinations();
+    setBackupDialogOpen(true);
+  };
+
+  const handleDestinationToggle = (type: string, checked: boolean) => {
+    if (checked) {
+      setSelectedDestinations([...selectedDestinations, type]);
+    } else {
+      setSelectedDestinations(selectedDestinations.filter(d => d !== type));
     }
   };
 
   useEffect(() => {
     loadStatistics();
   }, [loadStatistics]);
+
+  const getStorageIcon = (type: string) => {
+    switch (type) {
+      case 'RemoteServer': return <Server className="w-4 h-4 text-purple-500" />;
+      case 'GoogleDrive': return <Cloud className="w-4 h-4 text-green-500" />;
+      case 'Local': return <HardDrive className="w-4 h-4 text-blue-500" />;
+      default: return <HardDrive className="w-4 h-4 text-gray-500" />;
+    }
+  };
 
   const quickStats = [
     { 
@@ -117,7 +164,7 @@ export default function BackupPage() {
           </Button>
           {hasCreatePermission && (
             <Button 
-              onClick={() => setBackupDialogOpen(true)} 
+              onClick={handleOpenDialog} 
               className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
               size="sm"
             >
@@ -169,24 +216,54 @@ export default function BackupPage() {
         />
       </div>
 
-      {/* Create Backup Dialog */}
+      {/* Create Backup Dialog with Storage Selection */}
       <ConfirmDialog
         open={backupDialogOpen}
         onCancel={() => setBackupDialogOpen(false)}
         onConfirm={handleCreateBackup}
-        title="Create Backup"
+        title="Create Database Backup"
         variant="info"
         icon={<Database className="w-6 h-6" />}
         confirmLabel={backupLoading ? 'Creating...' : 'Create Backup'}
         loading={backupLoading}
       >
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className="text-blue-600 dark:text-blue-400 font-medium">
-            This will create a full database backup.
+            Select storage destinations for this backup:
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            The backup will be stored in all configured storage destinations.
-          </p>
+          
+          <div className="space-y-2">
+            {storageDestinations.map((dest) => (
+              <div 
+                key={dest.id}
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
+                  selectedDestinations.includes(dest.type)
+                    ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <Checkbox
+                  id={`dest-${dest.id}`}
+                  checked={selectedDestinations.includes(dest.type)}
+                  onCheckedChange={(checked) => handleDestinationToggle(dest.type, !!checked)}
+                  className="cursor-pointer"
+                />
+                <Label htmlFor={`dest-${dest.id}`} className="cursor-pointer flex items-center gap-2 flex-1">
+                  {getStorageIcon(dest.type)}
+                  <span className="font-medium">{dest.name}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
+                    {dest.isPrimary ? 'Primary' : 'Secondary'}
+                  </span>
+                </Label>
+              </div>
+            ))}
+          </div>
+          
+          {storageDestinations.length === 0 && (
+            <p className="text-yellow-600 dark:text-yellow-400 text-sm">
+              ⚠️ No storage destinations configured. Please configure at least one storage destination.
+            </p>
+          )}
         </div>
       </ConfirmDialog>
     </motion.div>

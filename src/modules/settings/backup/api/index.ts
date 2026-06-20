@@ -55,3 +55,6 @@ export const deleteStorageDestination = (id: number) =>
 
 export const testStorageConnection = (id: number) => 
   api.post<{ success: boolean; message: string }>(`/Backup/storage/${id}/test`);
+
+export const bulkDeleteBackups = (ids: string[]) => 
+  api.post('/Backup/bulk-delete', { ids });

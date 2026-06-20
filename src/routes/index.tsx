@@ -23,7 +23,7 @@ import TranslationsPage from "@/modules/settings/translations/pages/Translations
 import OptionsPage from "@/modules/settings/options/pages/OptionsPage";
 import MailboxPage from "@/modules/mail/pages/MailboxPage";
 import TemplatesPage from "@/modules/mail/pages/TemplatesPage";
-import BackupPage from "@/modules/backup/pages/BackupPage";
+import BackupPage from "@/modules/settings/backup/pages/BackupPage";
 
 
 export default function AppRoutes() {
