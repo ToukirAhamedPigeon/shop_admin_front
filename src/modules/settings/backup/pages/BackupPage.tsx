@@ -1,11 +1,13 @@
 // src/modules/backup/pages/BackupPage.tsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb';
 import GlassCard from '@/components/custom/GlassCard';
 import BackupList from '../components/BackupList';
+import ScheduleManager from '../components/ScheduleManager';
 import { Button } from '@/components/ui/button';
-import { Plus, RefreshCw, HardDrive, Database, Cloud, Server, CheckCircle } from 'lucide-react';
+import { Plus, RefreshCw, HardDrive, Database, Cloud, Server, CheckCircle, Clock } from 'lucide-react';
 import { getBackupStatistics, createBackup, getStorageDestinations } from '../api';
 import type { BackupStatistics, StorageDestination } from '../types';
 import { dispatchShowToast } from '@/lib/dispatch';
@@ -16,6 +18,11 @@ import { useAppSelector } from '@/hooks/useRedux';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
+// Helper: parse a UTC ISO string safely using date-fns parseISO
+const parseUtcDate = (dateStr: string): Date => {
+  return parseISO(dateStr);
+};
+
 export default function BackupPage() {
   const [statistics, setStatistics] = useState<BackupStatistics | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -24,14 +31,47 @@ export default function BackupPage() {
   const [backupLoading, setBackupLoading] = useState(false);
   const [storageDestinations, setStorageDestinations] = useState<StorageDestination[]>([]);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
+  const [countdown, setCountdown] = useState<string>('');
   const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
   const hasCreatePermission = can(['create-admin-backups']);
+  const hasSchedulePermission = can(['create-admin-backups']);
+
+  // 🔥 Track previous backup count to detect changes
+  const prevBackupCountRef = useRef<number | null>(null);
+  const prevSuccessCountRef = useRef<number | null>(null);
 
   const loadStatistics = useCallback(async () => {
     try {
       const response = await getBackupStatistics();
-      setStatistics(response.data);
+      const newStats = response.data;
+      console.log('📊 Statistics:', newStats);
+
+      // 🔥 Check if backup count changed (Condition 3)
+      const prevCount = prevBackupCountRef.current;
+      const currentCount = newStats.totalBackups;
+      const prevSuccess = prevSuccessCountRef.current;
+      const currentSuccess = newStats.successCount;
+
+      // Update statistics state
+      setStatistics(newStats);
+
+      // 🔥 If count changed, refresh the backup list
+      if (prevCount !== null && currentCount !== prevCount) {
+        console.log(`🔄 Backup count changed from ${prevCount} to ${currentCount} - refreshing list`);
+        refreshList();
+      }
+
+      // If success count changed (new backup completed), also refresh
+      if (prevSuccess !== null && currentSuccess !== prevSuccess) {
+        console.log(`🔄 Success count changed from ${prevSuccess} to ${currentSuccess} - refreshing list`);
+        refreshList();
+      }
+
+      // Update refs for next comparison
+      prevBackupCountRef.current = currentCount;
+      prevSuccessCountRef.current = currentSuccess;
+
     } catch (error) {
       console.error('Failed to load statistics:', error);
     }
@@ -54,6 +94,7 @@ export default function BackupPage() {
     setRefreshKey(prev => prev + 1);
   }, []);
 
+  // Condition 2: On Click Refresh Button
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadStatistics();
@@ -69,12 +110,12 @@ export default function BackupPage() {
 
     setBackupLoading(true);
     try {
-      // isManual will be handled by backend default (true)
       await createBackup({ 
         storageDestinations: selectedDestinations
       });
       dispatchShowToast({ type: 'success', message: 'Backup created successfully' });
       setBackupDialogOpen(false);
+      // Refresh after manual backup creation
       handleRefresh();
     } catch (error: any) {
       dispatchShowToast({ type: 'danger', message: error.response?.data?.message || 'Failed to create backup' });
@@ -96,9 +137,49 @@ export default function BackupPage() {
     }
   };
 
+  // Condition 1: On page load
   useEffect(() => {
     loadStatistics();
   }, [loadStatistics]);
+
+  useEffect(() => {
+    console.log('📊 Statistics updated:', statistics);
+  }, [statistics]);
+
+  // Countdown timer – only updates the countdown display
+  useEffect(() => {
+    if (!statistics?.nextBackupAt) {
+      setCountdown('');
+      return;
+    }
+
+    const nextDate = parseUtcDate(statistics.nextBackupAt);
+    const currentTime = new Date();
+    
+    console.log('🔍 Next backup (UTC):', nextDate.toISOString());
+    console.log('🔍 Current time (UTC):', currentTime.toISOString());
+    console.log('🔍 Diff (minutes):', (nextDate.getTime() - currentTime.getTime()) / 60000);
+
+    const diffMinutes = (nextDate.getTime() - currentTime.getTime()) / 60000;
+    if (diffMinutes > 1440) {
+      console.warn('⚠️ Next backup is more than 24 hours away – possible timezone issue');
+      setCountdown('Check schedule');
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const diff = nextDate.getTime() - Date.now();
+      if (diff <= 0) {
+        setCountdown('Now');
+        clearInterval(interval);
+        // 🔥 Don't auto-refresh here – the polling will detect the count change
+      } else {
+        setCountdown(formatDistanceToNow(nextDate, { addSuffix: true }));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [statistics?.nextBackupAt]);
 
   const getStorageIcon = (type: string) => {
     switch (type) {
@@ -129,10 +210,10 @@ export default function BackupPage() {
       color: 'text-green-500' 
     },
     { 
-      label: 'Google Drive', 
-      value: formatFileSize(statistics?.storageUsed?.googleDrive || 0), 
-      icon: <Cloud className="w-4 h-4" />, 
-      color: 'text-emerald-500' 
+      label: 'Next Backup', 
+      value: countdown || '—', 
+      icon: <Clock className="w-4 h-4" />, 
+      color: 'text-orange-500' 
     },
   ];
 
@@ -143,7 +224,6 @@ export default function BackupPage() {
       transition={{ duration: 0.5 }}
       className="flex flex-col gap-4 h-full relative"
     >
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
         <Breadcrumb
           title="common.backup.title"
@@ -175,7 +255,6 @@ export default function BackupPage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -207,7 +286,17 @@ export default function BackupPage() {
         </GlassCard>
       </motion.div>
 
-      {/* Backup List */}
+      {hasSchedulePermission && (
+        <ScheduleManager 
+          onScheduleChange={() => {
+            // Refresh after schedule changes
+            loadStatistics();
+            refreshList();
+            setRefreshKey(prev => prev + 1);
+          }} 
+        />
+      )}
+
       <div className="flex-1 min-h-0">
         <BackupList
           key={refreshKey}
@@ -216,7 +305,6 @@ export default function BackupPage() {
         />
       </div>
 
-      {/* Create Backup Dialog with Storage Selection */}
       <ConfirmDialog
         open={backupDialogOpen}
         onCancel={() => setBackupDialogOpen(false)}
@@ -231,7 +319,6 @@ export default function BackupPage() {
           <p className="text-blue-600 dark:text-blue-400 font-medium">
             Select storage destinations for this backup:
           </p>
-          
           <div className="space-y-2">
             {storageDestinations.map((dest) => (
               <div 
@@ -258,7 +345,6 @@ export default function BackupPage() {
               </div>
             ))}
           </div>
-          
           {storageDestinations.length === 0 && (
             <p className="text-yellow-600 dark:text-yellow-400 text-sm">
               ⚠️ No storage destinations configured. Please configure at least one storage destination.

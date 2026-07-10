@@ -20,6 +20,8 @@ export interface BackupSchedule {
   id: number;
   name: string;
   cronExpression: string;
+  intervalValue: number;
+  intervalUnit: string; // minutes, hours, days, weeks, months, years
   isActive: boolean;
   retentionDays: number;
   storageDestinations: string[];
@@ -72,5 +74,5 @@ export interface BackupStatistics {
     googleDrive: number;
   };
   lastBackupAt?: string;
-  nextBackupAt?: string;
+  nextBackupAt?: string;   // <-- add this
 }

@@ -4,7 +4,7 @@ import type { Backup, BackupSchedule, StorageDestination, BackupFilterRequest, B
 
 // Backup endpoints
 export const getBackupStatistics = () => 
-  api.get<BackupStatistics>('/Backup/statistics');
+  api.get<BackupStatistics>(`/Backup/statistics?_=${Date.now()}`); // Cache busting
 
 export const getBackups = (request: BackupFilterRequest) => 
   api.post<{ backups: Backup[]; totalCount: number; grandTotalCount: number }>('/Backup', request);
@@ -31,7 +31,15 @@ export const cleanOldBackups = (retentionDays: number) =>
 export const getSchedules = () => 
   api.get<{ schedules: BackupSchedule[] }>('/Backup/schedule');
 
-export const createSchedule = (data: Omit<BackupSchedule, 'id' | 'createdAt' | 'updatedAt' | 'createdByName'>) => 
+export const createSchedule = (data: {
+  name: string;
+  intervalValue: number;
+  intervalUnit: string;
+  retentionDays: number;
+  storageDestinations: string[];
+  isActive: boolean;
+  currentTime?: string;
+}) => 
   api.post<{ success: boolean; schedule: BackupSchedule }>('/Backup/schedule', data);
 
 export const updateSchedule = (id: number, data: Partial<BackupSchedule>) => 

@@ -494,7 +494,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                 <Card 
                   key={backup.id}
                   className={cn(
-                    "overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border",
+                    "overflow-hidden transition-all duration-300 hover:shadow-lg border",
                     isDarkMode ? "bg-gray-800/50 border-gray-700" : "bg-white border-gray-200",
                     isSelected && "ring-2 ring-blue-500"
                   )}
