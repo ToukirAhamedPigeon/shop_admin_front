@@ -24,6 +24,7 @@ import OptionsPage from "@/modules/settings/options/pages/OptionsPage";
 import MailboxPage from "@/modules/mail/pages/MailboxPage";
 import TemplatesPage from "@/modules/mail/pages/TemplatesPage";
 import BackupPage from "@/modules/settings/backup/pages/BackupPage";
+import AppSettingsPage from '@/modules/settings/app-settings/pages/AppSettingsPage';
 
 
 export default function AppRoutes() {
@@ -159,6 +160,14 @@ export default function AppRoutes() {
           element={
             <PermissionRoute anyOf={["read-admin-user-logs"]}>
               <UserLogsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="settings/app-settings"
+          element={
+            <PermissionRoute anyOf={["read-admin-settings"]}>
+              <AppSettingsPage />
             </PermissionRoute>
           }
         />
