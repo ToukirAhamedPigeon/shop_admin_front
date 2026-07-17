@@ -1,18 +1,27 @@
-// D:\shop\shop_admin_front\src\modules\settings\app-settings\store\settingsSlice.ts
+// D:\shop\shop_admin_front\src\redux\slices\settingsSlice.ts
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { getAllSettings, updateCategorySettings, resetCategory } from '../../modules/settings/app-settings/api';
-import type { SettingsResponse, SettingsGroup } from '@/types/settings';
+import {
+  getAllSettings,
+  updateThemeSettings,
+  updateGeneralSettings,
+  updateBrandingSettings,
+  resetThemeSettings,
+  resetGeneralSettings
+} from '@/modules/settings/app-settings/api';
+import type { SettingsResponse, UserSettings, BrandingSettings } from '@/types/settings';
 
 interface SettingsState {
   data: SettingsResponse | null;
-  groups: SettingsGroup[];
+  userSettings: UserSettings | null;
+  brandingSettings: BrandingSettings | null;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: SettingsState = {
   data: null,
-  groups: [],
+  userSettings: null,
+  brandingSettings: null,
   loading: false,
   error: null
 };
@@ -25,21 +34,42 @@ export const fetchSettings = createAsyncThunk(
   }
 );
 
-export const updateSettings = createAsyncThunk(
-  'settings/update',
-  async ({ category, settings }: { category: string; settings: Record<string, any> }) => {
-    await updateCategorySettings(category, settings);
-    // Refetch after update
-    const response = await getAllSettings();
+export const updateTheme = createAsyncThunk(
+  'settings/updateTheme',
+  async (settings: any) => {
+    const response = await updateThemeSettings(settings);
     return response;
   }
 );
 
-export const resetCategorySettings = createAsyncThunk(
-  'settings/reset',
-  async (category: string) => {
-    await resetCategory(category);
-    const response = await getAllSettings();
+export const updateGeneral = createAsyncThunk(
+  'settings/updateGeneral',
+  async (settings: any) => {
+    const response = await updateGeneralSettings(settings);
+    return response;
+  }
+);
+
+export const updateBranding = createAsyncThunk(
+  'settings/updateBranding',
+  async (settings: any) => {
+    const response = await updateBrandingSettings(settings);
+    return response;
+  }
+);
+
+export const resetTheme = createAsyncThunk(
+  'settings/resetTheme',
+  async () => {
+    const response = await resetThemeSettings();
+    return response;
+  }
+);
+
+export const resetGeneral = createAsyncThunk(
+  'settings/resetGeneral',
+  async () => {
+    const response = await resetGeneralSettings();
     return response;
   }
 );
@@ -50,13 +80,15 @@ const settingsSlice = createSlice({
   reducers: {
     clearSettings: (state) => {
       state.data = null;
-      state.groups = [];
+      state.userSettings = null;
+      state.brandingSettings = null;
       state.loading = false;
       state.error = null;
     }
   },
   extraReducers: (builder) => {
     builder
+      // Fetch Settings
       .addCase(fetchSettings.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -64,27 +96,55 @@ const settingsSlice = createSlice({
       .addCase(fetchSettings.fulfilled, (state, action: PayloadAction<SettingsResponse>) => {
         state.loading = false;
         state.data = action.payload;
-        state.groups = action.payload.groups;
+        state.userSettings = action.payload.user;
+        state.brandingSettings = action.payload.branding;
       })
       .addCase(fetchSettings.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch settings';
       })
-      .addCase(updateSettings.pending, (state) => {
-        state.loading = true;
+      // Update Theme
+      .addCase(updateTheme.fulfilled, (state, action: PayloadAction<UserSettings>) => {
+        state.userSettings = action.payload;
+        if (state.data) {
+          state.data.user = action.payload;
+          state.data.lastUpdated = action.payload.updatedAt;
+          state.data.updatedBy = action.payload.updatedBy;
+        }
       })
-      .addCase(updateSettings.fulfilled, (state, action: PayloadAction<SettingsResponse>) => {
-        state.loading = false;
-        state.data = action.payload;
-        state.groups = action.payload.groups;
+      // Update General
+      .addCase(updateGeneral.fulfilled, (state, action: PayloadAction<UserSettings>) => {
+        state.userSettings = action.payload;
+        if (state.data) {
+          state.data.user = action.payload;
+          state.data.lastUpdated = action.payload.updatedAt;
+          state.data.updatedBy = action.payload.updatedBy;
+        }
       })
-      .addCase(updateSettings.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to update settings';
+      // Update Branding
+      .addCase(updateBranding.fulfilled, (state, action: PayloadAction<BrandingSettings>) => {
+        state.brandingSettings = action.payload;
+        if (state.data) {
+          state.data.branding = action.payload;
+        }
       })
-      .addCase(resetCategorySettings.fulfilled, (state, action: PayloadAction<SettingsResponse>) => {
-        state.data = action.payload;
-        state.groups = action.payload.groups;
+      // Reset Theme
+      .addCase(resetTheme.fulfilled, (state, action: PayloadAction<UserSettings>) => {
+        state.userSettings = action.payload;
+        if (state.data) {
+          state.data.user = action.payload;
+          state.data.lastUpdated = action.payload.updatedAt;
+          state.data.updatedBy = action.payload.updatedBy;
+        }
+      })
+      // Reset General
+      .addCase(resetGeneral.fulfilled, (state, action: PayloadAction<UserSettings>) => {
+        state.userSettings = action.payload;
+        if (state.data) {
+          state.data.user = action.payload;
+          state.data.lastUpdated = action.payload.updatedAt;
+          state.data.updatedBy = action.payload.updatedBy;
+        }
       });
   }
 });

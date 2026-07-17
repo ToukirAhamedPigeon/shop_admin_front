@@ -8,7 +8,7 @@ import loaderReducer from "./slices/loaderSlice";
 import toastReducer from "./slices/toastSlice";
 import { setAccessTokenGetter, setCsrfTokenGetter } from "@/lib/axios";
 import tableColumnSettingsReducer from "./slices/tableColumnSettingsSlice";
-import settingsReducer from "./slices/settingsSlice";
+import settingsReducer from './slices/settingsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,7 +20,7 @@ export const store = configureStore({
     loader: loaderReducer,
     toast: toastReducer,
     tableColumnSettings: tableColumnSettingsReducer,
-    settings: settingsReducer,
+    settings: settingsReducer
   },
 });
 

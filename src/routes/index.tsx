@@ -27,6 +27,7 @@ import BackupPage from "@/modules/settings/backup/pages/BackupPage";
 import AppSettingsPage from '@/modules/settings/app-settings/pages/AppSettingsPage';
 
 
+
 export default function AppRoutes() {
   return (
     <Routes>

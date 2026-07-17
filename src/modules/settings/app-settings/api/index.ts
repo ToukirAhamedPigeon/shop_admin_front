@@ -1,38 +1,50 @@
 // D:\shop\shop_admin_front\src\modules\settings\app-settings\api\index.ts
 import api from '@/lib/axios';
-import type { SettingsResponse, SettingsGroup, AppSetting } from '@/types/settings';
+import type {
+  SettingsResponse,
+  UserSettings,
+  BrandingSettings,
+  UpdateThemeSettings,
+  UpdateGeneralSettings,
+  UpdateBrandingSettings
+} from '@/types/settings';
 
 export const getAllSettings = async (): Promise<SettingsResponse> => {
   const response = await api.get('/settings');
   return response.data;
 };
 
-export const getPublicSettings = async () => {
-  const response = await api.get('/settings/public');
+export const getUserSettings = async (): Promise<UserSettings> => {
+  const response = await api.get('/settings/user');
   return response.data;
 };
 
-export const getSettingsByCategory = async (category: string): Promise<SettingsGroup> => {
-  const response = await api.get(`/settings/category/${category}`);
+export const getBrandingSettings = async (): Promise<BrandingSettings> => {
+  const response = await api.get('/settings/branding');
   return response.data;
 };
 
-export const updateSetting = async (id: string, value: string): Promise<AppSetting> => {
-  const response = await api.put(`/settings/${id}`, { value });
+export const updateThemeSettings = async (data: UpdateThemeSettings): Promise<UserSettings> => {
+  const response = await api.put('/settings/theme', data);
   return response.data;
 };
 
-export const updateCategorySettings = async (category: string, settings: Record<string, any>) => {
-  const response = await api.put(`/settings/category/${category}`, settings);
+export const updateGeneralSettings = async (data: UpdateGeneralSettings): Promise<UserSettings> => {
+  const response = await api.put('/settings/general', data);
   return response.data;
 };
 
-export const resetCategory = async (category: string) => {
-  const response = await api.post(`/settings/reset/${category}`);
+export const updateBrandingSettings = async (data: UpdateBrandingSettings): Promise<BrandingSettings> => {
+  const response = await api.put('/settings/branding', data);
   return response.data;
 };
 
-export const clearCache = async () => {
-  const response = await api.post('/settings/clear-cache');
+export const resetThemeSettings = async (): Promise<UserSettings> => {
+  const response = await api.post('/settings/reset/theme');
+  return response.data;
+};
+
+export const resetGeneralSettings = async (): Promise<UserSettings> => {
+  const response = await api.post('/settings/reset/general');
   return response.data;
 };

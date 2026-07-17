@@ -1,15 +1,15 @@
 // D:\shop\shop_admin_front\src\modules\settings\app-settings\components\ThemeSettings.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ColorPicker } from './ColorPicker';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { SingleImageInput } from '@/components/custom/FormInputs';
 import { useTranslations } from '@/hooks/useTranslations';
 import { useAppSelector } from '@/hooks/useRedux';
-import type { AppSetting } from '@/types/settings';
+import type { ThemeSettings as ThemeSettingsType } from '@/types/settings';
 
 interface ThemeSettingsProps {
-  settings: AppSetting[];
+  settings: ThemeSettingsType;
   onUpdate: (key: string, value: any) => void;
   onUpload: (key: string, file: File) => void;
   loading: boolean;
@@ -22,26 +22,21 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
   loading
 }) => {
   const { t } = useTranslations();
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
-  const getSetting = (key: string) => settings.find(s => s.key === key);
+  const [sidebarPreview, setSidebarPreview] = useState<string | null>(settings.sidebar_bg_image || null);
+  const [loginPreview, setLoginPreview] = useState<string | null>(settings.login_bg_image || null);
 
-  const primaryColor = getSetting('primary_color')?.value || '#3B82F6';
-  const secondaryColor = getSetting('secondary_color')?.value || '#10B981';
-  const darkMode = getSetting('dark_mode')?.value === 'true';
-  const sidebarBg = getSetting('sidebar_bg_image')?.value || '';
-  const loginBg = getSetting('login_bg_image')?.value || '';
-  const customCss = getSetting('custom_css')?.value || '';
-
-  const [sidebarPreview, setSidebarPreview] = React.useState<string | null>(sidebarBg || null);
-  const [loginPreview, setLoginPreview] = React.useState<string | null>(loginBg || null);
+  useEffect(() => {
+    setSidebarPreview(settings.sidebar_bg_image || null);
+    setLoginPreview(settings.login_bg_image || null);
+  }, [settings.sidebar_bg_image, settings.login_bg_image]);
 
   const handleColorChange = (key: string, color: string) => {
     onUpdate(key, color);
   };
 
   const handleDarkModeToggle = (checked: boolean) => {
-    onUpdate('dark_mode', String(checked));
+    onUpdate('dark_mode', checked);
   };
 
   const handleTextChange = (key: string, value: string) => {
@@ -82,7 +77,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
           <div>
             <ColorPicker
               label={t('Primary Color')}
-              value={primaryColor}
+              value={settings.primary_color}
               onChange={(color: string) => handleColorChange('primary_color', color)}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -92,7 +87,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
           <div>
             <ColorPicker
               label={t('Secondary Color')}
-              value={secondaryColor}
+              value={settings.secondary_color}
               onChange={(color: string) => handleColorChange('secondary_color', color)}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -153,16 +148,16 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
           </div>
           <button
             type="button"
-            onClick={() => handleDarkModeToggle(!darkMode)}
+            onClick={() => handleDarkModeToggle(!settings.dark_mode)}
             className={`
               relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-              ${darkMode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}
+              ${settings.dark_mode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}
             `}
           >
             <span
               className={`
                 inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                ${darkMode ? 'translate-x-6' : 'translate-x-1'}
+                ${settings.dark_mode ? 'translate-x-6' : 'translate-x-1'}
               `}
             />
           </button>
@@ -176,7 +171,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
           {t('Custom CSS')}
         </h3>
         <Textarea
-          value={customCss}
+          value={settings.custom_css}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleTextChange('custom_css', e.target.value)}
           placeholder="/* Add custom CSS here */"
           className="font-mono h-32 bg-gray-50 dark:bg-gray-900"

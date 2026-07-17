@@ -1,37 +1,35 @@
 // D:\shop\shop_admin_front\src\modules\settings\app-settings\components\BrandingSettings.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { SingleImageInput } from '@/components/custom/FormInputs';
 import { useTranslations } from '@/hooks/useTranslations';
-import { useAppSelector } from '@/hooks/useRedux';
-import type { AppSetting } from '@/types/settings';
+import type { BrandingSettings as BrandingSettingsType } from '@/types/settings';
 
 interface BrandingSettingsProps {
-  settings: AppSetting[];
+  settings: BrandingSettingsType;
   onUpdate: (key: string, value: any) => void;
   onUpload: (key: string, file: File) => void;
   loading: boolean;
+  isDeveloper: boolean;
 }
 
 export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
   settings,
   onUpdate,
   onUpload,
-  loading
+  loading,
+  isDeveloper
 }) => {
   const { t } = useTranslations();
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
-  const getSetting = (key: string) => settings.find(s => s.key === key);
+  const [logoPreview, setLogoPreview] = useState<string | null>(settings.logo || null);
+  const [faviconPreview, setFaviconPreview] = useState<string | null>(settings.favicon || null);
 
-  const appName = getSetting('app_name')?.value || 'Shop Management';
-  const logo = getSetting('logo')?.value || '';
-  const favicon = getSetting('favicon')?.value || '';
-  const footerText = getSetting('footer_text')?.value || '';
-
-  const [logoPreview, setLogoPreview] = React.useState<string | null>(logo || null);
-  const [faviconPreview, setFaviconPreview] = React.useState<string | null>(favicon || null);
+  useEffect(() => {
+    setLogoPreview(settings.logo || null);
+    setFaviconPreview(settings.favicon || null);
+  }, [settings.logo, settings.favicon]);
 
   const handleInputChange = (key: string, value: string) => {
     onUpdate(key, value);
@@ -59,6 +57,24 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
     onUpdate(key, '');
   };
 
+  // Developer check with case-insensitive comparison
+  const isDeveloperUser = isDeveloper === true;
+
+  if (!isDeveloperUser) {
+    return (
+      <Card className="p-6">
+        <div className="text-center py-8">
+          <p className="text-gray-500 dark:text-gray-400">
+            {t('Branding settings can only be modified by Developer users.')}
+          </p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+            {t('Contact your system administrator for changes.')}
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Application Name */}
@@ -69,7 +85,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
         </h3>
         <div>
           <Input
-            value={appName}
+            value={settings.app_name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('app_name', e.target.value)}
             placeholder={t('Enter application name')}
             className="max-w-md"
@@ -124,7 +140,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
         </h3>
         <div>
           <Input
-            value={footerText}
+            value={settings.footer_text}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('footer_text', e.target.value)}
             placeholder={t('Enter footer copyright text')}
             className="max-w-md"
