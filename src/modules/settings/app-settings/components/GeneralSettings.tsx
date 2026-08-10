@@ -1,5 +1,5 @@
 // D:\shop\shop_admin_front\src\modules\settings\app-settings\components\GeneralSettings.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { CustomSelect } from '@/components/custom/FormInputs';
 import { useTranslations } from '@/hooks/useTranslations';
@@ -48,7 +48,20 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
 }) => {
   const { t } = useTranslations();
 
+  // Local state for immediate UI updates
+  const [localSettings, setLocalSettings] = useState<GeneralSettingsType>(settings);
+
+  // Update local state when props change
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
+
   const handleSelectChange = (key: string, value: string) => {
+    // Update local state immediately for UI feedback
+    setLocalSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
     onUpdate(key, value);
   };
 
@@ -75,7 +88,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
               label=""
               name="default_language"
               setValue={setValue}
-              value={settings.default_language || 'en'}
+              value={localSettings.default_language || 'en'}
               options={LANGUAGE_OPTIONS}
               model="Settings"
             />
@@ -90,7 +103,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
               label=""
               name="timezone"
               setValue={setValue}
-              value={settings.timezone || 'Asia/Dhaka'}
+              value={localSettings.timezone || 'Asia/Dhaka'}
               options={TIMEZONE_OPTIONS}
               model="Settings"
             />
@@ -105,7 +118,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
               label=""
               name="date_format"
               setValue={setValue}
-              value={settings.date_format || 'DD/MM/YYYY'}
+              value={localSettings.date_format || 'DD/MM/YYYY'}
               options={DATE_FORMAT_OPTIONS}
               model="Settings"
             />
@@ -120,7 +133,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
               label=""
               name="time_format"
               setValue={setValue}
-              value={settings.time_format || '12h'}
+              value={localSettings.time_format || '12h'}
               options={TIME_FORMAT_OPTIONS}
               model="Settings"
             />
@@ -135,7 +148,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
               label=""
               name="currency"
               setValue={setValue}
-              value={settings.currency || 'BDT'}
+              value={localSettings.currency || 'BDT'}
               options={CURRENCY_OPTIONS}
               model="Settings"
             />
