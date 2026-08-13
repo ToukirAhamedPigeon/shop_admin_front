@@ -108,8 +108,9 @@ const settingsSlice = createSlice({
         state.userSettings = action.payload;
         if (state.data) {
           state.data.user = action.payload;
-          state.data.lastUpdated = action.payload.updatedAt;
-          state.data.updatedBy = action.payload.updatedBy;
+          state.data.lastUpdated = action.payload.updatedAt || new Date().toISOString();
+          // Fix: Provide default empty string if updatedBy is undefined
+          state.data.updatedBy = action.payload.updatedBy || '';
         }
       })
       // Update General
@@ -117,8 +118,9 @@ const settingsSlice = createSlice({
         state.userSettings = action.payload;
         if (state.data) {
           state.data.user = action.payload;
-          state.data.lastUpdated = action.payload.updatedAt;
-          state.data.updatedBy = action.payload.updatedBy;
+          state.data.lastUpdated = action.payload.updatedAt || new Date().toISOString();
+          // Fix: Provide default empty string if updatedBy is undefined
+          state.data.updatedBy = action.payload.updatedBy || '';
         }
       })
       // Update Branding
@@ -133,8 +135,9 @@ const settingsSlice = createSlice({
         state.userSettings = action.payload;
         if (state.data) {
           state.data.user = action.payload;
-          state.data.lastUpdated = action.payload.updatedAt;
-          state.data.updatedBy = action.payload.updatedBy;
+          state.data.lastUpdated = action.payload.updatedAt || new Date().toISOString();
+          // Fix: Provide default empty string if updatedBy is undefined
+          state.data.updatedBy = action.payload.updatedBy || '';
         }
       })
       // Reset General
@@ -142,8 +145,9 @@ const settingsSlice = createSlice({
         state.userSettings = action.payload;
         if (state.data) {
           state.data.user = action.payload;
-          state.data.lastUpdated = action.payload.updatedAt;
-          state.data.updatedBy = action.payload.updatedBy;
+          state.data.lastUpdated = action.payload.updatedAt || new Date().toISOString();
+          // Fix: Provide default empty string if updatedBy is undefined
+          state.data.updatedBy = action.payload.updatedBy || '';
         }
       });
   }

@@ -1,9 +1,10 @@
 // D:\shop\shop_admin_front\src\types\settings.ts
+
 export interface ThemeSettings {
   primary_color: string;
   secondary_color: string;
-  sidebar_bg_image: string;
-  login_bg_image: string;
+  sidebar_bg_image: string | null;
+  login_bg_image: string | null;
   dark_mode: boolean;
   custom_css: string;
 }
@@ -18,16 +19,16 @@ export interface GeneralSettings {
 
 export interface BrandingSettings {
   app_name: string;
-  logo: string;
-  favicon: string;
+  logo: string | null;
+  favicon: string | null;
   footer_text: string;
 }
 
 export interface UserSettings {
   theme: ThemeSettings;
   general: GeneralSettings;
-  updatedAt: string;
-  updatedBy: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export interface SettingsResponse {
@@ -37,13 +38,15 @@ export interface SettingsResponse {
   updatedBy: string;
 }
 
+// Update DTOs to include file fields
 export interface UpdateThemeSettings {
   primary_color?: string;
   secondary_color?: string;
-  sidebar_bg_image?: string;
-  login_bg_image?: string;
   dark_mode?: boolean;
   custom_css?: string;
+  // File upload fields
+  SidebarBgFile?: File;
+  LoginBgFile?: File;
 }
 
 export interface UpdateGeneralSettings {
@@ -56,7 +59,8 @@ export interface UpdateGeneralSettings {
 
 export interface UpdateBrandingSettings {
   app_name?: string;
-  logo?: string;
-  favicon?: string;
   footer_text?: string;
+  // File upload fields
+  LogoFile?: File;
+  FaviconFile?: File;
 }

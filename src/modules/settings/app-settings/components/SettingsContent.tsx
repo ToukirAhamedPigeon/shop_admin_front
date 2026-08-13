@@ -36,9 +36,11 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   onResetGeneral
 }) => {
   const { t } = useTranslations();
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   const [saving, setSaving] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<Record<string, any>>({});
+  
+  // Track uploaded files separately
+  const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
 
   const config = CATEGORY_CONFIG[category as keyof typeof CATEGORY_CONFIG];
 
@@ -57,53 +59,70 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     }));
   };
 
-  const handleImageUpload = async (key: string, file: File) => {
-    try {
-      // Temporary: Store base64 for preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        handleSettingUpdate(key, base64);
-      };
-      reader.readAsDataURL(file);
-      
-      // In production, you would upload to server:
-      // const formData = new FormData();
-      // formData.append('file', file);
-      // formData.append('key', key);
-      // formData.append('category', category);
-      // const response = await api.post('/settings/upload', formData);
-      // handleSettingUpdate(key, response.data.url);
-      
-      dispatchShowToast({ type: 'success', message: t('Image uploaded successfully') });
-    } catch (error) {
-      console.error('Upload error:', error);
-      dispatchShowToast({ type: 'danger', message: t('Failed to upload image') });
-    }
+  // Handle file upload - store the actual File object
+  const handleImageUpload = (key: string, file: File) => {
+    // Store the file for later submission
+    setPendingFiles(prev => ({
+      ...prev,
+      [key]: file
+    }));
+    
+    // Create preview URL for immediate display
+    const previewUrl = URL.createObjectURL(file);
+    handleSettingUpdate(key, previewUrl);
+    
+    dispatchShowToast({ type: 'success', message: t('Image uploaded successfully') });
+  };
+
+  // Handle file clear - remove the file
+  const handleImageClear = (key: string) => {
+    setPendingFiles(prev => {
+      const newFiles = { ...prev };
+      delete newFiles[key];
+      return newFiles;
+    });
+    handleSettingUpdate(key, '');
   };
 
   const handleSave = async () => {
-    if (Object.keys(pendingChanges).length === 0) {
+    if (Object.keys(pendingChanges).length === 0 && Object.keys(pendingFiles).length === 0) {
       dispatchShowToast({ type: 'info', message: t('No changes to save') });
       return;
     }
 
     setSaving(true);
     try {
-      switch (category) {
-        case 'Theme':
-          await onUpdateTheme(pendingChanges);
-          break;
-        case 'General':
-          await onUpdateGeneral(pendingChanges);
-          break;
-        case 'Branding':
-          await onUpdateBranding(pendingChanges);
-          break;
-        default:
-          throw new Error('Unknown category');
+      // Prepare data for submission
+      let submitData: any = { ...pendingChanges };
+      
+      // Add files to the data
+      if (category === 'Theme') {
+        // Map file keys to backend expected field names
+        if (pendingFiles.sidebar_bg_image) {
+          submitData.SidebarBgFile = pendingFiles.sidebar_bg_image;
+        }
+        if (pendingFiles.login_bg_image) {
+          submitData.LoginBgFile = pendingFiles.login_bg_image;
+        }
+        await onUpdateTheme(submitData);
+      } else if (category === 'Branding') {
+        // Map file keys to backend expected field names
+        if (pendingFiles.logo) {
+          submitData.LogoFile = pendingFiles.logo;
+        }
+        if (pendingFiles.favicon) {
+          submitData.FaviconFile = pendingFiles.favicon;
+        }
+        await onUpdateBranding(submitData);
+      } else if (category === 'General') {
+        await onUpdateGeneral(submitData);
+      } else {
+        throw new Error('Unknown category');
       }
+      
+      // Clear pending changes and files after successful save
       setPendingChanges({});
+      setPendingFiles({});
       dispatchShowToast({ type: 'success', message: t('Settings saved successfully') });
     } catch (error) {
       console.error('Save error:', error);
@@ -128,6 +147,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
             return;
         }
         setPendingChanges({});
+        setPendingFiles({});
         dispatchShowToast({ type: 'success', message: t('Settings reset to defaults') });
       } catch (error) {
         console.error('Reset error:', error);
@@ -170,7 +190,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     }
   };
 
-  const hasPendingChanges = Object.keys(pendingChanges).length > 0;
+  const hasPendingChanges = Object.keys(pendingChanges).length > 0 || Object.keys(pendingFiles).length > 0;
   const canEdit = category !== 'Branding' || isDeveloper;
 
   return (

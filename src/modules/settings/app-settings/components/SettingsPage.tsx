@@ -16,10 +16,8 @@ export const SettingsPage: React.FC = () => {
   const { data, loading } = useAppSelector((state) => state.settings);
   const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
-  // Get current user to check if they are a developer
   const user = useAppSelector((state) => state.auth.user);
   
-  // ✅ FIXED: Case-insensitive role check for Developer
   const isDeveloper = user?.roles?.some(role => 
     role.toLowerCase() === 'developer'
   ) ?? false;
@@ -36,8 +34,9 @@ export const SettingsPage: React.FC = () => {
     dispatch(fetchSettings());
   }, [dispatch]);
 
-  // Wrap the hook functions to match the expected Promise<void> type
+  // These functions now handle FormData with files
   const handleUpdateTheme = async (settings: any) => {
+    // settings will contain SidebarBgFile and LoginBgFile as File objects
     await updateThemeSettings(settings);
   };
 
@@ -46,6 +45,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   const handleUpdateBranding = async (settings: any) => {
+    // settings will contain LogoFile and FaviconFile as File objects
     await updateBrandingSettings(settings);
   };
 
@@ -57,7 +57,6 @@ export const SettingsPage: React.FC = () => {
     await resetGeneralSettings();
   };
 
-  // If user is not Developer and tries to access Branding, redirect to Theme
   useEffect(() => {
     if (activeCategory === 'Branding' && !isDeveloper) {
       setActiveCategory('Theme');
@@ -79,7 +78,6 @@ export const SettingsPage: React.FC = () => {
       transition={{ duration: 0.4 }}
       className="flex h-[calc(100vh-100px)] overflow-hidden"
     >
-      {/* Sidebar - with glass effect */}
       <div
         className="rounded-l-2xl flex-shrink-0"
         style={{
@@ -97,7 +95,6 @@ export const SettingsPage: React.FC = () => {
         />
       </div>
 
-      {/* Content - with glass effect */}
       <div
         className="flex-1 rounded-r-2xl overflow-hidden"
         style={{
