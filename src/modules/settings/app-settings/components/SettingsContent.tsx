@@ -230,7 +230,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                 <Button
                   onClick={handleSave}
                   disabled={saving || !hasPendingChanges}
-                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                  className="flex items-center gap-2"
                 >
                   {saving ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />

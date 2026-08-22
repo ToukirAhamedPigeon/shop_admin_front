@@ -276,11 +276,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
 
   if (loading && backups.length === 0) {
     return (
-      <div className="flex-1 rounded-xl overflow-hidden border border-gray-200/30 dark:border-gray-700/30 flex items-center justify-center"
-        style={{
-          background: isDarkMode ? 'rgba(17,24,39,0.4)' : 'rgba(255,255,255,0.55)',
-          backdropFilter: 'blur(12px)',
-        }}>
+      <div className="flex-1 rounded-xl overflow-hidden border border-border bg-card flex items-center justify-center">
         <Loader type="circular" size={48} />
       </div>
     );
@@ -305,18 +301,18 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
               <Filter className="w-4 h-4 mr-1" />
               Filters
               {(fromDate || toDate || backupType !== 'all' || storageType !== 'all') && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500" />
+                <span className="ml-1 w-2 h-2 rounded-full bg-primary" />
               )}
             </Button>
-            
+
             {/* View Toggle Buttons */}
-            <div className="flex border rounded-lg overflow-hidden">
+            <div className="flex border border-border rounded-lg overflow-hidden">
               <button
                 onClick={() => setViewMode('grid')}
                 className={cn(
                   "p-1.5 px-3 transition-colors cursor-pointer",
-                  viewMode === 'grid' 
-                    ? "bg-blue-500 text-white" 
+                  viewMode === 'grid'
+                    ? "bg-primary text-primary-foreground"
                     : "hover:bg-gray-100 dark:hover:bg-gray-700"
                 )}
                 title="Grid View"
@@ -326,9 +322,9 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
               <button
                 onClick={() => setViewMode('list')}
                 className={cn(
-                  "p-1.5 px-3 transition-colors cursor-pointer border-l",
-                  viewMode === 'list' 
-                    ? "bg-blue-500 text-white" 
+                  "p-1.5 px-3 transition-colors cursor-pointer border-l border-border",
+                  viewMode === 'list'
+                    ? "bg-primary text-primary-foreground"
                     : "hover:bg-gray-100 dark:hover:bg-gray-700"
                 )}
                 title="List View"
@@ -439,7 +435,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                 <X className="w-4 h-4 mr-1" />
                 Clear All
               </Button>
-              <Button size="sm" onClick={() => { setPage(1); loadBackups(); }} className="cursor-pointer bg-gradient-to-r from-blue-500 to-indigo-600">
+              <Button size="sm" onClick={() => { setPage(1); loadBackups(); }} className="cursor-pointer">
                 Apply Filters
               </Button>
             </div>
@@ -470,8 +466,8 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
       {/* Content */}
       <div className="flex-1 overflow-auto py-4 relative">
         {loading && backups.length > 0 && (
-          <div className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-md z-10 flex items-center justify-center rounded-xl">
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-2xl">
+          <div className="absolute inset-0 bg-background/70 z-10 flex items-center justify-center rounded-xl">
+            <div className="bg-card border border-border rounded-2xl p-4 shadow-md">
               <Loader type="bars" size={32} />
             </div>
           </div>
@@ -496,7 +492,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                   className={cn(
                     "overflow-hidden transition-all duration-300 hover:shadow-lg border",
                     isDarkMode ? "bg-gray-800/50 border-gray-700" : "bg-white border-gray-200",
-                    isSelected && "ring-2 ring-blue-500"
+                    isSelected && "ring-2 ring-primary"
                   )}
                 >
                   <CardContent className="p-4">
@@ -554,10 +550,10 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                     <div className="flex items-center justify-end gap-1 pt-2 border-t border-gray-200/50 dark:border-gray-700/50">
                       <button
                         onClick={() => handleDownload(backup.id)}
-                        className="p-1.5 rounded-lg hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer group"
+                        className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer group"
                         title="Download"
                       >
-                        <Download className="w-4 h-4 text-blue-500 group-hover:text-blue-600" />
+                        <Download className="w-4 h-4 text-primary" />
                       </button>
                       <button
                         onClick={() => {
@@ -610,7 +606,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                   className={cn(
                     "grid grid-cols-12 gap-2 items-center px-3 py-2 rounded-lg transition-all duration-200",
                     isDarkMode ? "hover:bg-gray-800/50" : "hover:bg-gray-50",
-                    isSelected && "bg-blue-50/50 dark:bg-blue-950/30 ring-1 ring-blue-500"
+                    isSelected && "bg-primary/5 ring-1 ring-primary"
                   )}
                 >
                   <div className="col-span-1">
@@ -651,10 +647,10 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                   <div className="col-span-2 flex items-center gap-1">
                     <button
                       onClick={() => handleDownload(backup.id)}
-                      className="p-1 rounded hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer group"
+                      className="p-1 rounded hover:bg-primary/10 transition-colors cursor-pointer group"
                       title="Download"
                     >
-                      <Download className="w-4 h-4 text-blue-500 group-hover:text-blue-600" />
+                      <Download className="w-4 h-4 text-primary" />
                     </button>
                     <button
                       onClick={() => {
@@ -696,7 +692,6 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
               size="sm"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -718,10 +713,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                     variant={pageNum === page ? "default" : "outline"}
                     size="sm"
                     onClick={() => setPage(pageNum)}
-                    className={cn(
-                      "min-w-[36px] transition-all duration-200",
-                      pageNum === page && "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
-                    )}
+                    className="min-w-[36px]"
                   >
                     {pageNum}
                   </Button>
@@ -733,7 +725,6 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
               size="sm"
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>

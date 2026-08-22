@@ -54,21 +54,20 @@ const ImageUploadField: React.FC<{
             alt={label}
             className="w-full h-32 object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           <div className="absolute bottom-2 right-2 flex gap-2">
             <Button
               type="button"
               variant="destructive"
               size="sm"
               onClick={onClear}
-              className="shadow-lg"
+              className="shadow-md"
             >
               <X className="w-4 h-4 mr-1" />
               {t('Remove')}
             </Button>
           </div>
           <div className="absolute top-2 left-2">
-            <span className="px-2 py-1 text-xs bg-black/60 text-white rounded-full backdrop-blur-sm">
+            <span className="px-2 py-1 text-xs bg-black/80 text-white rounded-full">
               {t('Image uploaded')}
             </span>
           </div>
@@ -80,8 +79,8 @@ const ImageUploadField: React.FC<{
           className={cn(
             "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200",
             isDragActive
-              ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-              : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-800/50",
+              ? "border-primary bg-primary/5"
+              : "border-gray-300 dark:border-gray-600 hover:border-primary/50 hover:bg-gray-50 dark:hover:bg-gray-800/50",
             "min-h-[120px] flex flex-col items-center justify-center"
           )}
         >
@@ -172,7 +171,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
       {/* Color Scheme */}
       <Card className="p-6 space-y-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full" />
+          <span className="w-1 h-6 bg-primary rounded-full" />
           {t('Color Scheme')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -210,7 +209,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
       {/* Background Images */}
       <Card className="p-6 space-y-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-gradient-to-b from-emerald-500 to-teal-500 rounded-full" />
+          <span className="w-1 h-6 bg-primary rounded-full" />
           {t('Background Images')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -236,7 +235,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
       {/* Theme Preferences */}
       <Card className="p-6 space-y-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-gradient-to-b from-amber-500 to-orange-500 rounded-full" />
+          <span className="w-1 h-6 bg-primary rounded-full" />
           {t('Theme Preferences')}
         </h3>
         <div className="flex items-center justify-between">
@@ -252,8 +251,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
             type="button"
             onClick={() => handleDarkModeToggle(!localSettings.dark_mode)}
             className={`
-              relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-              ${localSettings.dark_mode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}
+              relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+              ${localSettings.dark_mode ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'}
             `}
           >
             <span
@@ -269,7 +268,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
       {/* Custom CSS */}
       <Card className="p-6 space-y-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full" />
+          <span className="w-1 h-6 bg-primary rounded-full" />
           {t('Custom CSS')}
         </h3>
         <Textarea

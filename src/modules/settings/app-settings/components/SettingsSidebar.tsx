@@ -62,19 +62,19 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             className={cn(
               "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left whitespace-nowrap cursor-pointer",
               isActive
-                ? "bg-gradient-to-r from-blue-500/20 to-indigo-500/20 dark:from-blue-500/30 dark:to-indigo-500/30 text-blue-700 dark:text-blue-300 font-medium shadow-md"
+                ? "bg-primary/10 text-primary font-medium"
                 : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
             )}
           >
             {Icon && (
               <Icon className={cn(
                 "w-5 h-5 flex-shrink-0",
-                isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
+                isActive ? "text-primary" : "text-gray-400 dark:text-gray-500"
               )} />
             )}
             <span className="truncate">{t(config.displayName)}</span>
             {isActive && (
-              <div className="ml-auto w-1.5 h-6 rounded-full bg-gradient-to-b from-blue-500 to-indigo-500 flex-shrink-0" />
+              <div className="ml-auto w-1.5 h-6 rounded-full bg-primary flex-shrink-0" />
             )}
           </button>
         );

@@ -74,7 +74,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
     <div className="space-y-6">
       <Card className="p-6 space-y-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full" />
+          <span className="w-1 h-6 bg-primary rounded-full" />
           {t('Localization')}
         </h3>
         

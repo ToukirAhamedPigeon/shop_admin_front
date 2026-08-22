@@ -71,8 +71,8 @@ const ImageUploadField: React.FC<{
           className={cn(
             "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200",
             isDragActive
-              ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-              : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-800/50",
+              ? "border-primary bg-primary/5"
+              : "border-gray-300 dark:border-gray-600 hover:border-primary/50 hover:bg-gray-50 dark:hover:bg-gray-800/50",
             "min-h-[100px] flex flex-col items-center justify-center"
           )}
         >
@@ -165,7 +165,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
       {/* Application Name */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full" />
+          <span className="w-1 h-6 bg-primary rounded-full" />
           {t('Application Name')}
         </h3>
         <div>
@@ -184,7 +184,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
       {/* Logo */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-gradient-to-b from-emerald-500 to-teal-500 rounded-full" />
+          <span className="w-1 h-6 bg-primary rounded-full" />
           {t('Logo')}
         </h3>
         <ImageUploadField
@@ -200,7 +200,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
       {/* Favicon */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full" />
+          <span className="w-1 h-6 bg-primary rounded-full" />
           {t('Favicon')}
         </h3>
         <ImageUploadField
@@ -216,7 +216,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
       {/* Footer Text */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-gradient-to-b from-amber-500 to-orange-500 rounded-full" />
+          <span className="w-1 h-6 bg-primary rounded-full" />
           {t('Footer Text')}
         </h3>
         <div>

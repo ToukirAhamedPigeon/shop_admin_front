@@ -191,29 +191,33 @@ export default function BackupPage() {
   };
 
   const quickStats = [
-    { 
-      label: 'Total Backups', 
-      value: statistics?.totalBackups || 0, 
-      icon: <Database className="w-4 h-4" />, 
-      color: 'text-blue-500' 
+    {
+      label: 'Total Backups',
+      value: statistics?.totalBackups || 0,
+      icon: <Database className="w-4 h-4" />,
+      color: 'text-primary',
+      iconBg: 'bg-primary/10',
     },
-    { 
-      label: 'Total Size', 
-      value: formatFileSize(statistics?.totalSize || 0), 
-      icon: <HardDrive className="w-4 h-4" />, 
-      color: 'text-purple-500' 
+    {
+      label: 'Total Size',
+      value: formatFileSize(statistics?.totalSize || 0),
+      icon: <HardDrive className="w-4 h-4" />,
+      color: 'text-primary',
+      iconBg: 'bg-primary/10',
     },
-    { 
-      label: 'Success Rate', 
-      value: statistics ? `${Math.round((statistics.successCount / (statistics.successCount + statistics.failedCount || 1)) * 100)}%` : '0%', 
-      icon: <CheckCircle className="w-4 h-4" />, 
-      color: 'text-green-500' 
+    {
+      label: 'Success Rate',
+      value: statistics ? `${Math.round((statistics.successCount / (statistics.successCount + statistics.failedCount || 1)) * 100)}%` : '0%',
+      icon: <CheckCircle className="w-4 h-4" />,
+      color: 'text-green-600 dark:text-green-400',
+      iconBg: 'bg-green-100/50 dark:bg-green-900/30',
     },
-    { 
-      label: 'Next Backup', 
-      value: countdown || '—', 
-      icon: <Clock className="w-4 h-4" />, 
-      color: 'text-orange-500' 
+    {
+      label: 'Next Backup',
+      value: countdown || '—',
+      icon: <Clock className="w-4 h-4" />,
+      color: 'text-primary',
+      iconBg: 'bg-primary/10',
     },
   ];
 
@@ -243,9 +247,8 @@ export default function BackupPage() {
             Refresh
           </Button>
           {hasCreatePermission && (
-            <Button 
-              onClick={handleOpenDialog} 
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+            <Button
+              onClick={handleOpenDialog}
               size="sm"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -277,7 +280,7 @@ export default function BackupPage() {
                     {stat.value}
                   </p>
                 </div>
-                <div className={`p-1.5 sm:p-2 rounded-lg bg-${stat.color.split('-')[1]}-100/50 dark:bg-${stat.color.split('-')[1]}-900/30 ${stat.color}`}>
+                <div className={`p-1.5 sm:p-2 rounded-lg ${stat.iconBg} ${stat.color}`}>
                   {stat.icon}
                 </div>
               </motion.div>
@@ -316,7 +319,7 @@ export default function BackupPage() {
         loading={backupLoading}
       >
         <div className="space-y-4">
-          <p className="text-blue-600 dark:text-blue-400 font-medium">
+          <p className="text-primary font-medium">
             Select storage destinations for this backup:
           </p>
           <div className="space-y-2">
@@ -325,7 +328,7 @@ export default function BackupPage() {
                 key={dest.id}
                 className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
                   selectedDestinations.includes(dest.type)
-                    ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30'
+                    ? 'border-primary bg-primary/5'
                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
