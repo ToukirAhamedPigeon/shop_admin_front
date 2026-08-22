@@ -6,14 +6,14 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -112,17 +112,18 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
   const getFileIcon = (file: File) => {
     const type = file.type;
     const extension = file.name.split('.').pop()?.toLowerCase() || '';
-    
-    if (type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />;
-    if (type.startsWith('video/')) return <FileVideo className="w-4 h-4 text-purple-500" />;
-    if (type.startsWith('audio/')) return <FileAudio className="w-4 h-4 text-green-500" />;
-    if (type === 'application/pdf' || extension === 'pdf') return <FileText className="w-4 h-4 text-red-500" />;
-    if (type.includes('spreadsheet') || extension === 'xlsx' || extension === 'xls') return <FileSpreadsheet className="w-4 h-4 text-green-600" />;
-    if (type.includes('word') || extension === 'docx' || extension === 'doc') return <FileText className="w-4 h-4 text-blue-600" />;
-    if (type.includes('presentation') || extension === 'pptx' || extension === 'ppt') return <FileSpreadsheet className="w-4 h-4 text-orange-500" />;
-    if (type.includes('zip') || type.includes('rar') || extension === 'zip' || extension === 'rar' || extension === '7z') return <Archive className="w-4 h-4 text-yellow-600" />;
-    if (type === 'text/plain' || extension === 'txt') return <FileText className="w-4 h-4 text-gray-500" />;
-    return <File className="w-4 h-4 text-gray-400" />;
+    const cls = "w-4 h-4 text-muted-foreground";
+
+    if (type.startsWith('image/')) return <Image className={cls} />;
+    if (type.startsWith('video/')) return <FileVideo className={cls} />;
+    if (type.startsWith('audio/')) return <FileAudio className={cls} />;
+    if (type === 'application/pdf' || extension === 'pdf') return <FileText className={cls} />;
+    if (type.includes('spreadsheet') || extension === 'xlsx' || extension === 'xls') return <FileSpreadsheet className={cls} />;
+    if (type.includes('word') || extension === 'docx' || extension === 'doc') return <FileText className={cls} />;
+    if (type.includes('presentation') || extension === 'pptx' || extension === 'ppt') return <FileSpreadsheet className={cls} />;
+    if (type.includes('zip') || type.includes('rar') || extension === 'zip' || extension === 'rar' || extension === '7z') return <Archive className={cls} />;
+    if (type === 'text/plain' || extension === 'txt') return <FileText className={cls} />;
+    return <File className={cls} />;
   };
 
   const getCurrentTotalSize = (): number => {
@@ -131,12 +132,12 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
 
   const validateFile = (file: File): { valid: boolean; error?: string } => {
     if (file.size > MAX_FILE_SIZE) {
-      return { 
-        valid: false, 
-        error: `${file.name} exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit` 
+      return {
+        valid: false,
+        error: `${file.name} exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`
       };
     }
-    
+
     const currentTotal = getCurrentTotalSize();
     if (currentTotal + file.size > MAX_TOTAL_ATTACHMENTS_SIZE) {
       return {
@@ -144,7 +145,7 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
         error: `Total attachments size would exceed ${MAX_TOTAL_ATTACHMENTS_SIZE / (1024 * 1024)}MB limit`
       };
     }
-    
+
     return { valid: true };
   };
 
@@ -154,7 +155,7 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
       const filesArray = Array.from(e.target.files);
       const validFiles: File[] = [];
       const errors: string[] = [];
-      
+
       for (const file of filesArray) {
         const validation = validateFile(file);
         if (validation.valid) {
@@ -163,16 +164,16 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
           errors.push(validation.error);
         }
       }
-      
+
       if (errors.length > 0) {
         setUploadError(errors.join(', '));
         setTimeout(() => setUploadError(null), 5000);
       }
-      
+
       if (validFiles.length > 0) {
         setAttachments(prev => [...prev, ...validFiles]);
       }
-      
+
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -191,16 +192,16 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
   const onSubmit = async (data: FormData) => {
     const totalSize = getCurrentTotalSize();
     if (totalSize > MAX_TOTAL_ATTACHMENTS_SIZE) {
-      dispatchShowToast({ 
-        type: 'danger', 
-        message: `Total attachments size exceeds ${MAX_TOTAL_ATTACHMENTS_SIZE / (1024 * 1024)}MB limit` 
+      dispatchShowToast({
+        type: 'danger',
+        message: `Total attachments size exceeds ${MAX_TOTAL_ATTACHMENTS_SIZE / (1024 * 1024)}MB limit`
       });
       return;
     }
 
     setLoading(true);
     setUploadProgress(0);
-    
+
     try {
       const formData = new FormData();
       formData.append('toMail', data.toMail);
@@ -210,15 +211,15 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
       formData.append('body', data.body || '');
       formData.append('mailType', 'manual');
       if (replyTo?.id) formData.append('parentMailId', replyTo.id.toString());
-      
+
       attachments.forEach(file => {
         formData.append('attachments', file, file.name);
       });
-      
+
       const response = await sendMail(formData, (progress) => {
         setUploadProgress(progress);
       });
-      
+
       dispatchShowToast({ type: 'success', message: 'Mail sent successfully' });
       reset();
       setAttachments([]);
@@ -230,14 +231,14 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
       onClose();
     } catch (error: any) {
       console.error('Send mail error:', error);
-      
+
       let errorMessage = 'Failed to send mail';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       dispatchShowToast({ type: 'danger', message: errorMessage });
       setUploadProgress(null);
     } finally {
@@ -271,7 +272,7 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
         <GlassCard variant="primary" padding="lg" className="border-0 shadow-none rounded-2xl">
           <DialogHeader className="pb-4">
-            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <DialogTitle className="text-xl font-bold">
               New Message
             </DialogTitle>
           </DialogHeader>
@@ -306,26 +307,26 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
 
             <div>
               <Label className="cursor-default">To *</Label>
-              <Input 
-                {...register('toMail')} 
-                placeholder="recipient@example.com" 
+              <Input
+                {...register('toMail')}
+                placeholder="recipient@example.com"
                 className={cn(errors.toMail ? 'border-red-500' : '', 'cursor-text')}
               />
               {errors.toMail && <p className="text-red-500 text-xs mt-1">{errors.toMail.message}</p>}
             </div>
 
             <div className="flex gap-2 text-sm">
-              <button 
-                type="button" 
-                onClick={() => setShowCc(!showCc)} 
-                className="text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
+              <button
+                type="button"
+                onClick={() => setShowCc(!showCc)}
+                className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
               >
                 Cc
               </button>
-              <button 
-                type="button" 
-                onClick={() => setShowBcc(!showBcc)} 
-                className="text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
+              <button
+                type="button"
+                onClick={() => setShowBcc(!showBcc)}
+                className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
               >
                 Bcc
               </button>
@@ -347,9 +348,9 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
 
             <div>
               <Label className="cursor-default">Subject *</Label>
-              <Input 
-                {...register('subject')} 
-                placeholder="Subject" 
+              <Input
+                {...register('subject')}
+                placeholder="Subject"
                 className={cn(errors.subject ? 'border-red-500' : '', 'cursor-text')}
               />
               {errors.subject && <p className="text-red-500 text-xs mt-1">{errors.subject.message}</p>}
@@ -370,9 +371,9 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
             </div>
 
             {uploadError && (
-              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <span className="text-red-600 dark:text-red-400 text-sm">{uploadError}</span>
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+                <span className="text-destructive text-sm">{uploadError}</span>
               </div>
             )}
 
@@ -380,35 +381,35 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
               <div className="border rounded-lg p-3">
                 <div className="flex justify-between items-center mb-2">
                   <div className="text-sm font-medium cursor-default">Attachments ({attachments.length})</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     {(currentTotalSize / (1024 * 1024)).toFixed(1)} MB / {(MAX_TOTAL_ATTACHMENTS_SIZE / (1024 * 1024)).toFixed(0)} MB
                   </div>
                 </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-1.5 mb-3">
-                  <div 
+
+                <div className="w-full bg-muted rounded-full h-1.5 mb-3">
+                  <div
                     className={cn(
                       "h-1.5 rounded-full transition-all duration-300",
-                      totalSizePercent > 90 ? "bg-red-500" : "bg-blue-500"
+                      totalSizePercent > 90 ? "bg-destructive" : "bg-primary"
                     )}
                     style={{ width: `${Math.min(totalSizePercent, 100)}%` }}
                   />
                 </div>
-                
+
                 <div className="space-y-1 max-h-40 overflow-y-auto">
                   {attachments.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                    <div key={index} className="flex items-center justify-between bg-muted p-2 rounded">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {getFileIcon(file)}
                         <span className="text-sm truncate">{file.name}</span>
                       </div>
-                      <span className="text-xs text-gray-500 mx-2 flex-shrink-0">
+                      <span className="text-xs text-muted-foreground mx-2 flex-shrink-0">
                         {formatFileSize(file.size)}
                       </span>
-                      <button 
-                        type="button" 
-                        onClick={() => removeAttachment(index)} 
-                        className="text-red-500 hover:text-red-700 p-1 cursor-pointer transition-colors flex-shrink-0"
+                      <button
+                        type="button"
+                        onClick={() => removeAttachment(index)}
+                        className="text-destructive hover:text-destructive/80 p-1 cursor-pointer transition-colors flex-shrink-0"
                         title="Remove attachment"
                       >
                         <X className="w-4 h-4" />
@@ -421,9 +422,9 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
 
             <div className="flex justify-between pt-4 border-t">
               <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   size="sm"
                   onClick={handleAttachClick}
                   className="cursor-pointer"
@@ -433,9 +434,9 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
                   Attach Files
                 </Button>
                 {attachments.length > 0 && (
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
+                  <Button
+                    type="button"
+                    variant="ghost"
                     size="sm"
                     onClick={() => setAttachments([])}
                     className="cursor-pointer"
@@ -456,13 +457,13 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
             </div>
             {uploadProgress !== null && (
               <div className="w-full mt-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1 text-center">Uploading: {uploadProgress}%</p>
+                <p className="text-xs text-muted-foreground mt-1 text-center">Uploading: {uploadProgress}%</p>
               </div>
             )}
           </form>

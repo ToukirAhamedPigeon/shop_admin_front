@@ -94,15 +94,15 @@ export default function AddTranslation({ fetchData, onClose }: AddTranslationPro
     >
       <TranslationGlassCard variant="primary" padding="lg" className="mb-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10">
-              <Languages className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Languages className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold text-foreground">
                 {t('Add New Translation')}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {t('Enter key, module, and values for English and Bangla')}
               </p>
             </div>
@@ -150,13 +150,12 @@ export default function AddTranslation({ fetchData, onClose }: AddTranslationPro
             />
           </div>
 
-          <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={handleReset} disabled={submitLoading}>
               {t('Reset Form')}
             </Button>
-            <Button 
-              type="submit" 
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+            <Button
+              type="submit"
               disabled={submitLoading}
             >
               {submitLoading ? (

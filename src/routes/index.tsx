@@ -25,6 +25,9 @@ import MailboxPage from "@/modules/mail/pages/MailboxPage";
 import TemplatesPage from "@/modules/mail/pages/TemplatesPage";
 import BackupPage from "@/modules/settings/backup/pages/BackupPage";
 import AppSettingsPage from '@/modules/settings/app-settings/pages/AppSettingsPage';
+import DeveloperGuidePage from "@/modules/documentation/pages/DeveloperGuidePage";
+import UserGuidePage from "@/modules/documentation/pages/UserGuidePage";
+import ChangelogPage from "@/modules/documentation/pages/ChangelogPage";
 
 
 
@@ -169,6 +172,30 @@ export default function AppRoutes() {
           element={
             <PermissionRoute anyOf={["read-admin-settings"]}>
               <AppSettingsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="docs/developer"
+          element={
+            <PermissionRoute anyOf={["read-admin-doc-developer"]}>
+              <DeveloperGuidePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="docs/guide"
+          element={
+            <PermissionRoute anyOf={["read-admin-doc-user-guide"]}>
+              <UserGuidePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="docs/changelog"
+          element={
+            <PermissionRoute anyOf={["read-admin-doc-developer"]}>
+              <ChangelogPage />
             </PermissionRoute>
           }
         />

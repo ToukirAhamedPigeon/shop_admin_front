@@ -68,71 +68,29 @@ export default function LoginPage() {
 
       {/* Login Card */}
       <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         className="w-full max-w-sm"
       >
-        <Card
-          className="shadow-2xl border-0 rounded-2xl overflow-hidden"
-          style={{
-            background: theme === 'dark'
-              ? 'rgba(12, 18, 40, 0.82)'
-              : 'rgba(255, 255, 255, 0.85)',
-            backdropFilter: 'blur(24px) saturate(1.4)',
-            boxShadow: theme === 'dark'
-              ? '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(100,140,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06)'
-              : '0 8px 40px rgba(10,30,80,0.18), 0 0 0 1px rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.9)',
-          }}
-        >
-          {/* Top accent line */}
-          <div
-            className="h-0.5 w-full"
-            style={{
-              background: 'linear-gradient(to right, rgba(100,120,255,0.6), rgba(180,100,255,0.4), rgba(100,120,255,0.6))',
-            }}
-          />
-
+        <Card className="border border-border shadow-md rounded-2xl overflow-hidden bg-card py-0">
           <CardContent className="p-8">
             {/* Logo + Title */}
-            <div
-              className="flex flex-col items-center mb-7"
-              // initial={{ opacity: 0, y: -10 }}
-              // animate={{ opacity: 1, y: 0 }}
-              // transition={{ delay: 0.4, duration: 0.5 }}
-            >
-              <div
-                className="mb-3 p-2.5 rounded-2xl"
-                style={{
-                  background: theme === 'dark'
-                    ? 'rgba(100,130,255,0.12)'
-                    : 'rgba(60,100,220,0.08)',
-                  border: '1px solid rgba(100,140,255,0.2)',
-                }}
-              >
+            <div className="flex flex-col items-center mb-7">
+              <div className="mb-3 p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
                 <img src="/logo.png" alt="App Logo" className="w-12 h-12" />
               </div>
-              <h1
-                className="text-2xl font-bold tracking-tight"
-                style={{
-                  color: theme === 'dark' ? '#e8eeff' : '#1a2a50',
-                  letterSpacing: '-0.02em',
-                }}
-              >
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {t("common.appName", "AIMS")}
               </h1>
-              <p className="text-sm mt-1" style={{ color: theme === 'dark' ? 'rgba(160,180,220,0.7)' : 'rgba(60,80,140,0.9)' }}>
+              <p className="text-sm mt-1 text-muted-foreground">
                 AI Powered Management System
               </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <Label
-                  htmlFor="identifier"
-                  className="text-sm font-medium mb-1.5 block"
-                  style={{ color: theme === 'dark' ? 'rgba(180,200,240,0.9)' : 'rgba(40,60,120,0.85)' }}
-                >
+                <Label htmlFor="identifier" className="text-sm font-medium mb-1.5 block">
                   {t("common.usernameOrEmail", "Username / Email / Phone")}
                 </Label>
                 <Input
@@ -140,15 +98,10 @@ export default function LoginPage() {
                   type="text"
                   placeholder="Enter your username or email"
                   {...register("identifier")}
-                  className="h-10 rounded-xl text-sm transition-all focus:ring-2"
-                  style={{
-                    background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(240,245,255,0.9)',
-                    border: theme === 'dark' ? '1px solid rgba(100,140,255,0.2)' : '1px solid rgba(80,120,220,0.2)',
-                    color: theme === 'dark' ? '#d8e4ff' : '#1a2a50',
-                  }}
+                  className="h-10 rounded-lg text-sm"
                 />
                 {errors.identifier && (
-                  <p className="text-red-400 text-xs mt-1">{errors.identifier.message}</p>
+                  <p className="text-destructive text-xs mt-1">{errors.identifier.message}</p>
                 )}
               </div>
 
@@ -158,7 +111,7 @@ export default function LoginPage() {
                   label="password"
                   labelFallback="Password"
                   isHidden={true}
-                  inputClassName="h-10 rounded-xl text-sm"
+                  inputClassName="h-10 rounded-lg text-sm"
                   placeholder="password.placeholder"
                   placeholderFallback="Enter your password"
                   {...register('password')}
@@ -169,14 +122,8 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-10 rounded-xl font-semibold text-sm mt-2 transition-all duration-200"
+                className="w-full h-10 rounded-lg font-semibold text-sm mt-2"
                 disabled={loading}
-                style={{
-                  background: 'linear-gradient(135deg, #4060e0 0%, #7040c8 100%)',
-                  boxShadow: '0 4px 16px rgba(80,80,220,0.35)',
-                  border: 'none',
-                  color: '#fff',
-                }}
               >
                 {loading ? t("common.loggingIn", "Logging in...") : t("common.login.title", "Sign In")}
               </Button>

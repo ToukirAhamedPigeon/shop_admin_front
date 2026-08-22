@@ -11,8 +11,7 @@ import { dispatchShowToast } from '@/lib/dispatch';
 import Loader from '@/components/custom/Loader';
 import { getOptionForEdit, updateOption, getParentOptions } from '../api';
 import type { IOption } from '@/types/option';
-import { Edit3, Layers, GitBranch, CheckCircle2, AlertTriangle, Shield } from 'lucide-react';
-import { useAppSelector } from '@/hooks/useRedux';
+import { Edit3, Layers, AlertTriangle, Shield } from 'lucide-react';
 
 const schema = z.object({
   name: z.string().min(1, 'Option name is required'),
@@ -35,7 +34,6 @@ export default function EditOption({ optionId, fetchData, onClose }: EditOptionP
   const [submitLoading, setSubmitLoading] = useState(false);
   const [parentOptions, setParentOptions] = useState<{ value: string; label: string }[]>([]);
   const hasLoaded = useRef(false);
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
   const {
     register,
@@ -181,59 +179,32 @@ export default function EditOption({ optionId, fetchData, onClose }: EditOptionP
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
     >
-      <div
-        className="relative rounded-2xl backdrop-blur-xl transition-all duration-300 p-6 mb-6"
-        style={{
-          background: isDarkMode
-            ? 'rgba(17, 24, 39, 0.4)'
-            : 'rgba(255, 255, 255, 0.55)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
-          boxShadow: isDarkMode
-            ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
-            : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
-        }}
-      >
-        {/* Animated gradient border overlay */}
-        <div
-          className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
-          style={{
-            background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
-          }}
-        />
-        
-        {/* Colored accent line at top - Warning/Orange theme */}
-        <div
-          className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#f59e0b' : '#f97316'}, ${isDarkMode ? '#d97706' : '#ea580c'}, transparent)`,
-          }}
-        />
-
+      <div className="rounded-xl bg-card border border-border shadow-sm p-6 mb-6">
         <div className="relative z-10">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Header Section */}
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10">
-                <Edit3 className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Edit3 className="w-6 h-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+                <h2 className="text-xl font-bold text-foreground">
                   {t('Edit Option')}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {t('Update option details including parent relationship and status')}
                 </p>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100/50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs">
                 <Shield className="w-3 h-3" />
                 <span>{t('Edit Mode')}</span>
               </div>
             </div>
 
             {/* Info Box */}
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <p className="text-xs text-amber-700 dark:text-amber-400">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted border border-border">
+              <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
                 {t('Note: Changing parent relationships may affect how options are displayed in dropdowns')}
               </p>
             </div>
@@ -296,10 +267,10 @@ export default function EditOption({ optionId, fetchData, onClose }: EditOptionP
 
             {/* Parent Warning Note */}
             {formValues.parentId && formValues.hasChild === 'true' && (
-              <div className="mt-2 p-3 rounded-xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+              <div className="mt-2 p-3 rounded-lg bg-muted border border-border">
                 <div className="flex items-start gap-2">
-                  <Layers className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <Layers className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground">
                     {t('This option has children and is also a child of another option. This creates a hierarchy relationship.')}
                   </p>
                 </div>
@@ -307,19 +278,17 @@ export default function EditOption({ optionId, fetchData, onClose }: EditOptionP
             )}
 
             {/* Submit Actions */}
-            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleReset} 
+            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
                 disabled={submitLoading}
-                className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
               >
                 {t('Reset Form')}
               </Button>
-              <Button 
-                type="submit" 
-                className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              <Button
+                type="submit"
                 disabled={submitLoading}
               >
                 {submitLoading ? (

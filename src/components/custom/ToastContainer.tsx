@@ -6,36 +6,35 @@ import { removeToast } from "@/redux/slices/toastSlice"
 import { motion, AnimatePresence } from "framer-motion"
 import { CheckCircle2, XCircle, AlertTriangle, Info, X } from "lucide-react"
 import type { Toast } from "@/redux/slices/toastSlice"
-import { useAppSelector } from "@/hooks/useRedux"
 
 const typeStyles: Record<
   Toast["type"],
-  { gradient: string; icon: React.ReactElement | null; borderGlow: string }
+  { iconBg: string; icon: React.ReactElement | null; accent: string }
 > = {
   success: {
-    gradient: "from-green-500/20 to-emerald-500/20",
-    icon: <CheckCircle2 className="text-green-500" />,
-    borderGlow: "rgba(34, 197, 94, 0.5)"
+    iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
+    icon: <CheckCircle2 className="text-emerald-600 dark:text-emerald-400" />,
+    accent: "bg-emerald-500"
   },
   danger: {
-    gradient: "from-red-500/20 to-rose-500/20",
-    icon: <XCircle className="text-red-500" />,
-    borderGlow: "rgba(239, 68, 68, 0.5)"
+    iconBg: "bg-red-100 dark:bg-red-900/30",
+    icon: <XCircle className="text-red-600 dark:text-red-400" />,
+    accent: "bg-red-500"
   },
   warning: {
-    gradient: "from-yellow-500/20 to-amber-500/20",
-    icon: <AlertTriangle className="text-yellow-500" />,
-    borderGlow: "rgba(234, 179, 8, 0.5)"
+    iconBg: "bg-amber-100 dark:bg-amber-900/30",
+    icon: <AlertTriangle className="text-amber-600 dark:text-amber-400" />,
+    accent: "bg-amber-500"
   },
   info: {
-    gradient: "from-blue-500/20 to-indigo-500/20",
-    icon: <Info className="text-blue-500" />,
-    borderGlow: "rgba(59, 130, 246, 0.5)"
+    iconBg: "bg-primary/10",
+    icon: <Info className="text-primary" />,
+    accent: "bg-primary"
   },
   custom: {
-    gradient: "from-gray-500/20 to-gray-600/20",
+    iconBg: "bg-muted",
     icon: null,
-    borderGlow: "rgba(107, 114, 128, 0.5)"
+    accent: "bg-muted-foreground"
   },
 }
 
@@ -84,7 +83,6 @@ const animationVariants: Record<
 export default function ToastContainer() {
   const toasts = useSelector((state: RootState) => state.toast.toasts)
   const dispatch = useDispatch<AppDispatch>()
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   useEffect(() => {
     const timers = toasts
@@ -113,38 +111,17 @@ export default function ToastContainer() {
                     transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 25 }}
                     className="relative overflow-hidden"
                   >
-                    {/* Glow effect */}
-                    <div
-                      className="absolute inset-0 rounded-xl opacity-30"
-                      style={{
-                        background: `radial-gradient(circle at 0% 50%, ${style.borderGlow}, transparent 70%)`,
-                      }}
-                    />
-                    
-                    <div
-                      className={`relative flex items-center gap-3 rounded-xl shadow-2xl p-4 min-w-[320px] backdrop-blur-xl border`}
-                      style={{
-                        background: isDarkMode
-                          ? 'rgba(17, 24, 39, 0.95)'
-                          : 'rgba(255, 255, 255, 0.95)',
-                        border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
-                      }}
-                    >
+                    <div className="relative flex items-center gap-3 rounded-xl shadow-md p-4 min-w-[320px] bg-popover border border-border">
                       {/* Colored accent line */}
-                      <div
-                        className="absolute left-0 top-4 bottom-4 w-1 rounded-full"
-                        style={{
-                          background: `linear-gradient(180deg, ${style.borderGlow}, transparent)`,
-                        }}
-                      />
-                      
-                      {/* Icon with gradient background */}
-                      <div className={`p-2 rounded-xl bg-gradient-to-br ${style.gradient} backdrop-blur-sm`}>
+                      <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-full ${style.accent}`} />
+
+                      {/* Icon */}
+                      <div className={`p-2 rounded-xl ${style.iconBg}`}>
                         {style.icon}
                       </div>
 
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                        <p className="text-sm font-medium text-foreground">
                           {toast.message}
                         </p>
                       </div>
@@ -152,9 +129,9 @@ export default function ToastContainer() {
                       {toast.showClose && (
                         <button
                           onClick={() => dispatch(removeToast(toast.id))}
-                          className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 hover:scale-110"
+                          className="p-1 rounded-lg hover:bg-accent transition-colors"
                         >
-                          <X className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                          <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                         </button>
                       )}
                     </div>

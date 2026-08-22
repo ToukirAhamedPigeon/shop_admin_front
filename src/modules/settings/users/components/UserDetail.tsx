@@ -1,6 +1,7 @@
 // app/(dashboard)/admin/users/UserDetail.tsx
 
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { getCustomDateTime, getPassedTime } from '@/lib/formatDate'
 import { generateQRImage } from '@/lib/generateQRImage'
 import { useEffect, useState } from 'react'
@@ -150,25 +151,27 @@ export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?:
           <span className="text-gray-400">No QR Code</span>
         )}
 
-        {/* 🔥 QR Regenerate Button - Hidden when user is deleted */}
+        {/* QR Regenerate Button - Hidden when user is deleted */}
         {!isDeleted && can(['update-admin-users']) && (
-          <button
+          <Button
+            type="button"
+            size="sm"
             disabled={qrLoading}
             onClick={handleRegenerateQR}
-            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-xs h-auto py-1.5"
           >
             {qrLoading ? (
               <>
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
                 Generating...
               </>
             ) : (
               <>
-                <RefreshCw className="w-3 h-3" />
+                <RefreshCw className="w-3 h-3 mr-1.5" />
                 {user.qrCode ? "Regenerate QR" : "Generate QR"}
               </>
             )}
-          </button>
+          </Button>
         )}
       </div>,
     ],
@@ -191,8 +194,11 @@ export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?:
           <span className="text-red-500 font-semibold">Not Verified</span>
 
           {!isDeleted && can(['update-admin-users']) && (
-            <button
+            <Button
+              type="button"
+              size="sm"
               disabled={loading}
+              className="text-xs h-auto py-1.5"
               onClick={async () => {
                 try {
                   setLoading(true)
@@ -218,20 +224,19 @@ export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?:
                   setLoading(false)
                 }
               }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
                   Sending...
                 </>
               ) : (
                 <>
-                  <Mail className="w-4 h-4" />
+                  <Mail className="w-4 h-4 mr-1.5" />
                   Resend Verification Email
                 </>
               )}
-            </button>
+            </Button>
           )}
         </div>
       ),

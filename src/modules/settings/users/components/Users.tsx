@@ -272,15 +272,15 @@ const getAllColumns = ({
     cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
-  { 
-    header: 'Roles', 
-    accessorKey: 'roles', 
+  {
+    header: 'Roles',
+    accessorKey: 'roles',
     cell: ({ getValue }) => {
       const roles = getValue() as string[] | undefined;
       return roles?.length ? (
         <div className="flex flex-wrap gap-1">
           {roles.map((role, idx) => (
-            <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200">
+            <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
               {role}
             </span>
           ))}
@@ -339,7 +339,6 @@ const getAllColumns = ({
 export default function Users() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '')
   const authroles = useAppSelector((state) => state.auth.user?.roles || [])
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   const {
     isModalOpen,
@@ -740,12 +739,12 @@ export default function Users() {
             }}
             title={isDisabled ? (hasDeveloperRole ? "Cannot select users with Developer role" : "Invalid user ID") : ""}
           >
-            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${!isDisabled && 'group-hover:scale-110'} ${
+            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors duration-200 ${
               isDisabled
-                ? 'bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-600 opacity-60'
+                ? 'bg-muted border-border opacity-60'
                 : isSelected
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 dark:from-blue-400 dark:to-indigo-500 dark:border-blue-400'
-                  : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md'
+                  ? 'bg-primary border-primary'
+                  : 'border-input bg-background hover:border-primary'
             }`}>
               {isSelected && !isDisabled && (
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -1096,11 +1095,11 @@ export default function Users() {
         isFilterActive={isFilterActive}
       />
       
-      {/* TABLE - Glass Design */}
-      <div className="relative rounded-xl overflow-hidden border border-gray-200/30 dark:border-gray-700/30">
+      {/* TABLE */}
+      <div className="relative rounded-xl overflow-hidden border border-border">
         <TableWithLoader loading={loading} id="printable-user-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showEmptyState ? (
-            <EmptyState 
+            <EmptyState
               message={showTrash ? "No deleted users found" : "No users found"}
               suggestion={showTrash ? "Deleted users will appear here once you move them to trash." : "Try adjusting your search or filter criteria to see more results."}
             />
@@ -1108,19 +1107,15 @@ export default function Users() {
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-20">
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b border-gray-200/50 dark:border-gray-700/50">
+                  <tr key={headerGroup.id} className="border-b border-border bg-muted">
                     {headerGroup.headers.map((header) => {
                       const isSortable = header.column.getCanSort()
-                      
+
                       return (
                         <th
                           key={header.id}
                           className={`p-4 text-center font-semibold ${header.column.columnDef.meta?.customClassName || ''}`}
                           style={{
-                            background: isDarkMode
-                              ? 'linear-gradient(135deg, #1e293b, #0f172a)'
-                              : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
-                            backdropFilter: 'blur(8px)',
                             cursor: isSortable ? 'pointer' : 'default'
                           }}
                           onClick={(event) => {
@@ -1131,7 +1126,7 @@ export default function Users() {
                           }}
                         >
                           <div className="flex justify-between items-center w-full gap-2">
-                            <span className="flex-1 text-center text-gray-800 dark:text-gray-200 font-semibold">
+                            <span className="flex-1 text-center text-foreground font-semibold">
                               {flexRender(
                                 header.column.columnDef.header,
                                 header.getContext()
@@ -1140,14 +1135,14 @@ export default function Users() {
                             {isSortable && (
                               <span className="relative">
                                 {header.column.getIsSorted() === 'asc' ? (
-                                  <FaSortUp className="text-purple-600 dark:text-purple-400" size={12} />
+                                  <FaSortUp className="text-primary" size={12} />
                                 ) : header.column.getIsSorted() === 'desc' ? (
-                                  <FaSortDown className="text-purple-600 dark:text-purple-400" size={12} />
+                                  <FaSortDown className="text-primary" size={12} />
                                 ) : (
                                   <FaSort className="text-gray-500 dark:text-gray-500" size={12} />
                                 )}
                                 {header.column.id === 'select' && header.column.getIsSorted() && (
-                                  <span className="absolute -top-1 -right-2 text-xs text-blue-500" title="Frontend sorting (no API call)">
+                                  <span className="absolute -top-1 -right-2 text-xs text-primary" title="Frontend sorting (no API call)">
                                     ⚡
                                   </span>
                                 )}
@@ -1163,14 +1158,14 @@ export default function Users() {
 
               <tbody>
                 {table.getRowModel().rows.map((row, index) => (
-                  <tr 
-                    key={row.id} 
+                  <tr
+                    key={row.id}
                     className={cn(
-                      "transition-all duration-200",
-                      "border-b border-gray-200/40 dark:border-gray-700/30",
+                      "transition-colors duration-200",
+                      "border-b border-border",
                       index !== table.getRowModel().rows.length - 1 && "border-b",
-                      row.getIsSelected() && "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 dark:from-blue-500/5 dark:to-indigo-500/5",
-                      !row.getIsSelected() && "hover:bg-white/20 dark:hover:bg-white/5"
+                      row.getIsSelected() && "bg-primary/10",
+                      !row.getIsSelected() && "hover:bg-muted/50"
                     )}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -1375,7 +1370,7 @@ export default function Users() {
         loading={deleteLoading}
       >
         <div className="space-y-3">
-          <p className="text-blue-600 dark:text-blue-400 font-medium">
+          <p className="text-primary font-medium">
             This user can be permanently deleted or moved to trash.
           </p>
           

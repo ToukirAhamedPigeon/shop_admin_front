@@ -153,20 +153,20 @@ export default function EditTranslation({ translationId, fetchData, onClose }: E
     >
       <TranslationGlassCard variant="warning" padding="lg" className="mb-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10">
-              <Edit3 className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Edit3 className="w-6 h-6 text-primary" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold text-foreground">
                 {t('Edit Translation')}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {t('Update translation key, module, and values')}
               </p>
             </div>
             {!isDeveloper && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100/50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs">
                 <Shield className="w-3 h-3" />
                 <span>Read-only: Key field</span>
               </div>
@@ -174,7 +174,7 @@ export default function EditTranslation({ translationId, fetchData, onClose }: E
           </div>
 
           {!isDeveloper && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
               <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <p className="text-xs text-amber-700 dark:text-amber-400">
                 {t('Only Developer users can edit the Key field')}
@@ -192,7 +192,7 @@ export default function EditTranslation({ translationId, fetchData, onClose }: E
               error={errors.key}
               model="Translation"
               readOnly={!isDeveloper}
-              className={!isDeveloper ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : ""}
+              className={!isDeveloper ? "bg-muted cursor-not-allowed" : ""}
             />
 
             <BasicInput
@@ -226,13 +226,12 @@ export default function EditTranslation({ translationId, fetchData, onClose }: E
             />
           </div>
 
-          <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={handleReset} disabled={submitLoading}>
               {t('Reset Form')}
             </Button>
-            <Button 
-              type="submit" 
-              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+            <Button
+              type="submit"
               disabled={submitLoading}
             >
               {submitLoading ? (

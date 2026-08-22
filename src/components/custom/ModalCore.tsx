@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { X, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/hooks/useTranslations";
-import { useAppSelector } from "@/hooks/useRedux";
 
 type ModalCoreProps = {
   onClose: () => void;
@@ -33,7 +32,6 @@ const ModalCore: React.FC<ModalCoreProps> = ({
 }) => {
   const { t } = useTranslations();
   const printRef = useRef<HTMLDivElement>(null);
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
   const handlePrint = () => {
     const html = printRef.current?.innerHTML;
@@ -70,10 +68,8 @@ const ModalCore: React.FC<ModalCoreProps> = ({
       exit="exit"
       transition={{ duration: 0.25, type: "spring", stiffness: 300, damping: 25 }}
       className={cn(
-        "relative rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl",
-        bgColor === "transparent"
-          ? "bg-transparent"
-          : ""
+        "relative rounded-2xl shadow-md overflow-hidden border border-border",
+        bgColor === "transparent" ? "bg-transparent" : "bg-card"
       )}
       style={{
         display: "flex",
@@ -81,29 +77,17 @@ const ModalCore: React.FC<ModalCoreProps> = ({
         width: widthPercent ? `${widthPercent}%` : "100%",
         minWidth: "320px",
         maxWidth: "90vw",
-        background: isDarkMode
-          ? 'rgba(17, 24, 39, 0.95)'
-          : 'rgba(255, 255, 255, 0.95)',
-        border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
       }}
     >
-      {/* Decorative top gradient */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-      
       {/* Header */}
       <div
         className={cn(
-          "sticky top-0 z-10 flex items-center justify-between px-6 py-4 backdrop-blur-sm",
-          "border-b border-gray-200/30 dark:border-gray-700/30",
+          "sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-card",
+          "border-b border-border",
           titleClassName
         )}
-        style={{
-          background: isDarkMode
-            ? 'rgba(0, 0, 0, 0.3)'
-            : 'rgba(255, 255, 255, 0.3)',
-        }}
       >
-        <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+        <h2 className="text-xl font-bold text-foreground">
           {t(title)}
         </h2>
 
@@ -111,7 +95,7 @@ const ModalCore: React.FC<ModalCoreProps> = ({
           {showPrintButton && (
             <button
               onClick={handlePrint}
-              className="p-2 rounded-lg text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-110"
+              className="p-2 rounded-lg text-muted-foreground hover:text-primary transition-colors hover:bg-accent"
             >
               <Printer size={18} />
             </button>
@@ -119,7 +103,7 @@ const ModalCore: React.FC<ModalCoreProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-110"
+            className="p-2 rounded-lg text-muted-foreground hover:text-destructive transition-colors hover:bg-accent"
           >
             <X size={18} />
           </button>

@@ -391,12 +391,12 @@ export default function Edit({ userId, fetchData, onClose }: Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex justify-between gap-4 mt-4 border-t border-gray-300 pt-4">
+      <div className="flex justify-between gap-4 mt-4 border-t border-border pt-4">
         <Button type="button" variant="outline" onClick={handleReset} disabled={submitLoading}>
           {t("Reset Form")}
         </Button>
 
-        <Button type="submit" className="bg-amber-600 text-white shadow hover:bg-amber-700" disabled={submitLoading}>
+        <Button type="submit" disabled={submitLoading}>
           {submitLoading ? t("Updating") + "..." : t("Update User")}
         </Button>
       </div>

@@ -6,18 +6,14 @@ import { Button } from '@/components/ui/button'
 import { useTranslations } from '@/hooks/useTranslations';
 import { type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  Info, 
-  Trash2, 
-  RotateCcw, 
+import {
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Trash2,
   ShieldAlert,
-  FileWarning,
-  Archive,
   X
 } from 'lucide-react';
-import { useAppSelector } from '@/hooks/useRedux';
 
 interface ConfirmDialogProps {
   open: boolean
@@ -63,7 +59,6 @@ const ConfirmDialog = ({
   cancelButtonClassName = ''
 }: ConfirmDialogProps) => {
   const { t } = useTranslations();
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
   const getDefaultIcon = () => {
     switch (variant) {
@@ -84,48 +79,38 @@ const ConfirmDialog = ({
     switch (variant) {
       case 'destructive':
         return {
-          iconBg: 'bg-gradient-to-br from-red-500/20 to-rose-500/20',
-          iconColor: 'text-red-600 dark:text-red-400',
-          titleColor: 'text-red-600 dark:text-red-400',
-          gradient: 'from-red-500/10 via-rose-500/5 to-red-500/10',
-          buttonGradient: 'from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700',
-          borderGlow: 'rgba(239, 68, 68, 0.5)'
+          iconBg: 'bg-destructive/10',
+          iconColor: 'text-destructive',
+          titleColor: 'text-destructive',
+          buttonVariant: 'destructive' as const,
         };
       case 'success':
         return {
-          iconBg: 'bg-gradient-to-br from-green-500/20 to-emerald-500/20',
-          iconColor: 'text-green-600 dark:text-green-400',
-          titleColor: 'text-green-600 dark:text-green-400',
-          gradient: 'from-green-500/10 via-emerald-500/5 to-green-500/10',
-          buttonGradient: 'from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700',
-          borderGlow: 'rgba(34, 197, 94, 0.5)'
+          iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+          iconColor: 'text-emerald-600 dark:text-emerald-400',
+          titleColor: 'text-emerald-600 dark:text-emerald-400',
+          buttonVariant: 'success' as const,
         };
       case 'warning':
         return {
-          iconBg: 'bg-gradient-to-br from-yellow-500/20 to-amber-500/20',
-          iconColor: 'text-yellow-600 dark:text-yellow-400',
-          titleColor: 'text-yellow-600 dark:text-yellow-400',
-          gradient: 'from-yellow-500/10 via-amber-500/5 to-yellow-500/10',
-          buttonGradient: 'from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700',
-          borderGlow: 'rgba(234, 179, 8, 0.5)'
+          iconBg: 'bg-amber-100 dark:bg-amber-900/30',
+          iconColor: 'text-amber-600 dark:text-amber-400',
+          titleColor: 'text-amber-600 dark:text-amber-400',
+          buttonVariant: 'warning' as const,
         };
       case 'info':
         return {
-          iconBg: 'bg-gradient-to-br from-blue-500/20 to-indigo-500/20',
-          iconColor: 'text-blue-600 dark:text-blue-400',
-          titleColor: 'text-blue-600 dark:text-blue-400',
-          gradient: 'from-blue-500/10 via-indigo-500/5 to-blue-500/10',
-          buttonGradient: 'from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700',
-          borderGlow: 'rgba(59, 130, 246, 0.5)'
+          iconBg: 'bg-primary/10',
+          iconColor: 'text-primary',
+          titleColor: 'text-primary',
+          buttonVariant: 'info' as const,
         };
       default:
         return {
-          iconBg: 'bg-gradient-to-br from-gray-500/20 to-gray-600/20',
-          iconColor: 'text-gray-600 dark:text-gray-400',
-          titleColor: 'text-gray-900 dark:text-gray-100',
-          gradient: 'from-gray-500/10 via-gray-600/5 to-gray-500/10',
-          buttonGradient: 'from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800',
-          borderGlow: 'rgba(107, 114, 128, 0.5)'
+          iconBg: 'bg-muted',
+          iconColor: 'text-muted-foreground',
+          titleColor: 'text-foreground',
+          buttonVariant: 'default' as const,
         };
     }
   };
@@ -142,25 +127,8 @@ const ConfirmDialog = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className={`relative backdrop-blur-xl rounded-2xl overflow-hidden`}
-              style={{
-                background: isDarkMode
-                  ? 'rgba(17, 24, 39, 0.95)'
-                  : 'rgba(255, 255, 255, 0.95)',
-                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
-              }}
+              className="relative rounded-2xl overflow-hidden bg-card border border-border"
             >
-              {/* Animated gradient border */}
-              <div
-                className="absolute inset-0 opacity-30"
-                style={{
-                  background: `radial-gradient(circle at 50% 0%, ${variantStyles.borderGlow}, transparent 70%)`,
-                }}
-              />
-              
-              {/* Decorative top border */}
-              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-${variant === 'destructive' ? 'red' : variant === 'success' ? 'green' : variant === 'warning' ? 'yellow' : 'blue'}-500 to-transparent`} />
-
               <div className="p-6 relative z-10">
                 <DialogHeader className="space-y-4">
                   <div className="flex items-start gap-4">
@@ -169,7 +137,7 @@ const ConfirmDialog = ({
                       initial={{ scale: 0, rotate: -180 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ duration: 0.3, type: "spring", stiffness: 260, damping: 20 }}
-                      className={`flex-shrink-0 w-14 h-14 rounded-2xl ${variantStyles.iconBg} backdrop-blur-sm flex items-center justify-center shadow-lg`}
+                      className={`flex-shrink-0 w-14 h-14 rounded-2xl ${variantStyles.iconBg} flex items-center justify-center`}
                     >
                       {icon || (
                         <div className={variantStyles.iconColor}>
@@ -188,7 +156,7 @@ const ConfirmDialog = ({
                     {/* Close button */}
                     <button
                       onClick={onCancel}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -198,11 +166,11 @@ const ConfirmDialog = ({
                 {/* Content */}
                 <div className="mt-4 ml-16">
                   {children ? (
-                    <div className="text-gray-700 dark:text-gray-300 space-y-3">
+                    <div className="text-muted-foreground space-y-3">
                       {children}
                     </div>
                   ) : (
-                    <div className="text-gray-700 dark:text-gray-300">
+                    <div className="text-muted-foreground">
                       {typeof description === 'string' ? t(description) : description}
                     </div>
                   )}
@@ -220,13 +188,13 @@ const ConfirmDialog = ({
                         variant="outline"
                         onClick={onCancel}
                         disabled={loading}
-                        className={`rounded-xl px-6 border-2 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-300 hover:scale-105 ${cancelButtonClassName}`}
+                        className={`rounded-xl px-6 ${cancelButtonClassName}`}
                       >
                         {t(cancelLabel)}
                       </Button>
                     </motion.div>
                   )}
-                  
+
                   {showPermanentDeleteButton && onPermanentDelete && (
                     <motion.div
                       initial={{ opacity: 0, x: 20 }}
@@ -234,13 +202,14 @@ const ConfirmDialog = ({
                       transition={{ delay: 0.15 }}
                     >
                       <Button
+                        variant={permanentDeleteVariant}
                         onClick={onPermanentDelete}
                         disabled={loading}
-                        className={`rounded-xl px-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-r ${variantStyles.buttonGradient} text-white ${confirmButtonClassName}`}
+                        className={`rounded-xl px-6 ${confirmButtonClassName}`}
                       >
                         {loading ? (
                           <>
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
@@ -255,7 +224,7 @@ const ConfirmDialog = ({
                       </Button>
                     </motion.div>
                   )}
-                  
+
                   {showConfirmButton && (
                     <motion.div
                       initial={{ opacity: 0, x: 20 }}
@@ -263,13 +232,14 @@ const ConfirmDialog = ({
                       transition={{ delay: 0.2 }}
                     >
                       <Button
+                        variant={variantStyles.buttonVariant}
                         onClick={onConfirm}
                         disabled={loading}
-                        className={`rounded-xl px-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-r ${variantStyles.buttonGradient} text-white ${confirmButtonClassName}`}
+                        className={`rounded-xl px-6 ${confirmButtonClassName}`}
                       >
                         {loading ? (
                           <>
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>

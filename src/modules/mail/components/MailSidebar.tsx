@@ -26,11 +26,11 @@ interface MailSidebarProps {
   isMobile?: boolean; // Added this property
 }
 
-const mailboxes: { id: MailboxType; label: string; icon: React.ReactNode; countKey?: keyof MailStatistics; gradient?: string }[] = [
-  { id: 'inbox', label: 'Inbox', icon: <Inbox className="w-4 h-4" />, countKey: 'totalReceived', gradient: 'from-blue-500/20 to-cyan-500/20' },
-  { id: 'starred', label: 'Starred', icon: <Star className="w-4 h-4" />, countKey: 'starredCount', gradient: 'from-yellow-500/20 to-amber-500/20' },
-  { id: 'sent', label: 'Sent', icon: <Send className="w-4 h-4" />, countKey: 'totalSent', gradient: 'from-emerald-500/20 to-teal-500/20' },
-  { id: 'trash', label: 'Trash', icon: <Trash2 className="w-4 h-4" />, countKey: 'trashCount', gradient: 'from-red-500/20 to-rose-500/20' },
+const mailboxes: { id: MailboxType; label: string; icon: React.ReactNode; countKey?: keyof MailStatistics }[] = [
+  { id: 'inbox', label: 'Inbox', icon: <Inbox className="w-4 h-4" />, countKey: 'totalReceived' },
+  { id: 'starred', label: 'Starred', icon: <Star className="w-4 h-4" />, countKey: 'starredCount' },
+  { id: 'sent', label: 'Sent', icon: <Send className="w-4 h-4" />, countKey: 'totalSent' },
+  { id: 'trash', label: 'Trash', icon: <Trash2 className="w-4 h-4" />, countKey: 'trashCount' },
 ];
 
 export default function MailSidebar({ 
@@ -59,12 +59,9 @@ export default function MailSidebar({
     <div className="flex flex-col gap-3 sm:gap-4 h-full p-1 sm:p-0">
       {/* Compose Button */}
       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-        <Button 
-          onClick={onCompose} 
-          className={cn(
-            "w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg",
-            isMobile ? "text-sm py-1.5" : ""
-          )}
+        <Button
+          onClick={onCompose}
+          className={cn("w-full", isMobile ? "text-sm py-1.5" : "")}
         >
           <Plus className={cn("w-4 h-4", isMobile ? "mr-1" : "mr-2")} />
           {isMobile ? "Compose" : "Compose Message"}
@@ -84,17 +81,17 @@ export default function MailSidebar({
             variants={itemVariants}
             onClick={() => onSelectMailbox(mailbox.id)}
             className={cn(
-              "w-full flex items-center justify-between px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl transition-all duration-200 cursor-pointer",
+              "w-full flex items-center justify-between px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl transition-colors duration-200 cursor-pointer",
               selectedMailbox === mailbox.id
-                ? "bg-gradient-to-r from-primary/15 to-primary/5 text-primary shadow-sm"
-                : "hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300",
+                ? "bg-primary/10 text-primary shadow-sm"
+                : "hover:bg-muted text-foreground",
               isMobile ? "text-sm" : ""
             )}
           >
             <span className="flex items-center gap-2 sm:gap-3">
               <span className={cn(
                 "transition-colors",
-                selectedMailbox === mailbox.id ? "text-primary" : "text-gray-500"
+                selectedMailbox === mailbox.id ? "text-primary" : "text-muted-foreground"
               )}>
                 {mailbox.icon}
               </span>
@@ -105,7 +102,7 @@ export default function MailSidebar({
                 "text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-semibold",
                 selectedMailbox === mailbox.id
                   ? "bg-primary/20 text-primary"
-                  : "bg-gray-200/70 dark:bg-gray-700/70 text-gray-600 dark:text-gray-400"
+                  : "bg-muted text-muted-foreground"
               )}>
                 {statistics[mailbox.countKey]}
               </span>
@@ -139,31 +136,31 @@ export default function MailSidebar({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-auto pt-4 border-t border-gray-200/50 dark:border-gray-700/50"
+          className="mt-auto pt-4 border-t border-border"
         >
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 tracking-wider uppercase">
+          <p className="text-xs font-semibold text-muted-foreground mb-3 tracking-wider uppercase">
             Mail Statistics
           </p>
           <div className="space-y-2">
-            <div className="flex justify-between items-center p-2 rounded-lg bg-blue-50/30 dark:bg-blue-900/20">
+            <div className="flex justify-between items-center p-2 rounded-lg bg-primary/5">
               <div className="flex items-center gap-2">
-                <div className="p-1 rounded bg-blue-100/50 dark:bg-blue-800/30">
-                  <MailIcon className="w-3 h-3 text-blue-500" />
+                <div className="p-1 rounded bg-primary/10">
+                  <MailIcon className="w-3 h-3 text-primary" />
                 </div>
-                <span className="text-xs text-gray-600 dark:text-gray-400">Unread</span>
+                <span className="text-xs text-muted-foreground">Unread</span>
               </div>
-              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+              <span className="text-sm font-bold text-primary">
                 {statistics.unreadCount}
               </span>
             </div>
-            <div className="flex justify-between items-center p-2 rounded-lg bg-purple-50/30 dark:bg-purple-900/20">
+            <div className="flex justify-between items-center p-2 rounded-lg bg-muted">
               <div className="flex items-center gap-2">
-                <div className="p-1 rounded bg-purple-100/50 dark:bg-purple-800/30">
-                  <TrendingUp className="w-3 h-3 text-purple-500" />
+                <div className="p-1 rounded bg-background">
+                  <TrendingUp className="w-3 h-3 text-muted-foreground" />
                 </div>
-                <span className="text-xs text-gray-600 dark:text-gray-400">Total</span>
+                <span className="text-xs text-muted-foreground">Total</span>
               </div>
-              <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+              <span className="text-sm font-bold text-foreground">
                 {statistics.totalReceived + statistics.totalSent}
               </span>
             </div>

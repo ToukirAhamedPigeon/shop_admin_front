@@ -1,16 +1,16 @@
 // src/modules/mail/components/MailDetail.tsx
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  Star, 
-  Reply, 
-  Trash2, 
+import {
+  Star,
+  Reply,
+  Trash2,
   Download,
   MailOpen,
   Mail as MailIcon,
@@ -45,17 +45,17 @@ const REMOTE_STORAGE_URL = import.meta.env.VITE_REMOTE_STORAGE_URL || 'https://s
 // Helper function to get full file URL (handles both local and remote paths)
 const getFullFileUrl = (url: string): string => {
   if (!url) return '';
-  
+
   // If it's already a full URL (starts with http), return as is
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
-  
+
   // If it's a relative path, prepend the remote storage URL
   if (url.startsWith('/uploads/')) {
     return `${REMOTE_STORAGE_URL}${url}`;
   }
-  
+
   return url;
 };
 
@@ -85,46 +85,46 @@ const getFileExtension = (fileName: string): string => {
 // Helper function to get appropriate icon based on file extension
 const getFileIcon = (fileName: string) => {
   const extension = getFileExtension(fileName);
-  const iconClass = "w-4 h-4 flex-shrink-0";
-  
+  const iconClass = "w-4 h-4 flex-shrink-0 text-muted-foreground";
+
   // Images
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico'].includes(extension)) {
-    return <Image className={`${iconClass} text-blue-500`} />;
+    return <Image className={iconClass} />;
   }
   // PDF
   if (extension === 'pdf') {
-    return <FileText className={`${iconClass} text-red-500`} />;
+    return <FileText className={iconClass} />;
   }
   // Word documents
   if (['doc', 'docx'].includes(extension)) {
-    return <FileText className={`${iconClass} text-blue-600`} />;
+    return <FileText className={iconClass} />;
   }
   // Excel spreadsheets
   if (['xls', 'xlsx', 'csv'].includes(extension)) {
-    return <FileSpreadsheet className={`${iconClass} text-green-600`} />;
+    return <FileSpreadsheet className={iconClass} />;
   }
   // PowerPoint
   if (['ppt', 'pptx'].includes(extension)) {
-    return <FileSpreadsheet className={`${iconClass} text-orange-500`} />;
+    return <FileSpreadsheet className={iconClass} />;
   }
   // Archives
   if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension)) {
-    return <Archive className={`${iconClass} text-yellow-600`} />;
+    return <Archive className={iconClass} />;
   }
   // Audio
   if (['mp3', 'wav', 'ogg', 'm4a', 'flac'].includes(extension)) {
-    return <FileAudio className={`${iconClass} text-purple-500`} />;
+    return <FileAudio className={iconClass} />;
   }
   // Video
   if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'].includes(extension)) {
-    return <FileVideo className={`${iconClass} text-purple-600`} />;
+    return <FileVideo className={iconClass} />;
   }
   // Text files
   if (['txt', 'html', 'htm', 'css', 'js', 'json', 'xml', 'md'].includes(extension)) {
-    return <FileText className={`${iconClass} text-gray-500`} />;
+    return <FileText className={iconClass} />;
   }
   // Default
-  return <File className={`${iconClass} text-gray-400`} />;
+  return <File className={iconClass} />;
 };
 
 // Helper function to truncate filename
@@ -210,8 +210,8 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
     window.open(fullUrl, '_blank');
   };
 
-  const visibleAttachments = showAllAttachments 
-    ? mail?.attachments || [] 
+  const visibleAttachments = showAllAttachments
+    ? mail?.attachments || []
     : (mail?.attachments || []).slice(0, 5);
 
   return (
@@ -223,7 +223,7 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
             <div className="flex gap-1">
               <button
                 onClick={handleToggleStar}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer"
               >
                 <Star
                   className={cn(
@@ -236,26 +236,26 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
               </button>
               <button
                 onClick={mail?.isRead ? handleMarkAsUnread : handleMarkAsRead}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer"
                 title={mail?.isRead ? "Mark as unread" : "Mark as read"}
               >
                 {mail?.isRead ? (
-                  <MailIcon className="w-5 h-5 text-gray-500" />
+                  <MailIcon className="w-5 h-5 text-muted-foreground" />
                 ) : (
-                  <MailOpen className="w-5 h-5 text-blue-500" />
+                  <MailOpen className="w-5 h-5 text-primary" />
                 )}
               </button>
               <button
                 onClick={handleMoveToTrash}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer"
               >
-                <Trash2 className="w-5 h-5 text-gray-500" />
+                <Trash2 className="w-5 h-5 text-muted-foreground" />
               </button>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
           </div>
@@ -290,7 +290,7 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
             </div>
 
             {/* Email Body */}
-            <div 
+            <div
               className="prose max-w-none"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(mail.body) }}
             />
@@ -307,12 +307,12 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
                     const fileName = getFileNameFromUrl(fullUrl);
                     const displayName = truncateFileName(fileName);
                     const fileExtension = getFileExtension(fileName);
-                    
+
                     return (
                       <button
                         key={index}
                         onClick={() => handleDownloadAttachment(attachment, fileName)}
-                        className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors cursor-pointer group"
+                        className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg hover:bg-muted/70 transition-colors cursor-pointer group"
                         title={fileName}
                       >
                         {getFileIcon(fileName)}
@@ -320,7 +320,7 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
                           {displayName}
                         </span>
                         {fileExtension && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">
+                          <span className="text-xs text-muted-foreground uppercase">
                             {fileExtension}
                           </span>
                         )}
@@ -349,14 +349,14 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
                 </div>
                 <div className="space-y-3">
                   {mail.replies.map(reply => (
-                    <div key={reply.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <div key={reply.id} className="bg-muted rounded-lg p-3">
                       <div className="flex justify-between text-sm">
                         <span className="font-medium">{reply.fromMail}</span>
                         <span className="text-gray-500">
                           {format(new Date(reply.createdAt), 'MMM dd, h:mm a')}
                         </span>
                       </div>
-                      <div 
+                      <div
                         className="text-sm mt-1 prose-sm"
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reply.body) }}
                       />
@@ -367,7 +367,7 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
             )}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">Mail not found</div>
+          <div className="text-center py-12 text-muted-foreground">Mail not found</div>
         )}
       </DialogContent>
     </Dialog>

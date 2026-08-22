@@ -119,10 +119,10 @@ export default function MailboxPage() {
   }
 
   const quickStats = [
-    { label: 'Inbox', value: statistics?.totalReceived || 0, icon: <Inbox className="w-4 h-4" />, color: 'text-blue-500' },
-    { label: 'Sent', value: statistics?.totalSent || 0, icon: <Send className="w-4 h-4" />, color: 'text-emerald-500' },
-    { label: 'Starred', value: statistics?.starredCount || 0, icon: <Star className="w-4 h-4" />, color: 'text-yellow-500' },
-    { label: 'Unread', value: statistics?.unreadCount || 0, icon: <MailIcon className="w-4 h-4" />, color: 'text-purple-500' },
+    { label: 'Inbox', value: statistics?.totalReceived || 0, icon: <Inbox className="w-4 h-4" /> },
+    { label: 'Sent', value: statistics?.totalSent || 0, icon: <Send className="w-4 h-4" /> },
+    { label: 'Starred', value: statistics?.starredCount || 0, icon: <Star className="w-4 h-4" /> },
+    { label: 'Unread', value: statistics?.unreadCount || 0, icon: <MailIcon className="w-4 h-4" /> },
   ];
 
   return (
@@ -145,21 +145,21 @@ export default function MailboxPage() {
             <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Fetch Emails
           </Button>
-          <Button 
-            onClick={handleFetchEmails} 
-            disabled={refreshing} 
-            variant="outline" 
-            size="sm" 
+          <Button
+            onClick={handleFetchEmails}
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
             className="cursor-pointer flex sm:hidden"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
-          
+
           {/* Mobile Sidebar Toggle Button */}
-          <Button 
+          <Button
             id="sidebar-toggle"
-            variant="ghost" 
-            size="sm" 
+            variant="ghost"
+            size="sm"
             className="lg:hidden cursor-pointer p-2"
             onClick={(e) => {
               e.stopPropagation();
@@ -194,7 +194,7 @@ export default function MailboxPage() {
                     {stat.value}
                   </p>
                 </div>
-                <div className={`p-1.5 sm:p-2 rounded-lg bg-${stat.color.split('-')[1]}-100/50 dark:bg-${stat.color.split('-')[1]}-900/30 ${stat.color}`}>
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary">
                   {stat.icon}
                 </div>
               </motion.div>
@@ -207,7 +207,7 @@ export default function MailboxPage() {
       <div className="flex gap-4 flex-1 min-h-0">
         {/* Mobile Sidebar Overlay */}
         {showMobileSidebar && isMobile && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-30 lg:hidden"
             onClick={() => setShowMobileSidebar(false)}
           />

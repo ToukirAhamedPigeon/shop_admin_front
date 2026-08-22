@@ -2,7 +2,6 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ModalCore from "./ModalCore";
-import { useAppSelector } from "@/hooks/useRedux";
 
 type ModalProps = {
   isOpen: boolean;
@@ -31,8 +30,6 @@ export default function Modal({
   showPrintButton,
   widthPercent,
 }: ModalProps) {
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -42,13 +39,7 @@ export default function Modal({
           animate="visible"
           exit="exit"
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 w-full h-full flex items-center justify-center z-50"
-          style={{
-            background: isDarkMode
-              ? 'rgba(0, 0, 0, 0.8)'
-              : 'rgba(0, 0, 0, 0.5)',
-            backdropFilter: 'blur(8px)',
-          }}
+          className="fixed inset-0 w-full h-full flex items-center justify-center z-50 bg-black/60"
           onClick={onClose}
         >
           <div className="w-full h-full flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>

@@ -34,7 +34,6 @@ export default function EditPermission({ permissionId, fetchData, onClose }: Edi
   const { t } = useTranslations()
   const { refreshUser } = useRefreshAuth()
   const currentUser = useAppSelector((state) => state.auth.user)
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
   const [loading, setLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)
   const hasLoaded = useRef(false)
@@ -69,14 +68,14 @@ export default function EditPermission({ permissionId, fetchData, onClose }: Edi
     try {
       setLoading(true)
       const permission: IPermission = await getPermissionForEdit(permissionId)
-      
+
       const formData = {
         name: permission.name,
         guardName: permission.guardName,
         roles: permission.roles || [],
         isActive: permission.isActive ? 'true' : 'false',
       }
-      
+
       reset(formData)
     } catch (error) {
       console.error('Failed to load permission:', error)
@@ -101,7 +100,7 @@ export default function EditPermission({ permissionId, fetchData, onClose }: Edi
 
       const currentUserPermissions = currentUser?.permissions || []
       const permissionName = data.name
-      
+
       if (currentUserPermissions.includes(permissionName)) {
         await refreshUser()
       }
@@ -156,59 +155,32 @@ export default function EditPermission({ permissionId, fetchData, onClose }: Edi
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
     >
-      <div
-        className="relative rounded-2xl backdrop-blur-xl transition-all duration-300 p-6 mb-6"
-        style={{
-          background: isDarkMode
-            ? 'rgba(17, 24, 39, 0.4)'
-            : 'rgba(255, 255, 255, 0.55)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
-          boxShadow: isDarkMode
-            ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
-            : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
-        }}
-      >
-        {/* Animated gradient border overlay */}
-        <div
-          className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
-          style={{
-            background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
-          }}
-        />
-        
-        {/* Colored accent line at top - Indigo/Purple theme */}
-        <div
-          className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#6366f1' : '#818cf8'}, ${isDarkMode ? '#a855f7' : '#c084fc'}, transparent)`,
-          }}
-        />
-
+      <div className="rounded-xl bg-card border border-border shadow-sm p-6 mb-6">
         <div className="relative z-10">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Header Section */}
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10">
-                <Edit3 className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Edit3 className="w-6 h-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+                <h2 className="text-xl font-bold text-foreground">
                   {t('Edit Permission')}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {t('Update permission details and assigned roles')}
                 </p>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100/50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs">
                 <Shield className="w-3 h-3" />
                 <span>{t('Edit Mode')}</span>
               </div>
             </div>
 
             {/* Info Box */}
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-              <AlertTriangle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <p className="text-xs text-blue-700 dark:text-blue-300">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted border border-border">
+              <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
                 {t('Note: Changes to permission name or guard name may affect role assignments')}
               </p>
             </div>
@@ -269,7 +241,7 @@ export default function EditPermission({ permissionId, fetchData, onClose }: Edi
                   value={formValues.isActive || 'true'}
                   model="Permission"
                 />
-                
+
                 {/* Empty div for layout balance */}
                 <div />
               </div>
@@ -277,30 +249,28 @@ export default function EditPermission({ permissionId, fetchData, onClose }: Edi
 
             {/* Role Assignment Note */}
             {formValues.roles && formValues.roles.length > 0 && (
-              <div className="mt-2 p-3 rounded-xl bg-green-50/50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+              <div className="mt-2 p-3 rounded-lg bg-muted border border-border">
                 <div className="flex items-start gap-2">
-                  <Users className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-green-700 dark:text-green-300">
-                    {t('This permission is currently assigned to')} <span className="font-semibold">{formValues.roles.length}</span> {t('role(s)')}
+                  <Users className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground">
+                    {t('This permission is currently assigned to')} <span className="font-semibold text-foreground">{formValues.roles.length}</span> {t('role(s)')}
                   </p>
                 </div>
               </div>
             )}
 
             {/* Submit Actions */}
-            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleReset} 
+            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
                 disabled={submitLoading}
-                className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
               >
                 {t('Reset Form')}
               </Button>
-              <Button 
-                type="submit" 
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              <Button
+                type="submit"
                 disabled={submitLoading}
               >
                 {submitLoading ? (

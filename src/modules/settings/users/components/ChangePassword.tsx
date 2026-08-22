@@ -112,66 +112,31 @@ export default function ChangePassword() {
         transition={{ duration: 0.5 }}
         className="max-w-md mx-auto"
       >
-        <div
-          className="relative rounded-2xl backdrop-blur-xl transition-all duration-300 p-6"
-          style={{
-            background: isDarkMode
-              ? 'rgba(17, 24, 39, 0.4)'
-              : 'rgba(255, 255, 255, 0.55)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
-            boxShadow: isDarkMode
-              ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
-              : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
-          }}
-        >
-          {/* Animated gradient border overlay */}
-          <div
-            className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
-            style={{
-              background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
-            }}
-          />
-          
-          {/* Colored accent line at top */}
-          <div
-            className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
-            style={{
-              background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#14b8a6' : '#14b8a6'}, ${isDarkMode ? '#0d9488' : '#0d9488'}, transparent)`,
-            }}
-          />
-
+        <div className="relative rounded-2xl bg-card border border-border shadow-sm transition-all duration-300 p-6">
           <div className="relative z-10 text-center space-y-6">
             {/* Success Icon */}
             <div className="flex justify-center">
-              <div className="p-3 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20">
-                <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+              <div className="p-3 rounded-full bg-emerald-500/10">
+                <CheckCircle className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
-            
+
             <div>
-              <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent mb-2">
+              <h3 className="text-xl font-bold text-foreground mb-2">
                 {t("Check Your Email")}
               </h3>
-              
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+
+              <p className="text-sm text-muted-foreground mb-2">
                 {t("We've sent a verification link to")}
               </p>
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 bg-gray-100/50 dark:bg-gray-800/50 inline-block px-3 py-1 rounded-lg">
+              <p className="text-sm font-semibold text-foreground bg-muted inline-block px-3 py-1 rounded-lg">
                 {userEmail}
               </p>
             </div>
-            
+
             {/* Next Steps Card */}
-            <div
-              className="p-4 rounded-xl text-left backdrop-blur-sm"
-              style={{
-                background: isDarkMode
-                  ? 'rgba(0, 0, 0, 0.2)'
-                  : 'rgba(255, 255, 255, 0.4)',
-                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.5)'}`,
-              }}
-            >
-              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-2">
+            <div className="p-4 rounded-xl text-left bg-muted/50 border border-border">
+              <p className="text-xs font-semibold text-primary mb-3 flex items-center gap-2">
                 <Mail className="w-3 h-3" />
                 {t("Next steps:")}
               </p>
@@ -181,14 +146,14 @@ export default function ChangePassword() {
                 <li>{t("You can continue using the app with your new password")}</li>
               </ol>
             </div>
-            
+
             {/* Try Again Link */}
             <div className="pt-2">
               <p className="text-xs text-gray-500">
                 {t("Didn't receive the email?")}{" "}
                 <button
                   onClick={() => setStep('form')}
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline inline-flex items-center gap-1 transition-colors"
+                  className="text-primary hover:underline font-medium inline-flex items-center gap-1 transition-colors"
                 >
                   <ArrowLeft className="w-3 h-3" />
                   {t("Try again")}
@@ -208,49 +173,22 @@ export default function ChangePassword() {
       transition={{ duration: 0.5 }}
       className="max-w-md mx-auto"
     >
-      <div
-        className="relative rounded-2xl backdrop-blur-xl transition-all duration-300 p-6"
-        style={{
-          background: isDarkMode
-            ? 'rgba(17, 24, 39, 0.4)'
-            : 'rgba(255, 255, 255, 0.55)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
-          boxShadow: isDarkMode
-            ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
-            : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
-        }}
-      >
-        {/* Animated gradient border overlay */}
-        <div
-          className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
-          style={{
-            background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
-          }}
-        />
-        
-        {/* Colored accent line at top - Amber/Orange theme */}
-        <div
-          className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#f59e0b' : '#f97316'}, ${isDarkMode ? '#d97706' : '#ea580c'}, transparent)`,
-          }}
-        />
-
+      <div className="relative rounded-2xl bg-card border border-border shadow-sm transition-all duration-300 p-6">
         <div className="relative z-10">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Header Section */}
-            <div className="text-center space-y-3 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
+            <div className="text-center space-y-3 pb-4 border-b border-border">
               <div className="flex justify-center">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10">
-                  <Key className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+                <div className="p-3 rounded-xl bg-primary/10">
+                  <Key className="w-8 h-8 text-primary" />
                 </div>
               </div>
-              
+
               <div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+                <h2 className="text-xl font-bold text-foreground">
                   {t("Change Password")}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {t("A verification email will be sent to confirm this change")}
                 </p>
               </div>
@@ -294,22 +232,14 @@ export default function ChangePassword() {
             </div>
 
             {/* Security Note */}
-            <div
-              className="p-4 rounded-xl backdrop-blur-sm"
-              style={{
-                background: isDarkMode
-                  ? 'rgba(0, 0, 0, 0.2)'
-                  : 'rgba(255, 255, 255, 0.4)',
-                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.5)'}`,
-              }}
-            >
+            <div className="p-4 rounded-xl bg-muted/50 border border-border">
               <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                  <p className="text-xs font-semibold text-foreground">
                     {t("Security Notice")}
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     {t("For security, you'll need to verify this change via email. Your password won't be changed until you click the verification link.")}
                   </p>
                 </div>
@@ -317,10 +247,10 @@ export default function ChangePassword() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-              <Button 
-                type="submit" 
-                className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 w-full sm:w-auto"
+            <div className="flex justify-end pt-4 border-t border-border">
+              <Button
+                type="submit"
+                className="w-full sm:w-auto"
                 disabled={submitLoading}
               >
                 {submitLoading ? (

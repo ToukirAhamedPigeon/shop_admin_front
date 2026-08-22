@@ -73,7 +73,6 @@ export default function ProfileEdit() {
   const [qrImg, setQrImg] = useState<string | null>(null)
   const [userData, setUserData] = useState<UserProfileData | null>(null)
   const userId = useAppSelector((state) => state.auth.user?.id)
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
   const model = "User"
   
   const hasLoadedRef = useRef(false)
@@ -273,62 +272,27 @@ export default function ProfileEdit() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div
-        className="relative rounded-2xl backdrop-blur-xl transition-all duration-300 p-6"
-        style={{
-          background: isDarkMode
-            ? 'rgba(17, 24, 39, 0.4)'
-            : 'rgba(255, 255, 255, 0.55)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
-          boxShadow: isDarkMode
-            ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
-            : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
-        }}
-      >
-        {/* Animated gradient border overlay */}
-        <div
-          className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
-          style={{
-            background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
-          }}
-        />
-        
-        {/* Colored accent line at top */}
-        <div
-          className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#6366f1' : '#818cf8'}, ${isDarkMode ? '#a855f7' : '#c084fc'}, transparent)`,
-          }}
-        />
-
+      <div className="relative rounded-2xl bg-card border border-border shadow-sm transition-all duration-300 p-6">
         <div className="relative z-10">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Header Section */}
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10">
-                <UserCircle className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <UserCircle className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                <h2 className="text-xl font-bold text-foreground">
                   {t('Edit Profile')}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {t('Update your personal information and profile picture')}
                 </p>
               </div>
             </div>
 
-            {/* User Info Card - Premium Glass Design */}
+            {/* User Info Card */}
             {userData && (
-              <div
-                className="relative rounded-xl backdrop-blur-sm p-4 mb-4 overflow-hidden"
-                style={{
-                  background: isDarkMode
-                    ? 'rgba(0, 0, 0, 0.3)'
-                    : 'rgba(255, 255, 255, 0.4)',
-                  border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.5)'}`,
-                }}
-              >
+              <div className="relative rounded-xl bg-muted/50 border border-border p-4 mb-4 overflow-hidden">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   {/* Left Section - User Info */}
                   <div className="flex-1 min-w-[200px]">
@@ -357,7 +321,7 @@ export default function ProfileEdit() {
                           {userData.roles?.map((role) => (
                             <span
                               key={role}
-                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 dark:from-indigo-900/50 dark:to-purple-900/50 dark:text-indigo-200"
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
                             >
                               {capitalize(role)}
                             </span>
@@ -405,35 +369,36 @@ export default function ProfileEdit() {
                           className="w-20 h-20 rounded-xl shadow-lg"
                         />
                       ) : (
-                        <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl flex items-center justify-center">
-                          <QrCode className="w-8 h-8 text-gray-400" />
+                        <div className="w-20 h-20 bg-muted rounded-xl flex items-center justify-center">
+                          <QrCode className="w-8 h-8 text-muted-foreground" />
                         </div>
                       )}
                     </div>
 
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
                       disabled={qrLoading}
                       onClick={handleRegenerateQr}
-                      className="px-3 py-1.5 text-xs rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5"
+                      className="text-xs h-auto py-1.5"
                     >
                       {qrLoading ? (
                         <>
-                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
                           <span>{t("Generating...")}</span>
                         </>
                       ) : (
                         <>
-                          <QrCode className="w-3 h-3" />
+                          <QrCode className="w-3 h-3 mr-1.5" />
                           <span>{userData.qrCode ? t("Regenerate QR") : t("Generate QR")}</span>
                         </>
                       )}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 {/* Note about editing restrictions */}
-                <div className="mt-3 pt-3 border-t border-gray-200/30 dark:border-gray-700/30">
+                <div className="mt-3 pt-3 border-t border-border">
                   <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                     <span className="text-base">ℹ️</span>
                     {t("Username, roles and permissions cannot be changed here. Contact administrator for changes.")}
@@ -447,8 +412,8 @@ export default function ProfileEdit() {
               {/* Left Column */}
               <div className="space-y-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <UserCircle className="w-4 h-4 text-blue-500" />
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <UserCircle className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">
                     {t('Personal Information')}
                   </h3>
                 </div>
@@ -539,8 +504,8 @@ export default function ProfileEdit() {
               {/* Right Column */}
               <div className="space-y-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4 text-emerald-500" />
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">
                     {t('Additional Information')}
                   </h3>
                 </div>
@@ -575,10 +540,9 @@ export default function ProfileEdit() {
             </div>
 
             {/* Submit Actions */}
-            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-              <Button 
-                type="submit" 
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-border">
+              <Button
+                type="submit"
                 disabled={submitLoading}
               >
                 {submitLoading ? (

@@ -5,15 +5,15 @@ import Breadcrumb from '@/components/module/admin/layout/Breadcrumb';
 import GlassCard from '@/components/custom/GlassCard';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, FileText, Mail, Calendar, User, Globe, Lock } from 'lucide-react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -99,14 +99,14 @@ export default function TemplatesPage() {
 
   const validateForm = (): boolean => {
     const errors: { name?: string; subject?: string } = {};
-    
+
     if (!formData.name.trim()) {
       errors.name = 'Template name is required';
     }
     if (!formData.subject.trim()) {
       errors.subject = 'Template subject is required';
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -129,9 +129,9 @@ export default function TemplatesPage() {
       setDialogOpen(false);
       loadTemplates();
     } catch (error: any) {
-      dispatchShowToast({ 
-        type: 'danger', 
-        message: error.response?.data?.message || 'Failed to save template' 
+      dispatchShowToast({
+        type: 'danger',
+        message: error.response?.data?.message || 'Failed to save template'
       });
     }
   };
@@ -181,7 +181,7 @@ export default function TemplatesPage() {
         />
         {hasCreatePermission && (
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button onClick={() => handleOpenDialog()} className="bg-gradient-to-r from-indigo-500 to-purple-600">
+            <Button onClick={() => handleOpenDialog()}>
               <Plus className="w-4 h-4 mr-2" />
               New Template
             </Button>
@@ -202,8 +202,8 @@ export default function TemplatesPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Templates</p>
               <p className="text-2xl font-bold mt-1">{templates.length}</p>
             </div>
-            <div className="p-3 rounded-xl bg-blue-100/50 dark:bg-blue-900/30">
-              <FileText className="w-6 h-6 text-blue-500" />
+            <div className="p-3 rounded-xl bg-primary/10">
+              <FileText className="w-6 h-6 text-primary" />
             </div>
           </div>
         </GlassCard>
@@ -214,8 +214,8 @@ export default function TemplatesPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Global Templates</p>
               <p className="text-2xl font-bold mt-1">{globalCount}</p>
             </div>
-            <div className="p-3 rounded-xl bg-emerald-100/50 dark:bg-emerald-900/30">
-              <Globe className="w-6 h-6 text-emerald-500" />
+            <div className="p-3 rounded-xl bg-emerald-500/10">
+              <Globe className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
         </GlassCard>
@@ -226,8 +226,8 @@ export default function TemplatesPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Personal Templates</p>
               <p className="text-2xl font-bold mt-1">{personalCount}</p>
             </div>
-            <div className="p-3 rounded-xl bg-purple-100/50 dark:bg-purple-900/30">
-              <Lock className="w-6 h-6 text-purple-500" />
+            <div className="p-3 rounded-xl bg-muted">
+              <Lock className="w-6 h-6 text-muted-foreground" />
             </div>
           </div>
         </GlassCard>
@@ -242,7 +242,7 @@ export default function TemplatesPage() {
         <GlassCard variant="default" padding="none" className="overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
+              <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead className="w-10"></TableHead>
                   <TableHead>Name</TableHead>
@@ -270,19 +270,19 @@ export default function TemplatesPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.03 }}
-                      className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
+                      className="border-b border-border hover:bg-muted/50 transition-colors"
                     >
                       <TableCell>
                         <div className={cn(
                           "w-8 h-8 rounded-lg flex items-center justify-center",
-                          template.isGlobal 
-                            ? "bg-emerald-100/50 dark:bg-emerald-900/30" 
-                            : "bg-purple-100/50 dark:bg-purple-900/30"
+                          template.isGlobal
+                            ? "bg-emerald-500/10"
+                            : "bg-muted"
                         )}>
                           {template.isGlobal ? (
-                            <Globe className="w-4 h-4 text-emerald-500" />
+                            <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                           ) : (
-                            <Lock className="w-4 h-4 text-purple-500" />
+                            <Lock className="w-4 h-4 text-muted-foreground" />
                           )}
                         </div>
                       </TableCell>
@@ -306,8 +306,8 @@ export default function TemplatesPage() {
                         <span className={cn(
                           "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
                           template.isGlobal
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                            : "bg-muted text-muted-foreground"
                         )}>
                           {template.isGlobal ? 'Yes' : 'No'}
                         </span>
@@ -331,9 +331,9 @@ export default function TemplatesPage() {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => handleOpenDialog(template)}
-                              className="p-2 rounded-lg hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer group"
+                              className="p-2 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer group"
                             >
-                              <Edit className="w-4 h-4 text-blue-500 group-hover:text-blue-600" />
+                              <Edit className="w-4 h-4 text-primary" />
                             </motion.button>
                           )}
                           {hasDeletePermission && (
@@ -344,9 +344,9 @@ export default function TemplatesPage() {
                                 setDeletingId(template.id);
                                 setDeleteDialogOpen(true);
                               }}
-                              className="p-2 rounded-lg hover:bg-red-100/50 dark:hover:bg-red-900/30 transition-colors cursor-pointer group"
+                              className="p-2 rounded-lg hover:bg-destructive/10 transition-colors cursor-pointer group"
                             >
-                              <Trash2 className="w-4 h-4 text-red-500 group-hover:text-red-600" />
+                              <Trash2 className="w-4 h-4 text-destructive" />
                             </motion.button>
                           )}
                         </div>
@@ -365,7 +365,7 @@ export default function TemplatesPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <GlassCard variant="primary" padding="md" className="border-0 shadow-none">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <DialogTitle className="text-xl font-bold">
                 {editingTemplate ? 'Edit Template' : 'Create New Template'}
               </DialogTitle>
             </DialogHeader>
@@ -419,7 +419,7 @@ export default function TemplatesPage() {
                   className="mt-1"
                 />
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50/50 dark:bg-gray-800/50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                 <Checkbox
                   id="isGlobal"
                   checked={formData.isGlobal}
@@ -435,7 +435,7 @@ export default function TemplatesPage() {
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} className="bg-gradient-to-r from-indigo-500 to-purple-600">
+              <Button onClick={handleSave}>
                 {editingTemplate ? 'Update Template' : 'Create Template'}
               </Button>
             </DialogFooter>

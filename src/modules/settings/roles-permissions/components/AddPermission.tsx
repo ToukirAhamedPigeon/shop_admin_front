@@ -10,7 +10,6 @@ import { useTranslations } from '@/hooks/useTranslations'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { createPermission } from '../api'
 import { Shield, Lock, Users, Activity, PlusCircle } from 'lucide-react'
-import { useAppSelector } from '@/hooks/useRedux'
 
 const schema = z.object({
   names: z.string().min(1, 'Permission name(s) are required'),
@@ -29,7 +28,6 @@ interface AddPermissionProps {
 export default function AddPermission({ fetchData, onClose }: AddPermissionProps) {
   const { t } = useTranslations()
   const [submitLoading, setSubmitLoading] = useState(false)
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   const {
     register,
@@ -94,46 +92,19 @@ export default function AddPermission({ fetchData, onClose }: AddPermissionProps
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
     >
-      <div
-        className="relative rounded-2xl backdrop-blur-xl transition-all duration-300 p-6 mb-6"
-        style={{
-          background: isDarkMode
-            ? 'rgba(17, 24, 39, 0.4)'
-            : 'rgba(255, 255, 255, 0.55)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
-          boxShadow: isDarkMode
-            ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
-            : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
-        }}
-      >
-        {/* Animated gradient border overlay */}
-        <div
-          className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
-          style={{
-            background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
-          }}
-        />
-        
-        {/* Colored accent line at top */}
-        <div
-          className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#6366f1' : '#818cf8'}, ${isDarkMode ? '#a855f7' : '#c084fc'}, transparent)`,
-          }}
-        />
-
+      <div className="rounded-xl bg-card border border-border shadow-sm p-6 mb-6">
         <div className="relative z-10">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Header Section */}
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10">
-                <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Shield className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                <h2 className="text-xl font-bold text-foreground">
                   {t('Add New Permission')}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {t('You can add multiple permissions by separating names with "="')}
                 </p>
               </div>
@@ -150,7 +121,7 @@ export default function AddPermission({ fetchData, onClose }: AddPermissionProps
                 error={errors.names}
                 model="Permission"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {t('Example')}: create-user=edit-user=delete-user
               </p>
             </div>
@@ -158,8 +129,8 @@ export default function AddPermission({ fetchData, onClose }: AddPermissionProps
             {/* Guard Name */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Lock className="w-4 h-4 text-amber-500" />
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Lock className="w-4 h-4 text-muted-foreground" />
+                <label className="text-sm font-medium text-foreground">
                   {t('Security Settings')}
                 </label>
               </div>
@@ -177,8 +148,8 @@ export default function AddPermission({ fetchData, onClose }: AddPermissionProps
             {/* Roles */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Users className="w-4 h-4 text-blue-500" />
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <label className="text-sm font-medium text-foreground">
                   {t('Role Assignment')}
                 </label>
               </div>
@@ -204,9 +175,9 @@ export default function AddPermission({ fetchData, onClose }: AddPermissionProps
             {/* Status */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Activity className="w-4 h-4 text-emerald-500" />
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {t('Status')} <span className="text-red-500">*</span>
+                <Activity className="w-4 h-4 text-muted-foreground" />
+                <label className="text-sm font-medium text-foreground">
+                  {t('Status')} <span className="text-destructive">*</span>
                 </label>
               </div>
               <CustomSelect<FormData>
@@ -227,19 +198,17 @@ export default function AddPermission({ fetchData, onClose }: AddPermissionProps
             </div>
 
             {/* Submit Actions */}
-            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleReset} 
+            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
                 disabled={submitLoading}
-                className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
               >
                 {t('Reset Form')}
               </Button>
-              <Button 
-                type="submit" 
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              <Button
+                type="submit"
                 disabled={submitLoading}
               >
                 {submitLoading ? (

@@ -50,7 +50,6 @@ import { deleteRole, restoreRole, getRoleDeleteInfo, getRoles, bulkDeleteRoles, 
 import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle } from 'lucide-react'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { cn } from '@/lib/utils'
-import { useAppSelector } from '@/hooks/useRedux'
 
 interface DeleteInfoResponse {
   canBePermanent: boolean
@@ -83,10 +82,10 @@ const getSelectColumn = (): ColumnDef<IRole> => ({
             row.toggleSelected(!isSelected)
           }}
         >
-          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors duration-150 ${
             isSelected
-              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 dark:from-blue-400 dark:to-indigo-500 dark:border-blue-400'
-              : 'border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md'
+              ? 'bg-primary border-primary'
+              : 'border-border bg-background hover:border-primary/50'
           }`}>
             {isSelected && (
               <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -227,7 +226,6 @@ const getDataColumns = ({
 /* ---------------------------------- */
 export default function Roles() {
   const userId = useSelector((s: RootState) => s.auth.user?.id ?? '')
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   const {
     isModalOpen,
@@ -799,11 +797,11 @@ export default function Roles() {
         isFilterActive={isFilterActive}
       />
       
-      {/* TABLE - Glass Design */}
-      <div className="relative rounded-xl overflow-hidden border border-gray-200/30 dark:border-gray-700/30">
+      {/* TABLE */}
+      <div className="relative rounded-xl overflow-hidden border border-border">
         <TableWithLoader loading={loading} id="printable-role-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showEmptyState ? (
-            <EmptyState 
+            <EmptyState
               message={showTrash ? "No deleted roles found" : "No roles found"}
               suggestion={showTrash ? "Deleted roles will appear here once you move them to trash." : "Try adjusting your search or filter criteria to see more results."}
             />
@@ -811,19 +809,15 @@ export default function Roles() {
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-20">
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b border-gray-200/50 dark:border-gray-700/50">
+                  <tr key={headerGroup.id} className="border-b border-border bg-muted">
                     {headerGroup.headers.map((header) => {
                       const isSortable = header.column.getCanSort()
-                      
+
                       return (
                         <th
                           key={header.id}
                           className={`p-4 text-center font-semibold ${header.column.columnDef.meta?.customClassName || ''}`}
                           style={{
-                            background: isDarkMode
-                              ? 'linear-gradient(135deg, #1e293b, #0f172a)'
-                              : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
-                            backdropFilter: 'blur(8px)',
                             cursor: isSortable ? 'pointer' : 'default'
                           }}
                           onClick={(event) => {
@@ -834,7 +828,7 @@ export default function Roles() {
                           }}
                         >
                           <div className="flex justify-between items-center w-full gap-2">
-                            <span className="flex-1 text-center text-gray-800 dark:text-gray-200 font-semibold">
+                            <span className="flex-1 text-center text-foreground font-semibold">
                               {flexRender(
                                 header.column.columnDef.header,
                                 header.getContext()
@@ -843,14 +837,14 @@ export default function Roles() {
                             {isSortable && (
                               <span className="relative">
                                 {header.column.getIsSorted() === 'asc' ? (
-                                  <FaSortUp className="text-purple-600 dark:text-purple-400" size={12} />
+                                  <FaSortUp className="text-primary" size={12} />
                                 ) : header.column.getIsSorted() === 'desc' ? (
-                                  <FaSortDown className="text-purple-600 dark:text-purple-400" size={12} />
+                                  <FaSortDown className="text-primary" size={12} />
                                 ) : (
-                                  <FaSort className="text-gray-500 dark:text-gray-500" size={12} />
+                                  <FaSort className="text-muted-foreground" size={12} />
                                 )}
                                 {header.column.id === 'select' && header.column.getIsSorted() && (
-                                  <span className="absolute -top-1 -right-2 text-xs text-blue-500" title="Frontend sorting (no API call)">
+                                  <span className="absolute -top-1 -right-2 text-xs text-primary" title="Frontend sorting (no API call)">
                                     ⚡
                                   </span>
                                 )}
@@ -865,20 +859,20 @@ export default function Roles() {
               </thead>
               <tbody>
                 {table.getRowModel().rows.map((row, index) => (
-                  <tr 
-                    key={row.id} 
+                  <tr
+                    key={row.id}
                     className={cn(
-                      "transition-all duration-200",
-                      "border-b border-gray-200/40 dark:border-gray-700/30",
+                      "transition-colors duration-150",
+                      "border-b border-border",
                       index !== table.getRowModel().rows.length - 1 && "border-b",
-                      row.getIsSelected() && "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 dark:from-blue-500/5 dark:to-indigo-500/5",
-                      !row.getIsSelected() && "hover:bg-white/20 dark:hover:bg-white/5"
+                      row.getIsSelected() && "bg-primary/10",
+                      !row.getIsSelected() && "hover:bg-muted/50"
                     )}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className={`p-4 text-gray-700 dark:text-gray-300 ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                        className={`p-4 text-foreground/90 ${cell.column.columnDef.meta?.tdClassName || ''}`}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

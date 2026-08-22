@@ -1,6 +1,3 @@
-import { useSelector } from "react-redux";
-import type { RootState } from "@/redux/store";
-
 interface FullPageLoaderProps {
   message?: string;
   type?: "circular" | "bars" | "pulse"; // multiple loader types
@@ -10,30 +7,13 @@ export default function FullPageLoader({
   message,
   type = "circular",
 }: FullPageLoaderProps) {
-  const { theme } = useSelector((state: RootState) => ({
-    theme: state.theme.current,
-  }));
-
-  const colorClass =
-    theme === "light" ? "bg-blue-600 border-blue-600" : "bg-white border-white";
+  const colorClass = "bg-primary border-primary";
 
   return (
-    <div
-      className={`
-        fixed inset-0 z-[9999]
-        flex flex-col items-center justify-center
-        backdrop-blur-sm
-        ${theme === "light" ? "bg-white/10" : "bg-black/10"}
-      `}
-    >
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background/80">
       {/* Loader Type Switch */}
       {type === "circular" && (
-        <div
-          className={`
-            w-12 h-12 rounded-full border-4 border-t-transparent animate-spin
-            ${theme === "light" ? "border-blue-600" : "border-white"}
-          `}
-        />
+        <div className="w-12 h-12 rounded-full border-4 border-muted border-t-primary animate-spin" />
       )}
 
       {type === "bars" && (
@@ -52,23 +32,12 @@ export default function FullPageLoader({
       )}
 
       {type === "pulse" && (
-        <div
-          className={`
-            w-12 h-12 rounded-full border-4 opacity-70
-            ${theme === "light" ? "border-blue-600" : "border-white"}
-            animate-ping
-          `}
-        />
+        <div className="w-12 h-12 rounded-full border-4 border-primary opacity-70 animate-ping" />
       )}
 
       {/* Optional Message */}
       {message && (
-        <p
-          className={`
-            mt-4 text-lg font-medium
-            ${theme === "light" ? "text-gray-900" : "text-gray-200"}
-          `}
-        >
+        <p className="mt-4 text-lg font-medium text-foreground">
           {message}
         </p>
       )}

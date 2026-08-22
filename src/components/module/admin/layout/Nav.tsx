@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   Settings,
   History,
-  SlidersHorizontal, 
+  SlidersHorizontal,
   Users,
   User,
   Lock,
@@ -19,7 +19,10 @@ import {
   Mail,
   Inbox,
   FileText,
-  Database 
+  Database,
+  BookOpen,
+  BookMarked,
+  GitCommitHorizontal
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
@@ -71,6 +74,40 @@ const menuItems: MenuItem[] = [
         iconName: "FileText",
         basePath: "/mail/templates",
         permissions: ["read-admin-mail-templates"],
+      },
+    ],
+  },
+  {
+    label: "common.documentation.title",
+    defaultLabel: "Documentation",
+    icon: <BookOpen size={22} className="mr-2" />,
+    iconName: "BookOpen",
+    basePath: "/docs",
+    permissions: ["read-admin-doc-developer", "read-admin-doc-user-guide"],
+    children: [
+      {
+        label: "common.documentation.developer",
+        defaultLabel: "Developer Guide",
+        icon: <BookMarked size={18} className="mr-2" />,
+        iconName: "BookMarked",
+        basePath: "/docs/developer",
+        permissions: ["read-admin-doc-developer"],
+      },
+      {
+        label: "common.documentation.user_guide",
+        defaultLabel: "User Guide",
+        icon: <BookOpen size={18} className="mr-2" />,
+        iconName: "BookOpen",
+        basePath: "/docs/guide",
+        permissions: ["read-admin-doc-user-guide"],
+      },
+      {
+        label: "common.documentation.changelog",
+        defaultLabel: "Changelog",
+        icon: <GitCommitHorizontal size={18} className="mr-2" />,
+        iconName: "GitCommitHorizontal",
+        basePath: "/docs/changelog",
+        permissions: ["read-admin-doc-developer"],
       },
     ],
   },
@@ -204,65 +241,35 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
   // Check if any child is active
   const hasActiveChild = (children?: MenuItem[]): boolean => {
     if (!children) return false;
-    return children.some(child => 
+    return children.some(child =>
       isActiveMenu(child.basePath) || hasActiveChild(child.children)
     );
   };
 
-  // Multi-color icon mapping for ALL menu items
-  const getIconColor = (iconName: string | undefined, isActive: boolean) => {
-    const colors: Record<string, { active: string; inactive: string }> = {
-      LayoutDashboard: { active: "text-blue-600", inactive: "text-blue-500" },
-      Mail: { active: "text-sky-600", inactive: "text-sky-500" },
-      Inbox: { active: "text-sky-600", inactive: "text-sky-500" },
-      FileText: { active: "text-violet-600", inactive: "text-violet-500" },
-      Settings: { active: "text-purple-600", inactive: "text-purple-500" },
-      SlidersHorizontal: { active: "text-indigo-600", inactive: "text-indigo-500" },
-      Users: { active: "text-cyan-600", inactive: "text-cyan-500" },
-      User: { active: "text-teal-600", inactive: "text-teal-500" },
-      Lock: { active: "text-amber-600", inactive: "text-amber-500" },
-      Shield: { active: "text-rose-600", inactive: "text-rose-500" },
-      Key: { active: "text-yellow-600", inactive: "text-yellow-500" },
-      Languages: { active: "text-pink-600", inactive: "text-pink-500" },
-      ListChecks: { active: "text-green-600", inactive: "text-green-500" },
-      History: { active: "text-orange-600", inactive: "text-orange-500" },
-      FileCode: { active: "text-gray-600", inactive: "text-gray-500" },
-      Database: { active: "text-blue-600", inactive: "text-blue-500" },
-    };
-    
-    const defaultColor = isActive 
-      ? (isDarkMode ? "text-white" : "text-gray-800")
-      : (isDarkMode ? "text-gray-400" : "text-[#282d34]");
-    
-    const colorSet = colors[iconName || ""];
-    if (colorSet) {
-      return isActive ? colorSet.active : colorSet.inactive;
-    }
-    return defaultColor;
+  // A single, consistent icon treatment: muted by default, accent color when active.
+  const getIconColor = (_iconName: string | undefined, isActive: boolean) => {
+    if (isActive) return "text-primary";
+    return isDarkMode ? "text-gray-400" : "text-gray-500";
   };
 
-  // Premium classes for menu items
+  // Flat, single-accent classes for menu items (no gradients).
   const getLevelClasses = (level: number, isActive: boolean) => {
     if (level === 0) {
       if (isActive) {
-        return isDarkMode
-          ? "bg-gradient-to-r from-primary-600/50 to-purple-600/50 text-white font-semibold shadow-lg backdrop-blur-sm"
-          : "bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-gray-800 font-semibold backdrop-blur-sm";
+        return "bg-primary/10 text-primary font-semibold";
       }
       return isDarkMode
         ? "text-gray-300 hover:bg-white/10 hover:text-white"
-        : "text-[#282d34] hover:bg-gray-100/50 hover:text-gray-900";
+        : "text-[#282d34] hover:bg-gray-100 hover:text-gray-900";
     }
 
     // Level >= 1 (submenu)
     if (isActive) {
-      return isDarkMode
-        ? "bg-gradient-to-r from-primary-500/15 to-purple-500/15 text-primary-300 font-semibold backdrop-blur-sm"
-        : "bg-gradient-to-r from-blue-50/80 to-indigo-50/80 text-gray-800 font-semibold border-l-2 border-blue-500";
+      return "bg-primary/10 text-primary font-semibold border-l-2 border-primary";
     }
     return isDarkMode
       ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-      : "text-[#282d34] hover:bg-gray-50/50 hover:text-gray-800";
+      : "text-[#282d34] hover:bg-gray-50 hover:text-gray-800";
   };
 
   const renderMenu = (items: MenuItem[], level = 0) => (
@@ -271,7 +278,7 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
         const isParentActive = isActiveMenu(basePath);
         const hasChildActive = hasActiveChild(children);
         const isOpen = openMenus.includes(label) || isParentActive || hasChildActive;
-        
+
         // For parent items, check if any child is active
         const shouldBeActive = level === 0 ? (isParentActive || hasChildActive) : isActiveSubmenu(basePath);
 

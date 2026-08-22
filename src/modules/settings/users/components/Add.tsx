@@ -14,7 +14,6 @@ import { dispatchShowToast } from "@/lib/dispatch";
 import { BOOLEAN_OPTIONS, GENDER_OPTIONS } from '@/constants'
 import { createUsers } from '../api'
 import { UserPlus, Shield, Mail, Phone, Key, Calendar, MapPin, FileText, User as UserIcon } from 'lucide-react'
-import { useAppSelector } from '@/hooks/useRedux'
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
@@ -77,7 +76,6 @@ interface RegisterProps {
 export default function Add({ fetchData }: RegisterProps) {
   const { t } = useTranslations();
   const [submitLoading, setSubmitLoading] = useState(false)
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
   const model = 'User'
   const dispatch = useAppDispatch();
 
@@ -208,48 +206,21 @@ export default function Add({ fetchData }: RegisterProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
     >
-      <div
-        className="relative rounded-2xl backdrop-blur-xl transition-all duration-300 p-6 mb-6"
-        style={{
-          background: isDarkMode
-            ? 'rgba(17, 24, 39, 0.4)'
-            : 'rgba(255, 255, 255, 0.55)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
-          boxShadow: isDarkMode
-            ? '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
-            : '0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
-        }}
-      >
-        {/* Animated gradient border overlay */}
-        <div
-          className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
-          style={{
-            background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
-          }}
-        />
-        
-        {/* Colored accent line at top */}
-        <div
-          className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#6366f1' : '#818cf8'}, ${isDarkMode ? '#a855f7' : '#c084fc'}, transparent)`,
-          }}
-        />
-
+      <div className="relative rounded-2xl bg-card border border-border shadow-sm transition-all duration-300 p-6 mb-6">
         <div className="relative z-10">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Header Section */}
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10">
-                <UserPlus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <UserPlus className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                <h2 className="text-xl font-bold text-foreground">
                   {t('Add New User')}
                 </h2>
-                <p 
-                  className="text-sm text-gray-500 dark:text-gray-400"
-                  dangerouslySetInnerHTML={{ 
+                <p
+                  className="text-sm text-muted-foreground"
+                  dangerouslySetInnerHTML={{
                     __html: t('Fill all required fields with (<span class="text-red-500">*</span>) before submitting.')
                   }}
                 />
@@ -297,8 +268,8 @@ export default function Add({ fetchData }: RegisterProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Key className="w-4 h-4 text-purple-500" />
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <Key className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">
                     {t('Security Settings')}
                   </h3>
                 </div>
@@ -325,8 +296,8 @@ export default function Add({ fetchData }: RegisterProps) {
               {/* Profile Picture */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <UserIcon className="w-4 h-4 text-emerald-500" />
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <UserIcon className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">
                     {t('Profile Picture')}
                   </h3>
                 </div>
@@ -470,24 +441,22 @@ export default function Add({ fetchData }: RegisterProps) {
             </div>
 
             {/* Submit Actions */}
-            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleReset} 
+            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
                 disabled={submitLoading}
-                className="shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
               >
                 {t('Reset Form')}
               </Button>
-              <Button 
-                type="submit" 
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              <Button
+                type="submit"
                 disabled={submitLoading}
               >
                 {submitLoading ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
