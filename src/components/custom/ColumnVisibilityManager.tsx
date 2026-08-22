@@ -1,4 +1,4 @@
-// src/components/custom/ColumnVisibilityManager.tsx - Premium Glass Edition
+// src/components/custom/ColumnVisibilityManager.tsx
 
 import React, {
   useEffect,
@@ -28,7 +28,6 @@ import { getTableColumnSettings, updateTableColumnSettings } from '@/api/table'
 import { useSelector, useDispatch } from "react-redux"
 import type { RootState } from "@/redux/store";
 import { setTableColumnSettings, clearTableColumnSettings } from "@/redux/slices/tableColumnSettingsSlice"
-import { useAppSelector } from '@/hooks/useRedux'
 import { cn } from '@/lib/utils'
 
 export type ColumnKey = string
@@ -53,7 +52,6 @@ export function ColumnVisibilityManager<T>({
   const [selectedHidden, setSelectedHidden] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const { t } = useTranslations()
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   const dispatch = useDispatch()
   const user = useSelector((state: RootState) => state.auth.user);
@@ -256,7 +254,7 @@ export function ColumnVisibilityManager<T>({
     (String(col.header) || '').toLowerCase().includes(search.toLowerCase())
   )
 
-  const buttonBaseClass = "shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+  const buttonBaseClass = "shadow-sm hover:shadow-md transition-shadow"
   const iconButtonClass = "flex items-center gap-2"
 
   return (
@@ -264,44 +262,19 @@ export function ColumnVisibilityManager<T>({
       if (isOpen) loadSettings()
       else onClose()
     }}>
-      <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-5xl overflow-hidden rounded-2xl p-0 shadow-2xl border-0">
-        {/* Glass Container */}
-        <div
-          className="relative rounded-2xl backdrop-blur-xl"
-          style={{
-            background: isDarkMode
-              ? 'rgba(17, 24, 39, 0.95)'
-              : 'rgba(255, 255, 255, 0.95)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)'}`,
-          }}
-        >
-          {/* Animated gradient border overlay */}
-          <div
-            className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none"
-            style={{
-              background: 'linear-gradient(135deg, rgba(100,120,255,0.08), rgba(180,100,255,0.05))',
-            }}
-          />
-
-          {/* Colored accent line at top */}
-          <div
-            className="absolute top-0 left-4 right-4 h-0.5 rounded-full"
-            style={{
-              background: `linear-gradient(90deg, transparent, ${isDarkMode ? '#6366f1' : '#818cf8'}, ${isDarkMode ? '#a855f7' : '#c084fc'}, transparent)`,
-            }}
-          />
-
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-5xl overflow-hidden rounded-2xl p-0 shadow-xl border-0">
+        <div className="relative rounded-2xl bg-card border border-border">
           {/* Header */}
-          <div className="relative z-10 px-6 py-5 border-b border-gray-200/50 dark:border-gray-700/50">
+          <div className="relative z-10 px-6 py-5 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10">
-                <Settings className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Settings className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                <DialogTitle className="text-2xl font-bold text-foreground">
                   {t('Column Settings')}
                 </DialogTitle>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {t('Customize which columns to display and their order')}
                 </p>
               </div>
@@ -313,16 +286,16 @@ export function ColumnVisibilityManager<T>({
             <div className="grid grid-cols-1 md:grid-cols-[40%_12%_40%] gap-6">
               {/* Visible Columns */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-200/50 dark:border-gray-700/50">
-                  <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                <div className="flex items-center gap-2 pb-2 border-b border-border">
+                  <Eye className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="font-semibold text-foreground">
                     {t('Display')}
                   </h3>
-                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                  <span className="ml-auto text-xs text-muted-foreground">
                     {visible.length} columns
                   </span>
                 </div>
-                <ScrollArea className="h-[400px] rounded-xl border border-gray-200/50 dark:border-gray-700/50 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm">
+                <ScrollArea className="h-[400px] rounded-xl border border-border bg-muted/30">
                   <div className="space-y-1 p-2">
                     {visible.map(col => {
                       const colId = getColumnId(col)
@@ -334,32 +307,32 @@ export function ColumnVisibilityManager<T>({
                           onDoubleClick={() => moveToHidden([colId])}
                           onClick={e => handleSelect(colId, selectedVisible, setSelectedVisible, e)}
                           className={cn(
-                            "group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-200",
+                            "group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors",
                             isSelected
-                              ? "bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30 shadow-md"
-                              : "hover:bg-white/50 dark:hover:bg-gray-800/50 hover:shadow-md"
+                              ? "bg-primary/10 border border-primary/30"
+                              : "hover:bg-accent"
                           )}
                         >
                           <span className={cn(
                             "text-sm transition-colors",
-                            isSelected ? "text-blue-700 dark:text-blue-300 font-medium" : "text-gray-700 dark:text-gray-300"
+                            isSelected ? "text-primary font-medium" : "text-foreground"
                           )}>
                             {t(displayName)}
                           </span>
                           {isSelected && (
-                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                            <div className="w-2 h-2 rounded-full bg-primary" />
                           )}
                         </div>
                       )
                     })}
                     {visible.length === 0 && (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+                      <div className="text-center py-8 text-muted-foreground text-sm">
                         No columns selected
                       </div>
                     )}
                   </div>
                 </ScrollArea>
-                
+
                 {/* Move buttons for visible columns */}
                 <div className="flex flex-wrap gap-2 pt-2 justify-center">
                   <Button
@@ -368,7 +341,6 @@ export function ColumnVisibilityManager<T>({
                     variant="outline"
                     onClick={() => move(selectedVisible, 'up')}
                     disabled={selectedVisible.length === 0}
-                    className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:scale-105 transition-all duration-300"
                   >
                     <ArrowUp className="w-4 h-4" />
                   </Button>
@@ -378,7 +350,6 @@ export function ColumnVisibilityManager<T>({
                     variant="outline"
                     onClick={() => move(selectedVisible, 'down')}
                     disabled={selectedVisible.length === 0}
-                    className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:scale-105 transition-all duration-300"
                   >
                     <ArrowDown className="w-4 h-4" />
                   </Button>
@@ -388,7 +359,6 @@ export function ColumnVisibilityManager<T>({
                     variant="outline"
                     onClick={() => move(selectedVisible, 'top')}
                     disabled={selectedVisible.length === 0}
-                    className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:scale-105 transition-all duration-300"
                   >
                     <ArrowBigUp className="w-4 h-4" />
                   </Button>
@@ -398,7 +368,6 @@ export function ColumnVisibilityManager<T>({
                     variant="outline"
                     onClick={() => move(selectedVisible, 'bottom')}
                     disabled={selectedVisible.length === 0}
-                    className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:scale-105 transition-all duration-300"
                   >
                     <ArrowBigDown className="w-4 h-4" />
                   </Button>
@@ -410,9 +379,10 @@ export function ColumnVisibilityManager<T>({
                 <Button
                   title={t("Move to Do not Display")}
                   size="default"
+                  variant="secondary"
                   onClick={() => moveToHidden(selectedVisible)}
                   disabled={selectedVisible.length === 0}
-                  className={`${buttonBaseClass} ${iconButtonClass} bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-red-500/30 w-full`}
+                  className={`${buttonBaseClass} ${iconButtonClass} w-full`}
                 >
                   <ArrowRight className="w-4 h-4" />
                   <span className="hidden lg:inline">Hide</span>
@@ -422,7 +392,7 @@ export function ColumnVisibilityManager<T>({
                   size="default"
                   onClick={() => moveToVisible(selectedHidden)}
                   disabled={selectedHidden.length === 0}
-                  className={`${buttonBaseClass} ${iconButtonClass} bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/30 w-full`}
+                  className={`${buttonBaseClass} ${iconButtonClass} w-full`}
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span className="hidden lg:inline">Show</span>
@@ -433,7 +403,7 @@ export function ColumnVisibilityManager<T>({
                   variant="outline"
                   onClick={() => moveToHidden(visible.map(getColumnId))}
                   disabled={visible.length === 0}
-                  className={`${buttonBaseClass} ${iconButtonClass} bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 w-full`}
+                  className={`${buttonBaseClass} ${iconButtonClass} w-full`}
                 >
                   <ArrowBigRight className="w-4 h-4" />
                   <span className="hidden lg:inline">Hide All</span>
@@ -444,7 +414,7 @@ export function ColumnVisibilityManager<T>({
                   variant="outline"
                   onClick={() => moveToVisible(hidden.map(getColumnId))}
                   disabled={hidden.length === 0}
-                  className={`${buttonBaseClass} ${iconButtonClass} bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 w-full`}
+                  className={`${buttonBaseClass} ${iconButtonClass} w-full`}
                 >
                   <ArrowBigLeft className="w-4 h-4" />
                   <span className="hidden lg:inline">Show All</span>
@@ -453,26 +423,26 @@ export function ColumnVisibilityManager<T>({
 
               {/* Hidden Columns */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-200/50 dark:border-gray-700/50">
-                  <EyeOff className="w-4 h-4 text-red-600 dark:text-red-400" />
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                <div className="flex items-center gap-2 pb-2 border-b border-border">
+                  <EyeOff className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="font-semibold text-foreground">
                     {t('Do Not Display')}
                   </h3>
-                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                  <span className="ml-auto text-xs text-muted-foreground">
                     {hidden.length} columns
                   </span>
                 </div>
-                
+
                 {/* Search input */}
                 <div className="relative">
                   <Input
                     placeholder={t("Filter columns") + "..."}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="pl-9 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-gray-200 dark:border-gray-700 rounded-xl"
+                    className="pl-9 bg-background border-border rounded-xl"
                   />
                   <svg
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -481,7 +451,7 @@ export function ColumnVisibilityManager<T>({
                   </svg>
                 </div>
 
-                <ScrollArea className="h-[350px] rounded-xl border border-gray-200/50 dark:border-gray-700/50 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm">
+                <ScrollArea className="h-[350px] rounded-xl border border-border bg-muted/30">
                   <div className="space-y-1 p-2">
                     {filteredHidden.map(col => {
                       const colId = getColumnId(col)
@@ -493,26 +463,26 @@ export function ColumnVisibilityManager<T>({
                           onDoubleClick={() => moveToVisible([colId])}
                           onClick={e => handleSelect(colId, selectedHidden, setSelectedHidden, e)}
                           className={cn(
-                            "group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-200",
+                            "group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors",
                             isSelected
-                              ? "bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 shadow-md"
-                              : "hover:bg-white/50 dark:hover:bg-gray-800/50 hover:shadow-md"
+                              ? "bg-primary/10 border border-primary/30"
+                              : "hover:bg-accent"
                           )}
                         >
                           <span className={cn(
                             "text-sm transition-colors",
-                            isSelected ? "text-red-700 dark:text-red-300 font-medium" : "text-gray-700 dark:text-gray-300"
+                            isSelected ? "text-primary font-medium" : "text-foreground"
                           )}>
                             {t(displayName)}
                           </span>
                           {isSelected && (
-                            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                            <div className="w-2 h-2 rounded-full bg-primary" />
                           )}
                         </div>
                       )
                     })}
                     {filteredHidden.length === 0 && (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+                      <div className="text-center py-8 text-muted-foreground text-sm">
                         {search ? "No matching columns found" : "All columns are visible"}
                       </div>
                     )}
@@ -523,14 +493,14 @@ export function ColumnVisibilityManager<T>({
           </div>
 
           {/* Footer */}
-          <div className="relative z-10 px-6 py-4 border-t border-gray-200/50 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-900/30 rounded-b-2xl">
+          <div className="relative z-10 px-6 py-4 border-t border-border bg-muted/30 rounded-b-2xl">
             <DialogFooter className="flex justify-center sm:justify-end gap-3">
               <Button
                 variant="default"
                 size="default"
                 onClick={onSave}
                 disabled={visible.length === 0}
-                className={`${buttonBaseClass} ${iconButtonClass} bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-blue-500/30`}
+                className={`${buttonBaseClass} ${iconButtonClass}`}
               >
                 <Save className="w-4 h-4" />
                 {t('Save')}
@@ -539,7 +509,7 @@ export function ColumnVisibilityManager<T>({
                 variant="outline"
                 size="default"
                 onClick={refreshFromDB}
-                className={`${buttonBaseClass} ${iconButtonClass} bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm`}
+                className={`${buttonBaseClass} ${iconButtonClass}`}
               >
                 <RefreshCw className="w-4 h-4" />
                 {t('Refresh')}
@@ -548,7 +518,7 @@ export function ColumnVisibilityManager<T>({
                 variant="outline"
                 size="default"
                 onClick={reset}
-                className={`${buttonBaseClass} ${iconButtonClass} bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30`}
+                className={`${buttonBaseClass} ${iconButtonClass} border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30`}
               >
                 <RotateCw className="w-4 h-4" />
                 {t('Reset')}
