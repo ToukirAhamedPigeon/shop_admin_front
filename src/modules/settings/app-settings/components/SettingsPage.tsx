@@ -14,8 +14,7 @@ export const SettingsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [activeCategory, setActiveCategory] = useState('Theme');
   const { data, loading } = useAppSelector((state) => state.settings);
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
-  
+
   const user = useAppSelector((state) => state.auth.user);
   
   const isDeveloper = user?.roles?.some(role => 
@@ -78,16 +77,7 @@ export const SettingsPage: React.FC = () => {
       transition={{ duration: 0.4 }}
       className="flex h-[calc(100vh-100px)] overflow-hidden"
     >
-      <div
-        className="rounded-l-2xl flex-shrink-0"
-        style={{
-          background: isDarkMode
-            ? 'rgba(17, 24, 39, 0.6)'
-            : 'rgba(255, 255, 255, 0.6)',
-          backdropFilter: 'blur(12px)',
-          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.3)'}`,
-        }}
-      >
+      <div className="rounded-l-2xl flex-shrink-0 bg-card border border-border">
         <SettingsSidebar
           activeCategory={activeCategory}
           onSelect={setActiveCategory}
@@ -95,16 +85,7 @@ export const SettingsPage: React.FC = () => {
         />
       </div>
 
-      <div
-        className="flex-1 rounded-r-2xl overflow-hidden"
-        style={{
-          background: isDarkMode
-            ? 'rgba(17, 24, 39, 0.3)'
-            : 'rgba(255, 255, 255, 0.3)',
-          backdropFilter: 'blur(8px)',
-          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)'}`,
-        }}
-      >
+      <div className="flex-1 rounded-r-2xl overflow-hidden bg-background border border-border">
         <SettingsContent
           category={activeCategory}
           data={data}

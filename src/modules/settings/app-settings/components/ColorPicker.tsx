@@ -1,7 +1,6 @@
 // D:\shop\shop_admin_front\src\modules\settings\app-settings\components\ColorPicker.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { useAppSelector } from '@/hooks/useRedux';
 
 interface ColorPickerProps {
   value: string;
@@ -34,7 +33,6 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [customColor, setCustomColor] = useState(value);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -101,14 +99,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
       {isOpen && (
         <div
           ref={popoverRef}
-          className="absolute z-50 mt-2 p-4 rounded-xl shadow-2xl border min-w-[280px]"
-          style={{
-            background: isDarkMode
-              ? 'rgba(30, 41, 59, 0.95)'
-              : 'rgba(255, 255, 255, 0.95)',
-            borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-            backdropFilter: 'blur(12px)'
-          }}
+          className="absolute z-50 mt-2 p-4 rounded-xl shadow-md border border-border bg-popover min-w-[280px]"
         >
           {/* Preset Colors */}
           <div className="grid grid-cols-8 gap-2 mb-4">
@@ -118,7 +109,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
                 className={cn(
                   "w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110 hover:shadow-lg",
                   value === color
-                    ? "border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/30"
+                    ? "border-primary ring-2 ring-primary/30"
                     : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"
                 )}
                 style={{ backgroundColor: color }}
@@ -139,11 +130,11 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               type="text"
               value={customColor}
               onChange={handleInputChange}
-              className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="#3B82F6"
             />
             <button
-              className="px-3 py-1.5 text-sm rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-200"
+              className="px-3 py-1.5 text-sm rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors duration-200"
               onClick={() => handleColorSelect(customColor)}
             >
               Apply
