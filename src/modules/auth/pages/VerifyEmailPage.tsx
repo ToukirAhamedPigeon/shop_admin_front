@@ -49,23 +49,12 @@ export default function VerifyEmailPage() {
       <AuthHeader />
 
       <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         className="w-full max-w-sm"
       >
-        <Card
-          className="shadow-2xl border-0 rounded-2xl overflow-hidden"
-          style={{
-            background: theme === 'dark' ? 'rgba(12, 18, 40, 0.82)' : 'rgba(255, 255, 255, 0.88)',
-            backdropFilter: 'blur(24px) saturate(1.4)',
-            boxShadow: theme === 'dark'
-              ? '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(100,140,255,0.12)'
-              : '0 8px 40px rgba(10,30,80,0.18), 0 0 0 1px rgba(255,255,255,0.7)',
-          }}
-        >
-          <div className="h-0.5 w-full" style={{ background: 'linear-gradient(to right, rgba(100,120,255,0.6), rgba(180,100,255,0.4), rgba(100,120,255,0.6))' }} />
-
+        <Card className="border border-border shadow-md rounded-2xl overflow-hidden bg-card py-0">
           <CardContent className="p-8 text-center">
             {success ? (
               <SuccessMessage
@@ -74,28 +63,18 @@ export default function VerifyEmailPage() {
               />
             ) : (
               <div className="flex flex-col items-center gap-4">
-                <div
-                  className="p-3 rounded-2xl"
-                  style={{
-                    background: 'rgba(220,40,40,0.1)',
-                    border: '1px solid rgba(220,80,80,0.25)',
-                  }}
-                >
-                  <ShieldAlert className="w-12 h-12 text-red-500" />
+                <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20">
+                  <ShieldAlert className="w-12 h-12 text-destructive" />
                 </div>
-                <h2
-                  className="text-xl font-bold"
-                  style={{ color: theme === 'dark' ? '#fca5a5' : '#b91c1c', letterSpacing: '-0.01em' }}
-                >
+                <h2 className="text-xl font-bold text-destructive">
                   Email Verification Failed
                 </h2>
-                <p style={{ color: theme === 'dark' ? 'rgba(160,180,220,0.7)' : 'rgba(80,80,120,0.7)' }} className="text-sm">
+                <p className="text-sm text-muted-foreground">
                   The verification link is invalid or has expired.
                 </p>
                 <button
                   onClick={() => navigate("/login")}
-                  className="text-sm font-medium transition-colors mt-1"
-                  style={{ color: theme === 'dark' ? '#a0b0f0' : '#4060c0' }}
+                  className="text-sm font-medium text-primary hover:text-primary/80 transition-colors mt-1"
                 >
                   Go to Login
                 </button>

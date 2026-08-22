@@ -54,23 +54,12 @@ export default function ForgotPasswordPage() {
       <AuthHeader />
 
       <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         className="w-full max-w-md"
       >
-        <Card
-          className="shadow-2xl border-0 rounded-2xl overflow-hidden"
-          style={{
-            background: theme === 'dark' ? 'rgba(12, 18, 40, 0.82)' : 'rgba(255, 255, 255, 0.88)',
-            backdropFilter: 'blur(24px) saturate(1.4)',
-            boxShadow: theme === 'dark'
-              ? '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(100,140,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06)'
-              : '0 8px 40px rgba(10,30,80,0.18), 0 0 0 1px rgba(255,255,255,0.7)',
-          }}
-        >
-          <div className="h-0.5 w-full" style={{ background: 'linear-gradient(to right, rgba(100,120,255,0.6), rgba(180,100,255,0.4), rgba(100,120,255,0.6))' }} />
-
+        <Card className="border border-border shadow-md rounded-2xl overflow-hidden bg-card py-0">
           {success ? (
             <SuccessMessage
               title="Password Reset Email Sent!"
@@ -80,39 +69,21 @@ export default function ForgotPasswordPage() {
             />
           ) : (
             <CardContent className="p-8">
-              <motion.div
-                className="flex flex-col items-center mb-7"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-              >
-                <div
-                  className="mb-3 p-3 rounded-2xl"
-                  style={{
-                    background: theme === 'dark' ? 'rgba(100,130,255,0.12)' : 'rgba(60,100,220,0.08)',
-                    border: '1px solid rgba(100,140,255,0.2)',
-                  }}
-                >
-                  <Mail className="w-10 h-10" style={{ color: theme === 'dark' ? '#8090e0' : '#5060c0' }} />
+              <div className="flex flex-col items-center mb-7">
+                <div className="mb-3 p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+                  <Mail className="w-10 h-10 text-primary" />
                 </div>
-                <h1
-                  className="text-2xl font-bold tracking-tight"
-                  style={{ color: theme === 'dark' ? '#e8eeff' : '#1a2a50', letterSpacing: '-0.02em' }}
-                >
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">
                   {t("common.forgotPassword", "Forgot Password")}
                 </h1>
-                <p className="text-sm mt-1 text-center" style={{ color: theme === 'dark' ? 'rgba(160,180,220,0.7)' : 'rgba(60,80,140,0.8)' }}>
+                <p className="text-sm mt-1 text-center text-muted-foreground">
                   Enter your email to receive a reset link
                 </p>
-              </motion.div>
+              </div>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                  <Label
-                    htmlFor="email"
-                    className="text-sm font-medium mb-1.5 block"
-                    style={{ color: theme === 'dark' ? 'rgba(180,200,240,0.9)' : 'rgba(40,60,120,0.85)' }}
-                  >
+                  <Label htmlFor="email" className="text-sm font-medium mb-1.5 block">
                     {t("common.email", "Email")}
                   </Label>
                   <Input
@@ -120,28 +91,17 @@ export default function ForgotPasswordPage() {
                     type="email"
                     placeholder="Enter your email address"
                     {...register("email")}
-                    className="h-10 rounded-xl text-sm"
-                    style={{
-                      background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(240,245,255,0.9)',
-                      border: theme === 'dark' ? '1px solid rgba(100,140,255,0.2)' : '1px solid rgba(80,120,220,0.2)',
-                      color: theme === 'dark' ? '#d8e4ff' : '#1a2a50',
-                    }}
+                    className="h-10 rounded-lg text-sm"
                   />
                   {errors.email && (
-                    <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>
+                    <p className="text-destructive text-xs mt-1">{errors.email.message}</p>
                   )}
                 </div>
 
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-10 rounded-xl font-semibold text-sm transition-all duration-200"
-                  style={{
-                    background: 'linear-gradient(135deg, #4060e0 0%, #7040c8 100%)',
-                    boxShadow: '0 4px 16px rgba(80,80,220,0.35)',
-                    border: 'none',
-                    color: '#fff',
-                  }}
+                  className="w-full h-10 rounded-lg font-semibold text-sm"
                 >
                   {isLoading ? t("common.sendResetLinkLoading", "Sending...") : t("common.sendResetLink", "Send Reset Link")}
                 </Button>
@@ -149,8 +109,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="button"
                   onClick={() => navigate("/login")}
-                  className="w-full flex items-center justify-center gap-1.5 text-sm mt-1 transition-colors cursor-pointer"
-                  style={{ color: theme === 'dark' ? 'rgba(140,160,220,0.8)' : 'rgba(60,90,180,0.8)' }}
+                  className="w-full flex items-center justify-center gap-1.5 text-sm mt-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   {t("common.backToLogin", "Back to Login")}

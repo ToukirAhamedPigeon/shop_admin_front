@@ -21,7 +21,7 @@ export default function GlobalLoader(): React.ReactElement | null {
   const activeMessageColor = isDarkMode ? darkMessageColor : messageColor;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/30 dark:bg-black/30 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95">
       <div className="flex flex-col items-center gap-6">
         {/* Site Logo */}
         <div className="relative w-16 h-16 select-none pointer-events-none">

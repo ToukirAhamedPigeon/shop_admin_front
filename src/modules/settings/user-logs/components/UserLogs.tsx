@@ -40,7 +40,6 @@ import { useSelector } from 'react-redux'
 import type { RootState } from '@/redux/store'
 import { ExpandableText } from '@/components/custom/ExpandableText'
 import { can } from '@/lib/authCheck'
-import { useAppSelector } from '@/hooks/useRedux'
 import { cn } from '@/lib/utils'
 
 // Column definitions with enhanced styling
@@ -85,7 +84,7 @@ const getAllColumns = ({
     cell: ({ getValue }) => {
       const value = getValue() as string;
       return (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 dark:from-blue-900/50 dark:to-indigo-900/50 dark:text-blue-200 shadow-sm">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
           {value}
         </span>
       )
@@ -100,10 +99,10 @@ const getAllColumns = ({
       const value = getValue() as string;
       const getActionColor = () => {
         switch(value?.toLowerCase()) {
-          case 'create': return 'text-green-600 dark:text-green-400';
-          case 'update': return 'text-blue-600 dark:text-blue-400';
-          case 'delete': return 'text-red-600 dark:text-red-400';
-          default: return 'text-gray-600 dark:text-gray-400';
+          case 'create': return 'text-emerald-600 dark:text-emerald-400';
+          case 'update': return 'text-primary';
+          case 'delete': return 'text-destructive';
+          default: return 'text-muted-foreground';
         }
       };
       return <span className={`font-medium ${getActionColor()}`}>{value}</span>
@@ -114,7 +113,7 @@ const getAllColumns = ({
     header: 'Object ID', 
     id: 'modelId', 
     accessorKey: 'modelId',
-    cell: ({ getValue }) => <span className="font-mono text-sm text-purple-600 dark:text-purple-400">{getValue() as string}</span>,
+    cell: ({ getValue }) => <span className="font-mono text-sm text-primary">{getValue() as string}</span>,
     meta: { customClassName: 'text-center min-w-[150px]', tdClassName: 'text-center min-w-[150px]' } 
   },
   { 
@@ -212,7 +211,6 @@ export default function LogListTable() {
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [showColumnModal, setShowColumnModal] = useState(false)
   const [visible, setVisible] = useState<ColumnDef<IUserLog>[]>([])
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   // Refs to track state changes and prevent infinite loops
   const hasFetchedRef = useRef(false)
@@ -432,8 +430,8 @@ export default function LogListTable() {
           isFilterActive={isFilterActive}
         />
 
-        {/* TABLE - Glass Design */}
-        <div className="relative rounded-xl overflow-hidden border border-gray-200/30 dark:border-gray-700/30">
+        {/* TABLE */}
+        <div className="relative rounded-xl overflow-hidden border border-border">
           <TableWithLoader 
             loading={loading}
             id="printable-user-table"
@@ -442,32 +440,26 @@ export default function LogListTable() {
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-20">
                 {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id} className="border-b border-gray-200/50 dark:border-gray-700/50">
+                  <tr key={headerGroup.id} className="border-b border-border">
                     {headerGroup.headers.map(header => (
-                      <th 
-                        key={header.id} 
-                        className={`p-4 text-center font-semibold ${header.column.columnDef.meta?.customClassName || ''}`}
-                        style={{
-                          background: isDarkMode
-                            ? 'linear-gradient(135deg, #1e293b, #0f172a)'
-                            : 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
-                          backdropFilter: 'blur(8px)',
-                        }}
+                      <th
+                        key={header.id}
+                        className={`p-4 text-center font-semibold bg-muted ${header.column.columnDef.meta?.customClassName || ''}`}
                       >
                         <div
                           className="flex justify-between items-center w-full gap-2 cursor-pointer"
                           onClick={header.column.getToggleSortingHandler()}
                         >
-                          <span className="flex-1 text-center text-gray-800 dark:text-gray-200 font-semibold">
+                          <span className="flex-1 text-center text-foreground font-semibold">
                             {flexRender(header.column.columnDef.header, header.getContext())}
                           </span>
                           <span className="relative">
                             {header.column.getIsSorted() === 'asc' ? (
-                              <FaSortUp className="text-purple-600 dark:text-purple-400" size={12} />
+                              <FaSortUp className="text-primary" size={12} />
                             ) : header.column.getIsSorted() === 'desc' ? (
-                              <FaSortDown className="text-purple-600 dark:text-purple-400" size={12} />
+                              <FaSortDown className="text-primary" size={12} />
                             ) : (
-                              <FaSort className="text-gray-500 dark:text-gray-500" size={12} />
+                              <FaSort className="text-muted-foreground" size={12} />
                             )}
                           </span>
                         </div>

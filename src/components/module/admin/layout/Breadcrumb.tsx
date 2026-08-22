@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/hooks/useTranslations";
 import { motion } from "framer-motion";
-import { useAppSelector } from "@/hooks/useRedux";
 
 export type Crumb = {
   label: string;
@@ -28,7 +27,6 @@ export default function Breadcrumb({
   className = "",
 }: BreadcrumbProps) {
   const { t } = useTranslations();
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
   return (
     <motion.div
@@ -39,48 +37,21 @@ export default function Breadcrumb({
     >
       {/* Title */}
       {showTitle && (
-        <h1
-          className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 dark:from-white dark:via-gray-200 dark:to-gray-300 bg-clip-text text-transparent"
-          style={{ letterSpacing: '-0.01em' }}
-        >
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
           {t(title, defaultTitle)}
         </h1>
       )}
 
-      {/* Breadcrumb navigation - Glass effect with transparent background */}
+      {/* Breadcrumb navigation */}
       {items.length > 0 && (
         <nav
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs w-fit transition-all duration-300 backdrop-blur-xl"
-          style={{
-            background: isDarkMode 
-              ? 'rgba(17, 24, 39, 0.4)'
-              : 'rgba(255, 255, 255, 0.4)',
-            border: isDarkMode 
-              ? '1px solid rgba(255, 255, 255, 0.15)' 
-              : '1px solid rgba(255, 255, 255, 0.6)',
-            boxShadow: isDarkMode 
-              ? '0 4px 20px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.05) inset'
-              : '0 4px 20px rgba(0,0,0,0.03), 0 1px 0 rgba(255,255,255,0.8) inset',
-          }}
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs w-fit bg-muted border border-border"
           aria-label="Breadcrumb"
         >
-          {/* Home Link - Distinct Brand Color */}
+          {/* Home Link */}
           <Link
             to="/dashboard"
-            className="group flex items-center gap-1 px-1.5 py-0.5 rounded-md transition-all duration-200"
-            style={{
-              color: isDarkMode ? '#a5b4fc' : '#4f46e5',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = isDarkMode ? '#c7d2fe' : '#6366f1';
-              e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(129, 140, 248, 0.2)' : 'rgba(79, 70, 229, 0.1)';
-              e.currentTarget.style.backdropFilter = 'blur(4px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = isDarkMode ? '#a5b4fc' : '#4f46e5';
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.backdropFilter = 'none';
-            }}
+            className="group flex items-center gap-1 px-1.5 py-0.5 rounded-md text-primary hover:bg-primary/10 transition-colors"
           >
             <Home className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110" />
             <span className="hidden sm:inline text-xs font-medium ml-0.5">Home</span>
@@ -88,32 +59,16 @@ export default function Breadcrumb({
 
           {items.map((item, idx) => (
             <div key={idx} className="flex items-center gap-1">
-              <ChevronRight className="w-3 h-3" style={{ color: isDarkMode ? '#64748b' : '#94a3b8' }} />
+              <ChevronRight className="w-3 h-3 text-muted-foreground" />
               {item.href ? (
                 <Link
                   to={item.href}
-                  className="px-1.5 py-0.5 rounded-md transition-all duration-200"
-                  style={{
-                    color: isDarkMode ? '#cbd5e1' : '#475569',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = isDarkMode ? '#f8fafc' : '#0f172a';
-                    e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)';
-                    e.currentTarget.style.backdropFilter = 'blur(4px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = isDarkMode ? '#cbd5e1' : '#475569';
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.backdropFilter = 'none';
-                  }}
+                  className="px-1.5 py-0.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                   {t(item.label, item.defaultLabel)}
                 </Link>
               ) : (
-                <span 
-                  className="font-semibold px-1.5 py-0.5"
-                  style={{ color: isDarkMode ? '#ffffff' : '#0f172a' }}
-                >
+                <span className="font-semibold px-1.5 py-0.5 text-foreground">
                   {t(item.label, item.defaultLabel)}
                 </span>
               )}

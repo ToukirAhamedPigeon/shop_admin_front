@@ -15,47 +15,26 @@ export function NotFound() {
       >
         {/* Large 404 */}
         <div
-          className="text-8xl font-black tracking-tighter select-none"
-          style={{
-            background: 'linear-gradient(135deg, #a0b0f0 0%, #c080f8 50%, #8060e8 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: '-0.04em',
-            lineHeight: 1,
-          }}
+          className="text-8xl font-black tracking-tighter select-none text-primary"
+          style={{ letterSpacing: '-0.04em', lineHeight: 1 }}
         >
           404
         </div>
 
-        <div
-          className="p-3 rounded-2xl"
-          style={{
-            background: 'rgba(120,100,220,0.1)',
-            border: '1px solid rgba(120,100,220,0.2)',
-          }}
-        >
-          <AlertCircle className="w-8 h-8 text-indigo-400 dark:text-indigo-300" />
+        <div className="p-3 rounded-2xl bg-primary/10 border border-primary/20">
+          <AlertCircle className="w-8 h-8 text-primary" />
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">
             Page Not Found
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">
+          <p className="text-muted-foreground text-sm max-w-xs">
             The page you're looking for doesn't exist or has been moved.
           </p>
         </div>
 
-        <Button
-          asChild
-          className="mt-2 rounded-xl h-10 px-6 gap-2 font-semibold text-sm"
-          style={{
-            background: 'linear-gradient(135deg, #4060e0 0%, #7040c8 100%)',
-            boxShadow: '0 4px 14px rgba(80,80,220,0.3)',
-            border: 'none',
-            color: '#fff',
-          }}
-        >
+        <Button asChild className="mt-2 h-10 px-6 gap-2 font-semibold text-sm">
           <Link to="/">
             <Home className="w-4 h-4" />
             Go Home
