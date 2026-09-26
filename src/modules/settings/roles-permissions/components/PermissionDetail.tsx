@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table'
 import { getCustomDateTime } from '@/lib/formatDate'
 import type { IPermission } from '@/types/role-permission'
 
-export default function PermissionDetail({ permission, onUpdated }: { permission: IPermission; onUpdated?: () => void }) {
+export default function PermissionDetail({ permission }: { permission: IPermission; onUpdated?: () => void }) {
   const rows = [
     ['Name', permission.name],
     ['Guard Name', permission.guardName],

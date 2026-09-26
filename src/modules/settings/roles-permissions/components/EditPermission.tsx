@@ -13,7 +13,7 @@ import { getPermissionForEdit, updatePermission } from '../api'
 import type { IPermission } from '@/types/role-permission'
 import { useRefreshAuth } from '@/hooks/useRefreshAuth';
 import { useAppSelector } from '@/hooks/useRedux';
-import { Edit3, Shield, AlertTriangle, Key, Users } from 'lucide-react'
+import { Edit3, Shield, AlertTriangle, Users } from 'lucide-react'
 
 const schema = z.object({
   name: z.string().min(1, 'Permission name is required'),

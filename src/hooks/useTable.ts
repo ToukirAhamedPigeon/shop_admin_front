@@ -15,7 +15,6 @@ interface ViewIndicatorConfig {
 
 export function useTable<T>({
   fetcher,
-  initialColumns = [],
   defaultSort = 'createdAt',
   enableTrashView = false,
   minLoadingTime = 500,

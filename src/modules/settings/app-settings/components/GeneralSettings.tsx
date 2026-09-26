@@ -44,7 +44,6 @@ const CURRENCY_OPTIONS = [
 export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
   settings,
   onUpdate,
-  loading
 }) => {
   const { t } = useTranslations();
 

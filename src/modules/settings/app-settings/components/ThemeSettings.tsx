@@ -6,9 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useDropzone } from 'react-dropzone';
 import { useTranslations } from '@/hooks/useTranslations';
-import { useAppSelector } from '@/hooks/useRedux';
 import type { ThemeSettings as ThemeSettingsType } from '@/types/settings';
-import { Image, X, Upload } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ThemeSettingsProps {
@@ -27,7 +26,6 @@ const ImageUploadField: React.FC<{
   recommended: string;
 }> = ({ label, value, preview, onDrop, onClear, recommended }) => {
   const { t } = useTranslations();
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -104,7 +102,6 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
   settings,
   onUpdate,
   onUpload,
-  loading
 }) => {
   const { t } = useTranslations();
 

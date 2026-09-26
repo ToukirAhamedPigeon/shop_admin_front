@@ -1,5 +1,5 @@
 // src/modules/profile/ProfileEdit.tsx
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -18,15 +18,12 @@ import DateTimeInput, {
 import { GENDER_OPTIONS } from "@/constants"
 import { useProfilePicture } from "@/hooks/useProfilePicture"
 import { useTranslations } from "@/hooks/useTranslations"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import Fancybox from "@/components/custom/FancyBox"
 import { generateQRImage } from "@/lib/generateQRImage"
-import { Loader2, QrCode, UserCircle, Mail, Phone, MapPin, FileText, Calendar, Shield, Key, Save } from "lucide-react"
+import { Loader2, QrCode, UserCircle, MapPin, Shield, Key, Save } from "lucide-react"
 import { capitalize } from "@/lib/helpers"
 import Loader from "@/components/custom/Loader"
 import { useRefreshAuth } from '@/hooks/useRefreshAuth';
-import { useDispatch } from 'react-redux';
 
 // Schema for Profile Edit - only personal fields
 export const profileEditSchema = z.object({
@@ -65,7 +62,6 @@ interface UserProfileData {
 
 export default function ProfileEdit() {
   const { t } = useTranslations()
-  const dispatch = useDispatch()
   const { refreshUser } = useRefreshAuth()
   const [loading, setLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)

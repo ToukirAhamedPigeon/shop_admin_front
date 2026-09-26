@@ -76,7 +76,7 @@ const getBackupType = (name: string) => {
   return 'manual';
 };
 
-export default function BackupList({ isMobile = false, onRefresh, refreshKey }: BackupListProps) {
+export default function BackupList({ onRefresh, refreshKey }: BackupListProps) {
   const [backups, setBackups] = useState<Backup[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);

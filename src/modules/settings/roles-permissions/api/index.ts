@@ -2,8 +2,6 @@
 
 import api from '@/lib/axios';
 import type {
-  IRole,
-  IPermission,
   RoleFilterRequest,
   PermissionFilterRequest,
   CreateRoleRequest,

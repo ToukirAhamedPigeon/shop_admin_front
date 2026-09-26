@@ -8,7 +8,6 @@ import { useTranslations } from '@/hooks/useTranslations';
 import type { BrandingSettings as BrandingSettingsType } from '@/types/settings';
 import { X, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAppSelector } from '@/hooks/useRedux';
 
 interface BrandingSettingsProps {
   settings: BrandingSettingsType;
@@ -27,7 +26,6 @@ const ImageUploadField: React.FC<{
   recommended?: string;
 }> = ({ label, value, preview, onDrop, onClear, recommended }) => {
   const { t } = useTranslations();
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -98,7 +96,6 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
   settings,
   onUpdate,
   onUpload,
-  loading,
   isDeveloper
 }) => {
   const { t } = useTranslations();

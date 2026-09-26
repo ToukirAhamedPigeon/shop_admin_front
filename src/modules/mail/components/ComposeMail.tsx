@@ -47,17 +47,6 @@ interface ComposeMailProps {
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENTS_SIZE = 50 * 1024 * 1024;
 
-const ALLOWED_FILE_TYPES = [
-  'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml',
-  'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'text/plain', 'text/csv', 'text/html', 'text/xml', 'application/rtf',
-  'application/zip', 'application/x-zip-compressed', 'application/x-rar-compressed', 'application/x-7z-compressed',
-  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/flac',
-  'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
-];
-
 export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeMailProps) {
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -216,7 +205,7 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
         formData.append('attachments', file, file.name);
       });
 
-      const response = await sendMail(formData, (progress) => {
+      await sendMail(formData, (progress) => {
         setUploadProgress(progress);
       });
 

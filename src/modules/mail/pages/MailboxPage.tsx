@@ -12,12 +12,10 @@ import { getMailStatistics, fetchEmails } from '../api';
 import { can } from '@/lib/authCheck';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Mail as MailIcon, Inbox, Send, Star, Trash2, Menu, X } from 'lucide-react';
-import { useTranslations } from '@/hooks/useTranslations';
+import { RefreshCw, Mail as MailIcon, Inbox, Send, Star, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MailboxPage() {
-  const { t } = useTranslations();
   const [selectedMailbox, setSelectedMailbox] = useState<MailboxType>('inbox');
   const [selectedMail, setSelectedMail] = useState<Mail | null>(null);
   const [showCompose, setShowCompose] = useState(false);

@@ -22,7 +22,6 @@ import {
 import {
   fetchTranslations,
   setLanguage,
-  refreshTranslations,
 } from "./redux/slices/languageSlice";
 
 // Axios handlers

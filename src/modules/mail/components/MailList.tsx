@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { dispatchShowToast } from '@/lib/dispatch';
-import { getMails, bulkMailAction, toggleStar, moveToTrash, markAsRead } from '../api';
+import { getMails, bulkMailAction, toggleStar, markAsRead } from '../api';
 import type { Mail, MailboxType, MailFilterRequest } from '../types';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import Loader from '@/components/custom/Loader';
@@ -111,7 +111,6 @@ const EmailTable = memo(({
   selectedIds,
   onMailClick,
   onStarClick,
-  onSelectChange,
   onSelectAll,
   loading,
   isMobile
@@ -412,7 +411,6 @@ export default function MailList({
     }
   }, [actionDialog, onRefreshList, onRefreshStatistics]);
 
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const selectedCount = selectedIds.size;
 
   if (loading && mails.length === 0) {

@@ -32,11 +32,9 @@ import Loader from '@/components/custom/Loader';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import RichTextEditor from '@/components/custom/RichTextEditor';
 import { format } from 'date-fns';
-import { useTranslations } from '@/hooks/useTranslations';
 import { cn } from '@/lib/utils';
 
 export default function TemplatesPage() {
-  const { t } = useTranslations();
   const [templates, setTemplates] = useState<MailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

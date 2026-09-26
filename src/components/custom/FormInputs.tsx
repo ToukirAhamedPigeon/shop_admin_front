@@ -3,15 +3,11 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Eye, EyeOff,Search } from 'lucide-react';
 import { useTranslations } from "@/hooks/useTranslations";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/redux/store";
 import { useNavigate } from "react-router-dom";
 import api from "@/lib/axios";
-import { useSelect } from "@/hooks/useSelect";
-import { capitalize, labelFormatter } from "@/lib/helpers";
+import { labelFormatter } from "@/lib/helpers";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import type {  Path, PathValue, FieldError, UseFormSetValue, UseFormRegisterReturn} from "react-hook-form";
+import type {  Path, FieldError, UseFormSetValue, UseFormRegisterReturn} from "react-hook-form";
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { checkValueExists } from "@/lib/validations";
@@ -372,7 +368,6 @@ export function CustomSelect<T extends Record<string, any>>({
   filter = {},
   optionValueKey = "name",
   optionLabelKeys = ["name"],
-  optionLabelSeparator = " ",
   multiple = false,
 }: CustomSelectProps<T>) {
   const { t } = useTranslations();
@@ -694,7 +689,6 @@ export const PasswordInput = ({
   const [hidden, setHidden] = useState(isHidden);
   const { t } = useTranslations();
   const navigate = useNavigate();
-  const theme = useSelector((state: RootState) => state.theme.current);
 
   return (
     <div className="space-y-1 w-full">
@@ -779,7 +773,6 @@ const DateTimeInput = React.forwardRef<React.ComponentRef<typeof DatePicker>, Da
       error,
       disabled,
       readOnly,
-      allowTyping = false,
       showResetButton = false, // default off
       className
       },

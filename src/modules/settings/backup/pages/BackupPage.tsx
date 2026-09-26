@@ -14,7 +14,6 @@ import { dispatchShowToast } from '@/lib/dispatch';
 import { formatFileSize } from '@/lib/helpers';
 import { can } from '@/lib/authCheck';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
-import { useAppSelector } from '@/hooks/useRedux';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
@@ -32,7 +31,6 @@ export default function BackupPage() {
   const [storageDestinations, setStorageDestinations] = useState<StorageDestination[]>([]);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [countdown, setCountdown] = useState<string>('');
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
   
   const hasCreatePermission = can(['create-admin-backups']);
   const hasSchedulePermission = can(['create-admin-backups']);

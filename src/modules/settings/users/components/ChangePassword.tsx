@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { motion } from "framer-motion"
 import { useAppSelector } from "@/hooks/useRedux"
-import { changePasswordRequest, verifyPasswordChange } from "../api"
+import { changePasswordRequest } from "../api"
 import { dispatchShowToast } from "@/lib/dispatch"
 import { Button } from "@/components/ui/button"
 import { PasswordInput } from "@/components/custom/FormInputs"
@@ -42,9 +42,7 @@ export default function ChangePassword() {
   const { t } = useTranslations()
   const [submitLoading, setSubmitLoading] = useState(false)
   const [step, setStep] = useState<'form' | 'verification'>('form')
-  const userId = useAppSelector((state) => state.auth.user?.id)
   const userEmail = useAppSelector((state) => state.auth.user?.email)
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark'
 
   const {
     register,
@@ -79,25 +77,6 @@ export default function ChangePassword() {
       dispatchShowToast({
         type: "danger",
         message: err.response?.data?.message || err.response?.data || t("Failed to process request")
-      })
-    } finally {
-      setSubmitLoading(false)
-    }
-  }
-
-  const handleVerifyToken = async (token: string) => {
-    setSubmitLoading(true)
-    try {
-      await verifyPasswordChange(token)
-
-      dispatchShowToast({ 
-        type: "success", 
-        message: t("Password changed successfully") 
-      })
-    } catch (err: any) {
-      dispatchShowToast({
-        type: "danger",
-        message: err.response?.data?.message || err.response?.data || t("Verification failed")
       })
     } finally {
       setSubmitLoading(false)

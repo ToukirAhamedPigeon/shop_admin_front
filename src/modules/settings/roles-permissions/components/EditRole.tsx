@@ -13,7 +13,7 @@ import { getRoleForEdit, updateRole } from '../api'
 import type { IRole } from '@/types/role-permission'
 import { useRefreshAuth } from '@/hooks/useRefreshAuth';
 import { useAppSelector } from '@/hooks/useRedux';
-import { Edit3, Shield, AlertTriangle, Key, Lock, Users, Settings } from 'lucide-react'
+import { Edit3, Shield, AlertTriangle, Lock } from 'lucide-react'
 
 const schema = z.object({
   name: z.string().min(1, 'Role name is required'),

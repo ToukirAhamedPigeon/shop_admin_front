@@ -11,8 +11,6 @@ import {
   RefreshCw,
   Mail as MailIcon,
   TrendingUp,
-  Users,
-  Clock
 } from 'lucide-react';
 import type { MailboxType, MailStatistics } from '../types';
 

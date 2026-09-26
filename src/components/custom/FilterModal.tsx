@@ -58,9 +58,6 @@ export function FilterModal<T>({
     }
   }, [open, initialFilters])
 
-  const isFilterApplied = () =>
-    JSON.stringify(filterValues) !== JSON.stringify(initialFilters)
-
   const handleApply = () => {
     onApply(filterValues)
     localStorage.setItem(LOCAL_KEY, JSON.stringify(filterValues))

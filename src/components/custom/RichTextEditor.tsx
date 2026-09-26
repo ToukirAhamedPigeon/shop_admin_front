@@ -3,7 +3,6 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
-import { Button } from '@/components/ui/button';
 import {
   Bold,
   Italic,
@@ -16,9 +15,6 @@ import {
   Redo,
   Heading1,
   Heading2,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
   Quote,
   Code,
 } from 'lucide-react';
@@ -35,7 +31,6 @@ interface RichTextEditorProps {
 export default function RichTextEditor({ 
   value, 
   onChange, 
-  placeholder = "Write your message here...", 
   className,
   height = "300px"
 }: RichTextEditorProps) {
