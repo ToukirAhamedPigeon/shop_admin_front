@@ -255,6 +255,15 @@
   @apply bg-background text-foreground border border-input rounded-md px-2 py-1 text-xs cursor-pointer outline-none;
 }
 
+/* ===== Tiptap placeholder (RichTextEditor) ===== */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--muted-foreground);
+}
+
 /* ========== Base Layer ========== */
 @layer base {
   * {
