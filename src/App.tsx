@@ -12,7 +12,7 @@ export default function App() {
 // });
   return (
     <BrowserRouter>
-      <RouteProgress color="#3b82f6" darkColor="#ffffff" />
+      <RouteProgress color="var(--primary)" darkColor="var(--primary)" />
       <AppRoutes /> 
     </BrowserRouter>
   );

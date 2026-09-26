@@ -201,27 +201,27 @@ const getAllColumns = ({
   { 
     header: 'Name', 
     accessorKey: 'name',
-    cell: ({ getValue }) => <span className="font-medium text-gray-700 dark:text-gray-300">{getValue() as string}</span>
+    cell: ({ getValue }) => <span className="font-medium text-foreground/80">{getValue() as string}</span>
   },
   { 
     header: 'Username', 
     accessorKey: 'username',
-    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() as string}</span>
   },
   { 
     header: 'Email', 
     accessorKey: 'email',
-    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() as string}</span>
   },
   { 
     header: 'Mobile', 
     accessorKey: 'mobileNo',
-    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() as string}</span>
   },
   { 
     header: 'NID', 
     accessorKey: 'nid',
-    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() as string}</span>
   },
   { 
     header: 'Gender', 
@@ -237,7 +237,7 @@ const getAllColumns = ({
         <>
           {getCustomDateTime(getValue() as string, 'YYYY-MM-DD')}
           <br />
-          <small className="text-gray-500 dark:text-gray-400">
+          <small className="text-muted-foreground">
             ({getPassedTime(getCustomDateTime(getValue() as string, 'YYYY-MM-DD') as string, 'yearsOnly')})
           </small>
         </>
@@ -246,7 +246,7 @@ const getAllColumns = ({
   { 
     header: 'Email Verification', 
     accessorKey: 'emailVerifiedAt', 
-    cell: ({ getValue }) => getValue() ? <span className="text-green-600 font-semibold">Verified <small className="text-xs text-gray-500 dark:text-gray-400">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-red-500 font-semibold">Not Verified</span> 
+    cell: ({ getValue }) => getValue() ? <span className="text-green-600 font-semibold">Verified <small className="text-xs text-muted-foreground">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-red-500 font-semibold">Not Verified</span> 
   },
   { 
     header: 'Active', 
@@ -257,7 +257,7 @@ const getAllColumns = ({
   { 
     header: 'Deleted', 
     accessorKey: 'isDeleted', 
-    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-gray-600 dark:text-gray-400">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-muted-foreground">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   { 
@@ -1096,7 +1096,7 @@ export default function Users() {
       />
       
       {/* TABLE */}
-      <div className="relative rounded-xl overflow-hidden border border-border">
+      <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
         <TableWithLoader loading={loading} id="printable-user-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showEmptyState ? (
             <EmptyState
@@ -1114,7 +1114,7 @@ export default function Users() {
                       return (
                         <th
                           key={header.id}
-                          className={`p-4 text-center font-semibold ${header.column.columnDef.meta?.customClassName || ''}`}
+                          className={`px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap ${header.column.columnDef.meta?.customClassName || ''}`}
                           style={{
                             cursor: isSortable ? 'pointer' : 'default'
                           }}
@@ -1126,7 +1126,7 @@ export default function Users() {
                           }}
                         >
                           <div className="flex justify-between items-center w-full gap-2">
-                            <span className="flex-1 text-center text-foreground font-semibold">
+                            <span className="flex-1 text-center">
                               {flexRender(
                                 header.column.columnDef.header,
                                 header.getContext()
@@ -1139,7 +1139,7 @@ export default function Users() {
                                 ) : header.column.getIsSorted() === 'desc' ? (
                                   <FaSortDown className="text-primary" size={12} />
                                 ) : (
-                                  <FaSort className="text-gray-500 dark:text-gray-500" size={12} />
+                                  <FaSort className="text-muted-foreground/50" size={10} />
                                 )}
                                 {header.column.id === 'select' && header.column.getIsSorted() && (
                                   <span className="absolute -top-1 -right-2 text-xs text-primary" title="Frontend sorting (no API call)">
@@ -1171,7 +1171,7 @@ export default function Users() {
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className={`p-4 text-gray-700 dark:text-gray-300 ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                        className={`px-4 py-3 text-sm text-foreground/90 ${cell.column.columnDef.meta?.tdClassName || ''}`}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -1285,12 +1285,12 @@ export default function Users() {
           <p className="text-yellow-600 dark:text-yellow-400 font-medium">
             This user will be moved to trash.
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             You can restore them later from the trash view.
           </p>
           {deleteInfo?.message && (
-            <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-3 p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
                 {deleteInfo.message}
               </p>
             </div>
@@ -1317,13 +1317,13 @@ export default function Users() {
             </p>
           </div>
           
-          <p className="text-gray-700 dark:text-gray-300">
+          <p className="text-foreground/80">
             This will permanently delete the user and all associated data.
           </p>
 
           {deleteInfo?.message && !deleteInfo.canBePermanent && (
-            <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-3 p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
                 {deleteInfo.message}
               </p>
             </div>
@@ -1347,7 +1347,7 @@ export default function Users() {
             <p className="text-green-600 dark:text-green-400 font-medium">
               Are you sure you want to restore this user?
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               The user will be moved back to active users and all their data will be restored.
             </p>
           </div>
@@ -1418,7 +1418,7 @@ export default function Users() {
           
           {errorDetails?.blockingTables && errorDetails.blockingTables.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+              <p className="text-sm font-medium text-foreground/80 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-yellow-500" />
                 Related data found in:
               </p>
@@ -1426,10 +1426,10 @@ export default function Users() {
                 {errorDetails.blockingTables.map((tableName, index) => (
                   <div 
                     key={index} 
-                    className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
+                    className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg border border-border"
                   >
                     <div className="w-2 h-2 rounded-full bg-red-500" />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-medium text-foreground/80">
                       {tableName}
                     </span>
                   </div>
@@ -1438,8 +1438,8 @@ export default function Users() {
             </div>
           )}
           
-          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="pt-2 border-t border-border">
+            <p className="text-sm text-muted-foreground">
               Please move this user to trash instead, or manually remove the related records first.
             </p>
           </div>
@@ -1479,7 +1479,7 @@ export default function Users() {
           <p className="text-yellow-600 dark:text-yellow-400 font-medium">
             Are you sure you want to move {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected user(s) to trash?
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             These users can be restored later from the trash view.
           </p>
         </div>
@@ -1500,7 +1500,7 @@ export default function Users() {
           <p className="text-green-600 dark:text-green-400 font-medium">
             Are you sure you want to restore {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected user(s)?
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             These users will be moved back to active users.
           </p>
         </div>
@@ -1524,10 +1524,10 @@ export default function Users() {
               Warning: This action cannot be undone!
             </p>
           </div>
-          <p className="text-gray-700 dark:text-gray-300">
+          <p className="text-foreground/80">
             Are you sure you want to permanently delete {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected user(s)?
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             This will permanently delete all selected users and their associated data.
           </p>
         </div>

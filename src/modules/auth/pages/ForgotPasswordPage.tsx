@@ -54,12 +54,12 @@ export default function ForgotPasswordPage() {
       <AuthHeader />
 
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-md"
       >
-        <Card className="border border-border shadow-md rounded-2xl overflow-hidden bg-card py-0">
+        <Card className="border border-border shadow-xl rounded-xl overflow-hidden bg-card py-0">
           {success ? (
             <SuccessMessage
               title="Password Reset Email Sent!"
@@ -70,10 +70,10 @@ export default function ForgotPasswordPage() {
           ) : (
             <CardContent className="p-8">
               <div className="flex flex-col items-center mb-7">
-                <div className="mb-3 p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+                <div className="mb-4">
                   <Mail className="w-10 h-10 text-primary" />
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">
                   {t("common.forgotPassword", "Forgot Password")}
                 </h1>
                 <p className="text-sm mt-1 text-center text-muted-foreground">

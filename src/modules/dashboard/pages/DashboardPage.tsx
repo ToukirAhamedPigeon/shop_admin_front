@@ -8,7 +8,7 @@ export default function DashboardPage() {
       <Breadcrumb
           title="common.dashboard.title"
           defaultTitle="Dashboard"
-          showTitle={true}
+          showTitle={false}
           items={[
           ]}
           className='pb-0'

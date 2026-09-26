@@ -121,8 +121,8 @@ export default function TranslationFilterForm({
         {/* Date Range Section */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground/80">
               {t('Date Range')}
             </span>
           </div>
@@ -156,8 +156,8 @@ export default function TranslationFilterForm({
         {/* Modules Section */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Layers className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <Layers className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground/80">
               {t('Modules')}
             </span>
           </div>

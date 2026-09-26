@@ -630,7 +630,7 @@ export default function Translations() {
       />
       
       {/* TABLE with sticky header fix */}
-      <div className="relative rounded-xl overflow-hidden border border-border shadow-sm">
+      <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
         <TableWithLoader loading={loading} id="printable-translation-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showEmptyState ? (
             <EmptyState
@@ -649,7 +649,7 @@ export default function Translations() {
                       return (
                         <th
                           key={header.id}
-                          className={`p-4 text-center font-semibold ${header.column.columnDef.meta?.customClassName || ''}`}
+                          className={`px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap ${header.column.columnDef.meta?.customClassName || ''}`}
                           style={{
                             cursor: isSortable ? 'pointer' : 'default'
                           }}
@@ -661,7 +661,7 @@ export default function Translations() {
                           }}
                         >
                           <div className="flex justify-between items-center w-full gap-2">
-                            <span className="flex-1 text-center text-foreground font-semibold">
+                            <span className="flex-1 text-center">
                               {flexRender(
                                 header.column.columnDef.header,
                                 header.getContext()
@@ -674,7 +674,7 @@ export default function Translations() {
                                 ) : header.column.getIsSorted() === 'desc' ? (
                                   <FaSortDown className="text-primary" size={12} />
                                 ) : (
-                                  <FaSort className="text-muted-foreground" size={12} />
+                                  <FaSort className="text-muted-foreground/50" size={10} />
                                 )}
                                 {header.column.id === 'select' && header.column.getIsSorted() && (
                                   <span className="absolute -top-1 -right-2 text-xs text-primary" title="Frontend sorting (no API call)">
@@ -707,7 +707,7 @@ export default function Translations() {
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className={`p-4 text-foreground/90 ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                        className={`px-4 py-3 text-sm text-foreground/90 ${cell.column.columnDef.meta?.tdClassName || ''}`}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -835,7 +835,7 @@ export default function Translations() {
             <p className="text-yellow-600 dark:text-yellow-400 font-medium">
               Are you sure you want to delete this translation?
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               This action cannot be undone. The translation will be permanently removed.
             </p>
           </div>
@@ -860,10 +860,10 @@ export default function Translations() {
               Warning: This action cannot be undone!
             </p>
           </div>
-          <p className="text-gray-700 dark:text-gray-300">
+          <p className="text-foreground/80">
             Are you sure you want to delete {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected translation(s)?
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             This will permanently delete all selected translations and their associated values.
           </p>
         </div>

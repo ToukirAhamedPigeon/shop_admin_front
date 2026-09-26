@@ -74,7 +74,7 @@ const getAllColumns = ({
     header: 'Detail', 
     id: 'detail', 
     accessorKey: 'detail',
-    cell: ({ getValue }) => <span className="text-gray-700 dark:text-gray-300">{getValue() as string}</span>,
+    cell: ({ getValue }) => <span className="text-foreground/80">{getValue() as string}</span>,
     meta: { customClassName: 'text-center min-w-[200px]', tdClassName: 'text-center min-w-[200px]' } 
   },
   { 
@@ -120,7 +120,7 @@ const getAllColumns = ({
     header: 'Created By', 
     id: 'createdByName', 
     accessorKey: 'createdByName',
-    cell: ({ getValue }) => <span className="font-medium text-gray-700 dark:text-gray-300">{getValue() as string}</span>,
+    cell: ({ getValue }) => <span className="font-medium text-foreground/80">{getValue() as string}</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
   },
   { 
@@ -141,28 +141,28 @@ const getAllColumns = ({
     header: 'Browser', 
     id: 'browser', 
     accessorKey: 'browser',
-    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>,
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() as string}</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
   },
   { 
     header: 'Device', 
     id: 'device', 
     accessorKey: 'device',
-    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>,
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() as string}</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
   },
   { 
     header: 'OS', 
     id: 'operatingSystem', 
     accessorKey: 'operatingSystem',
-    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>,
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() as string}</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
   },
   { 
     header: 'User Agent', 
     id: 'userAgent', 
     accessorKey: 'userAgent',
-    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400 text-sm truncate max-w-[300px] block" title={getValue() as string}>{getValue() as string}</span>,
+    cell: ({ getValue }) => <span className="text-muted-foreground text-sm truncate max-w-[300px] block" title={getValue() as string}>{getValue() as string}</span>,
     meta: { customClassName: 'text-center min-w-[300px]', tdClassName: 'text-center min-w-[300px]' } 
   },
   {
@@ -431,7 +431,7 @@ export default function LogListTable() {
         />
 
         {/* TABLE */}
-        <div className="relative rounded-xl overflow-hidden border border-border">
+        <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
           <TableWithLoader 
             loading={loading}
             id="printable-user-table"
@@ -444,13 +444,13 @@ export default function LogListTable() {
                     {headerGroup.headers.map(header => (
                       <th
                         key={header.id}
-                        className={`p-4 text-center font-semibold bg-muted ${header.column.columnDef.meta?.customClassName || ''}`}
+                        className={`px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap bg-muted ${header.column.columnDef.meta?.customClassName || ''}`}
                       >
                         <div
                           className="flex justify-between items-center w-full gap-2 cursor-pointer"
                           onClick={header.column.getToggleSortingHandler()}
                         >
-                          <span className="flex-1 text-center text-foreground font-semibold">
+                          <span className="flex-1 text-center">
                             {flexRender(header.column.columnDef.header, header.getContext())}
                           </span>
                           <span className="relative">
@@ -459,7 +459,7 @@ export default function LogListTable() {
                             ) : header.column.getIsSorted() === 'desc' ? (
                               <FaSortDown className="text-primary" size={12} />
                             ) : (
-                              <FaSort className="text-muted-foreground" size={12} />
+                              <FaSort className="text-muted-foreground/50" size={10} />
                             )}
                           </span>
                         </div>
@@ -516,7 +516,7 @@ export default function LogListTable() {
                         {row.getVisibleCells().map(cell => (
                           <td
                             key={cell.id}
-                            className={`p-4 text-gray-700 dark:text-gray-300 ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                            className={`px-4 py-3 text-sm text-foreground/90 ${cell.column.columnDef.meta?.tdClassName || ''}`}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>

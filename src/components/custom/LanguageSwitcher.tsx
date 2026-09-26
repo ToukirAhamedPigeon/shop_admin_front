@@ -26,7 +26,7 @@ const LanguageSwitcher: React.FC = () => {
     <Button
       variant="ghost"
       onClick={() => switchLanguage(nextLang)}
-      className="flex items-center gap-1.5 px-2 py-1 h-8 rounded-md bg-primary/10 text-primary hover:bg-primary/20"
+      className="flex items-center gap-1.5 px-2.5 h-9 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
     >
       <Globe className="w-3.5 h-3.5" />
       <span className="text-xs font-medium">{label}</span>

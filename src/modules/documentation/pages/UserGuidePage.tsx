@@ -63,16 +63,16 @@ export default function UserGuidePage() {
             <Loader type="circular" size={36} />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center gap-2 py-16 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex flex-col items-center gap-2 py-16 text-sm text-muted-foreground">
             <AlertTriangle className="w-8 h-8 text-amber-500" />
             {t('documentation.guide.error', 'Failed to load the user guide')}
           </div>
         ) : guide ? (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{guide.title}</h2>
+              <h2 className="text-lg font-semibold text-foreground">{guide.title}</h2>
               {guide.updatedAt && (
-                <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="w-3.5 h-3.5" />
                   {new Date(guide.updatedAt).toLocaleString()}
                 </span>

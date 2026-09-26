@@ -28,25 +28,25 @@ export default function DashboardCard({
 }: DashboardCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
+      transition={{ duration: 0.3, delay, ease: [0.22, 1, 0.36, 1] }}
     >
-      <GlassCard variant={variant} hoverEffect padding="md" className={cn("h-full", className)}>
+      <GlassCard variant={variant} hoverEffect padding="md" className={cn("h-full p-5", className)}>
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">
               {title}
             </p>
-            <p className="text-2xl font-bold mt-2 text-foreground">
+            <p className="text-[28px] leading-none font-semibold tracking-tight tabular-nums mt-3 text-foreground">
               {value}
             </p>
             {trend && (
-              <div className="flex items-center gap-1 mt-2">
+              <div className="flex items-center gap-1.5 mt-3">
                 <span
                   className={cn(
-                    "text-xs font-medium",
-                    trend.isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"
+                    "inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium tabular-nums",
+                    trend.isPositive ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
                   )}
                 >
                   {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}%
@@ -55,7 +55,7 @@ export default function DashboardCard({
               </div>
             )}
           </div>
-          <div className="p-3 rounded-xl bg-primary/10 text-primary">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary [&_svg]:size-[18px]">
             {icon}
           </div>
         </div>

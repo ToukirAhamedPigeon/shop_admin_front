@@ -52,7 +52,7 @@ export default function UserDropdown() {
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
       <DropdownMenuTrigger asChild>
         <button
-          className="cursor-pointer flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring group hover:bg-accent"
+          className="cursor-pointer flex items-center gap-2.5 ml-1 pl-1.5 pr-2 py-1 rounded-lg transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring group hover:bg-accent"
         >
           <Avatar className="h-8 w-8">
             <AvatarImage
@@ -66,7 +66,7 @@ export default function UserDropdown() {
           </Avatar>
 
           <div className="hidden lg:flex flex-col items-start">
-            <span className="text-sm font-bold text-foreground" title={displayName}>
+            <span className="text-sm font-medium leading-tight text-foreground" title={displayName}>
               {truncatedFirstName}
             </span>
             <span className="text-xs font-medium text-muted-foreground">
@@ -87,12 +87,12 @@ export default function UserDropdown() {
       <DropdownMenuContent
         align="end"
         sideOffset={8}
-        className="w-[280px] sm:w-72 p-1 border border-border rounded-xl bg-popover shadow-md"
+        className="w-[280px] sm:w-72 p-1 border border-border rounded-xl bg-popover shadow-lg"
       >
         {/* User Info Card */}
         <div className="px-3 py-4 mb-1">
           <div className="flex items-start gap-3">
-            <Avatar className="h-14 w-14 shadow-sm">
+            <Avatar className="h-12 w-12">
               <AvatarImage
                 src={user?.profileImage ? import.meta.env.VITE_API_ASSET_URL + user.profileImage : undefined}
                 alt={displayName}
@@ -104,7 +104,7 @@ export default function UserDropdown() {
             </Avatar>
 
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold truncate text-foreground" title={displayName}>
+              <h4 className="font-semibold truncate text-foreground" title={displayName}>
                 {truncatedName}
               </h4>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
@@ -153,7 +153,7 @@ export default function UserDropdown() {
 
           <Can anyOf={['read-admin-settings']}>
             <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-              <Link to="/settings/app" className="flex items-center gap-3 px-3 py-2.5 text-sm">
+              <Link to="/settings/app-settings" className="flex items-center gap-3 px-3 py-2.5 text-sm">
                 <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted text-muted-foreground">
                   <SlidersHorizontal className="w-4 h-4" />
                 </div>

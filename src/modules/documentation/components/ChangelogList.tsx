@@ -39,7 +39,7 @@ export default function ChangelogList({ entries, loading }: ChangelogListProps) 
     return (
       <div className="space-y-2 animate-pulse">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-14 rounded-lg bg-gray-100 dark:bg-gray-800/50" />
+          <div key={i} className="h-14 rounded-lg bg-muted/50" />
         ))}
       </div>
     );
@@ -47,7 +47,7 @@ export default function ChangelogList({ entries, loading }: ChangelogListProps) 
 
   if (!entries.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
         <GitCommitHorizontal className="w-10 h-10 mb-3 opacity-50" />
         <p className="text-sm">{t('documentation.changelog.empty', 'No changelog entries found')}</p>
       </div>
@@ -55,7 +55,7 @@ export default function ChangelogList({ entries, loading }: ChangelogListProps) 
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div className="rounded-xl border border-border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -85,7 +85,7 @@ export default function ChangelogList({ entries, loading }: ChangelogListProps) 
                         <ChevronRight className="w-4 h-4 text-gray-400" />
                       ))}
                   </TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
                     {(() => {
                       try {
                         return format(parseISO(entry.date), 'yyyy-MM-dd HH:mm');
@@ -99,21 +99,21 @@ export default function ChangelogList({ entries, loading }: ChangelogListProps) 
                       {entry.repo}
                     </Badge>
                   </TableCell>
-                  <TableCell className="max-w-md truncate font-medium text-gray-800 dark:text-gray-100">
+                  <TableCell className="max-w-md truncate font-medium text-foreground">
                     {entry.summary}
                   </TableCell>
-                  <TableCell className="text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
                     {entry.author || '—'}
                   </TableCell>
                 </TableRow>
 
                 {isOpen && hasDetails && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={5} className="bg-gray-50 dark:bg-gray-900/40 whitespace-normal">
+                    <TableCell colSpan={5} className="bg-muted/50/40 whitespace-normal">
                       <div className="py-2 space-y-3">
                         {entry.files && entry.files.length > 0 && (
                           <div>
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1.5">
                               <FileDiff className="w-3.5 h-3.5" />
                               {t('documentation.changelog.files_changed', 'Files changed')} (
                               {entry.files.length})
@@ -122,7 +122,7 @@ export default function ChangelogList({ entries, loading }: ChangelogListProps) 
                               {entry.files.map((file) => (
                                 <li
                                   key={file}
-                                  className="text-xs font-mono text-gray-500 dark:text-gray-400 truncate"
+                                  className="text-xs font-mono text-muted-foreground truncate"
                                 >
                                   {file}
                                 </li>

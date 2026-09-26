@@ -49,12 +49,12 @@ export default function VerifyEmailPage() {
       <AuthHeader />
 
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-sm"
       >
-        <Card className="border border-border shadow-md rounded-2xl overflow-hidden bg-card py-0">
+        <Card className="border border-border shadow-xl rounded-xl overflow-hidden bg-card py-0">
           <CardContent className="p-8 text-center">
             {success ? (
               <SuccessMessage
@@ -63,7 +63,7 @@ export default function VerifyEmailPage() {
               />
             ) : (
               <div className="flex flex-col items-center gap-4">
-                <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20">
+                <div className="p-3 rounded-xl bg-destructive/10">
                   <ShieldAlert className="w-12 h-12 text-destructive" />
                 </div>
                 <h2 className="text-xl font-bold text-destructive">

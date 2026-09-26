@@ -1,57 +1,32 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 
+// Full-screen blocking loader. Colors come from theme tokens so it always
+// matches the active palette; the slice's color fields are no longer used.
 export default function GlobalLoader(): React.ReactElement | null {
-  const {
-    visible,
-    message,
-    spinnerColor,
-    darkSpinnerColor,
-    messageColor,
-    darkMessageColor,
-  } = useSelector((state: RootState) => state.loader);
-
-
-  const { current: theme } = useSelector((state: RootState) => state.theme)
-  const isDarkMode = theme === "dark"
+  const { visible, message } = useSelector((state: RootState) => state.loader);
 
   if (!visible) return null;
 
-  const activeSpinnerColor = isDarkMode ? darkSpinnerColor : spinnerColor;
-  const activeMessageColor = isDarkMode ? darkMessageColor : messageColor;
-
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95">
-      <div className="flex flex-col items-center gap-6">
-        {/* Site Logo */}
-        <div className="relative w-16 h-16 select-none pointer-events-none">
-          <img
-            src="/logo.png"
-            alt="Logo"
-            width={64}
-            height={64}
-            className="object-contain"
-          />
-        </div>
-
-        {/* Spinner */}
-        <div
-          className="w-8 h-8 border-3 border-solid rounded-full animate-spin mt-4 outline-none focus:outline-none select-none"
-          style={{
-            borderColor: `${activeSpinnerColor} transparent ${activeSpinnerColor} ${activeSpinnerColor}`,
-          }}
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in-0 duration-200"
+    >
+      <div className="flex flex-col items-center gap-5">
+        <img
+          src="/logo.png"
+          alt=""
+          width={48}
+          height={48}
+          className="select-none pointer-events-none object-contain"
         />
 
-        {/* Message */}
+        <div className="size-6 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+
         {message && (
-          <p
-            className="text-xl font-medium"
-            style={{
-              color: activeMessageColor,
-            }}
-          >
-            {message}
-          </p>
+          <p className="text-sm font-medium text-muted-foreground">{message}</p>
         )}
       </div>
     </div>

@@ -16,9 +16,9 @@ type ModalCoreProps = {
 };
 
 const modalVariants = {
-  hidden: { opacity: 0, scale: 0.95, y: -20 },
+  hidden: { opacity: 0, scale: 0.98, y: 8 },
   visible: { opacity: 1, scale: 1, y: 0 },
-  exit: { opacity: 0, scale: 0.95, y: -20 },
+  exit: { opacity: 0, scale: 0.98, y: 8 },
 };
 
 const ModalCore: React.FC<ModalCoreProps> = ({
@@ -66,9 +66,9 @@ const ModalCore: React.FC<ModalCoreProps> = ({
       initial="hidden"
       animate="visible"
       exit="exit"
-      transition={{ duration: 0.25, type: "spring", stiffness: 300, damping: 25 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "relative rounded-2xl shadow-md overflow-hidden border border-border",
+        "relative rounded-xl shadow-2xl overflow-hidden border border-border",
         bgColor === "transparent" ? "bg-transparent" : "bg-card"
       )}
       style={{
@@ -87,7 +87,7 @@ const ModalCore: React.FC<ModalCoreProps> = ({
           titleClassName
         )}
       >
-        <h2 className="text-xl font-bold text-foreground">
+        <h2 className="text-lg font-semibold text-foreground">
           {t(title)}
         </h2>
 
@@ -95,7 +95,7 @@ const ModalCore: React.FC<ModalCoreProps> = ({
           {showPrintButton && (
             <button
               onClick={handlePrint}
-              className="p-2 rounded-lg text-muted-foreground hover:text-primary transition-colors hover:bg-accent"
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors hover:bg-accent"
             >
               <Printer size={18} />
             </button>
@@ -103,7 +103,7 @@ const ModalCore: React.FC<ModalCoreProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-muted-foreground hover:text-destructive transition-colors hover:bg-accent"
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors hover:bg-accent"
           >
             <X size={18} />
           </button>

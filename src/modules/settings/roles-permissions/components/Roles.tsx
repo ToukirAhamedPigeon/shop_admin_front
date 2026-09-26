@@ -178,12 +178,12 @@ const getDataColumns = ({
   {
     header: 'Name',
     accessorKey: 'name',
-    cell: ({ getValue }) => <span className="font-medium text-gray-700 dark:text-gray-300">{getValue() as string}</span>
+    cell: ({ getValue }) => <span className="font-medium text-foreground/80">{getValue() as string}</span>
   },
   {
     header: 'Guard Name',
     accessorKey: 'guardName',
-    cell: ({ getValue }) => <span className="text-gray-600 dark:text-gray-400">{getValue() as string}</span>
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() as string}</span>
   },
   {
     header: 'Permissions',
@@ -206,7 +206,7 @@ const getDataColumns = ({
   {
     header: 'Deleted',
     accessorKey: 'isDeleted',
-    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-gray-600 dark:text-gray-400">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-muted-foreground">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
@@ -798,7 +798,7 @@ export default function Roles() {
       />
       
       {/* TABLE */}
-      <div className="relative rounded-xl overflow-hidden border border-border">
+      <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
         <TableWithLoader loading={loading} id="printable-role-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showEmptyState ? (
             <EmptyState
@@ -816,7 +816,7 @@ export default function Roles() {
                       return (
                         <th
                           key={header.id}
-                          className={`p-4 text-center font-semibold ${header.column.columnDef.meta?.customClassName || ''}`}
+                          className={`px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap ${header.column.columnDef.meta?.customClassName || ''}`}
                           style={{
                             cursor: isSortable ? 'pointer' : 'default'
                           }}
@@ -828,7 +828,7 @@ export default function Roles() {
                           }}
                         >
                           <div className="flex justify-between items-center w-full gap-2">
-                            <span className="flex-1 text-center text-foreground font-semibold">
+                            <span className="flex-1 text-center">
                               {flexRender(
                                 header.column.columnDef.header,
                                 header.getContext()
@@ -841,7 +841,7 @@ export default function Roles() {
                                 ) : header.column.getIsSorted() === 'desc' ? (
                                   <FaSortDown className="text-primary" size={12} />
                                 ) : (
-                                  <FaSort className="text-muted-foreground" size={12} />
+                                  <FaSort className="text-muted-foreground/50" size={10} />
                                 )}
                                 {header.column.id === 'select' && header.column.getIsSorted() && (
                                   <span className="absolute -top-1 -right-2 text-xs text-primary" title="Frontend sorting (no API call)">
@@ -872,7 +872,7 @@ export default function Roles() {
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className={`p-4 text-foreground/90 ${cell.column.columnDef.meta?.tdClassName || ''}`}
+                        className={`px-4 py-3 text-sm text-foreground/90 ${cell.column.columnDef.meta?.tdClassName || ''}`}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -991,8 +991,8 @@ export default function Roles() {
             This role will be moved to trash. You can restore it later.
           </p>
           {deleteInfo?.message && deleteInfo.canBePermanent === false && (
-            <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm text-gray-600 dark:text-gray-400">{deleteInfo.message}</p>
+            <div className="mt-3 p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">{deleteInfo.message}</p>
             </div>
           )}
         </div>
@@ -1017,24 +1017,24 @@ export default function Roles() {
             </p>
           </div>
           
-          <p className="text-gray-700 dark:text-gray-300">
+          <p className="text-foreground/80">
             This will permanently delete the role and all associated data including:
           </p>
           
           <ul className="space-y-2 ml-4">
-            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <li className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
               Role-permission assignments
             </li>
-            <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <li className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
               User-role assignments
             </li>
           </ul>
 
           {deleteInfo?.message && deleteInfo.canBePermanent === false && (
-            <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm text-gray-600 dark:text-gray-400">{deleteInfo.message}</p>
+            <div className="mt-3 p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">{deleteInfo.message}</p>
             </div>
           )}
         </div>
@@ -1056,7 +1056,7 @@ export default function Roles() {
             <p className="text-green-600 dark:text-green-400 font-medium">
               Are you sure you want to restore this role?
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               The role will be moved back to active roles with all its permissions.
             </p>
           </div>
@@ -1082,8 +1082,8 @@ export default function Roles() {
             </p>
           </div>
           
-          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="pt-2 border-t border-border">
+            <p className="text-sm text-muted-foreground">
               Please move this role to trash instead, or manually remove the related records first.
             </p>
           </div>
@@ -1123,7 +1123,7 @@ export default function Roles() {
           <p className="text-yellow-600 dark:text-yellow-400 font-medium">
             Are you sure you want to move {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected role(s) to trash?
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             These roles can be restored later from the trash view.
           </p>
         </div>
@@ -1144,7 +1144,7 @@ export default function Roles() {
           <p className="text-green-600 dark:text-green-400 font-medium">
             Are you sure you want to restore {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected role(s)?
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             These roles will be moved back to active roles.
           </p>
         </div>
@@ -1168,10 +1168,10 @@ export default function Roles() {
               Warning: This action cannot be undone!
             </p>
           </div>
-          <p className="text-gray-700 dark:text-gray-300">
+          <p className="text-foreground/80">
             Are you sure you want to permanently delete {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected role(s)?
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             This will permanently delete all selected roles and their associated data.
           </p>
         </div>
