@@ -53,7 +53,7 @@ export function useTable<T>({
   
   // Refs for managing loading state
   const loadingStartTime = useRef<number | null>(null)
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const pendingData = useRef<{ 
     data: T[]; 
     total: number; 
