@@ -34,5 +34,5 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
 ## Security notes
 
 - Mail attachments are checked against an extension allow-list in
-  `src/modules/mail/components/ComposeMail.tsx`. That check runs only in the
-  browser, and the backend must enforce its own allow-list.
+  `src/modules/mail/components/ComposeMail.tsx`. The API (`shop_back`) enforces
+  the same list in `FileValidationPresets.MailAttachment`. Keep the two lists in sync.
