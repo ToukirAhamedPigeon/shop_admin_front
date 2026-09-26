@@ -3,6 +3,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
+import { Placeholder } from '@tiptap/extensions';
 import {
   Bold,
   Italic,
@@ -31,6 +32,7 @@ interface RichTextEditorProps {
 export default function RichTextEditor({ 
   value, 
   onChange, 
+  placeholder = "Write your message here...",
   className,
   height = "300px"
 }: RichTextEditorProps) {
@@ -53,6 +55,7 @@ export default function RichTextEditor({
           class: 'max-w-full h-auto rounded-lg my-2',
         },
       }),
+      Placeholder.configure({ placeholder }),
     ],
     content: value,
     editorProps: {
