@@ -47,6 +47,31 @@ interface ComposeMailProps {
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENTS_SIZE = 50 * 1024 * 1024;
 
+// Allowed attachment extensions. Checked by extension rather than MIME type
+// because browsers report MIME inconsistently (often empty for .7z/.rar, and
+// Windows reports .csv as application/vnd.ms-excel). HTML and SVG are
+// deliberately excluded: both can carry scripts and are common phishing
+// vectors. This is a UX guard only; the API must enforce its own allow-list.
+const ALLOWED_ATTACHMENT_EXTENSIONS = [
+  // Images
+  'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp',
+  // Documents
+  'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'rtf', 'xml',
+  // Archives
+  'zip', 'rar', '7z',
+  // Audio
+  'mp3', 'wav', 'ogg', 'm4a', 'flac',
+  // Video
+  'mp4', 'mpeg', 'mpg', 'mov', 'avi', 'mkv',
+];
+
+const ATTACHMENT_ACCEPT = ALLOWED_ATTACHMENT_EXTENSIONS.map(ext => `.${ext}`).join(',');
+
+const getFileExtension = (fileName: string): string => {
+  const dot = fileName.lastIndexOf('.');
+  return dot > 0 ? fileName.slice(dot + 1).toLowerCase() : '';
+};
+
 export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeMailProps) {
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -120,6 +145,13 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
   };
 
   const validateFile = (file: File): { valid: boolean; error?: string } => {
+    if (!ALLOWED_ATTACHMENT_EXTENSIONS.includes(getFileExtension(file.name))) {
+      return {
+        valid: false,
+        error: `${file.name} is not an allowed file type`
+      };
+    }
+
     if (file.size > MAX_FILE_SIZE) {
       return {
         valid: false,
@@ -273,7 +305,7 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
               multiple
               onChange={handleFileChange}
               className="hidden"
-              accept="*/*"
+              accept={ATTACHMENT_ACCEPT}
             />
 
             {templates.length > 0 && (
