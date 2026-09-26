@@ -29,7 +29,6 @@ import { refreshColumnSettings } from '@/lib/refreshColumnSettings';
 import { exportVisibleTableToExcel } from '@/lib/exportTable';
 import { printTableById } from '@/lib/printTable';
 import { getCustomDateTime } from '@/lib/formatDate';
-import { ExpandableText } from '@/components/custom/ExpandableText';
 import { FilterModal } from '@/components/custom/FilterModal';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/redux/store';
@@ -44,7 +43,7 @@ import EditOption from './EditOption';
 import { useEditSheet } from '@/hooks/useEditSheet';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import { deleteOption, restoreOption, getOptions, bulkDeleteOptions, bulkRestoreOptions, getOptionDeleteInfo } from '../api';
-import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle, List, AlertCircle } from 'lucide-react';
+import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Database, XCircle, List, AlertCircle } from 'lucide-react';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { cn } from '@/lib/utils';
 
@@ -283,7 +282,7 @@ export default function Options() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteInfo, setDeleteInfo] = useState<DeleteInfoResponse | null>(null);
-  const [checkingDelete, setCheckingDelete] = useState(false);
+  const [, setCheckingDelete] = useState(false);
 
   // Bulk operations state
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);

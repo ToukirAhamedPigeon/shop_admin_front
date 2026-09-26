@@ -7,8 +7,6 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
-  type OnChangeFn,
 } from '@tanstack/react-table'
 import { motion } from 'framer-motion'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
@@ -71,7 +69,6 @@ const getSelectColumn = (): ColumnDef<IRole> => ({
   header: ({ table }) => <SelectAllCheckbox<IRole> table={table} />,
   cell: ({ row }) => {
     const isSelected = row.getIsSelected()
-    const role = row.original
     
     return (
       <div className="flex justify-center">
@@ -258,7 +255,7 @@ export default function Roles() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteInfo, setDeleteInfo] = useState<DeleteInfoResponse | null>(null)
-  const [checkingDelete, setCheckingDelete] = useState(false)
+  const [, setCheckingDelete] = useState(false)
 
   // Bulk operations state
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)

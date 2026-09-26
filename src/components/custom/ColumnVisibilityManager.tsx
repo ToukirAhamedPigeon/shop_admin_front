@@ -9,7 +9,6 @@ import type { ColumnDef } from '@tanstack/react-table'
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog'

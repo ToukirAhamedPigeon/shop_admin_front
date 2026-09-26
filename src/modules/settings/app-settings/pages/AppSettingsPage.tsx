@@ -1,5 +1,4 @@
 // D:\shop\shop_admin_front\src\modules\settings\app-settings\pages\AppSettingsPage.tsx
-import React from 'react';
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb';
 import { SettingsPage } from '../components/SettingsPage';
 

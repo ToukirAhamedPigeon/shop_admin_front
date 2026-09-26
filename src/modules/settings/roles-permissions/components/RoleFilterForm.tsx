@@ -24,7 +24,6 @@ export default function RoleFilterForm({
   filterValues,
   setFilterValues,
   onResetRef,
-  onClose,
   showTrash = false,
   onShowTrashChange,
 }: RoleFilterFormProps) {

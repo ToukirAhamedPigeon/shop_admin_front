@@ -7,8 +7,6 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
-  type OnChangeFn,
 } from '@tanstack/react-table'
 import { motion } from 'framer-motion'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
@@ -286,7 +284,7 @@ export default function Permissions() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteInfo, setDeleteInfo] = useState<DeleteInfoResponse | null>(null)
-  const [checkingDelete, setCheckingDelete] = useState(false)
+  const [, setCheckingDelete] = useState(false)
 
   // Bulk operations state
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { CustomSelect } from '@/components/custom/FormInputs';
 import DateTimeInput from '@/components/custom/FormInputs';
 import { useTranslations } from '@/hooks/useTranslations';
-import { Filter, Calendar, Layers } from 'lucide-react';
+import { Calendar, Layers } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'translationFilters';
 
@@ -25,7 +25,6 @@ export default function TranslationFilterForm({
   filterValues,
   setFilterValues,
   onResetRef,
-  onClose,
 }: TranslationFilterFormProps) {
   const initialized = useRef(false);
   const { t } = useTranslations();

@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table'
 import { getCustomDateTime } from '@/lib/formatDate'
 import type { IRole } from '@/types/role-permission'
 
-export default function RoleDetail({ role, onUpdated }: { role: IRole; onUpdated?: () => void }) {
+export default function RoleDetail({ role }: { role: IRole; onUpdated?: () => void }) {
   const rows = [
     ['Name', role.name],
     ['Guard Name', role.guardName],

@@ -6,7 +6,6 @@ import { ThemeSettings } from './ThemeSettings';
 import { BrandingSettings } from './BrandingSettings';
 import { GeneralSettings } from './GeneralSettings';
 import { useTranslations } from '@/hooks/useTranslations';
-import { useAppSelector } from '@/hooks/useRedux';
 import { CATEGORY_CONFIG } from '../config/categories';
 import type { SettingsResponse } from '@/types/settings';
 import { RefreshCw, Save, RotateCcw } from 'lucide-react';
@@ -72,16 +71,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     handleSettingUpdate(key, previewUrl);
     
     dispatchShowToast({ type: 'success', message: t('Image uploaded successfully') });
-  };
-
-  // Handle file clear - remove the file
-  const handleImageClear = (key: string) => {
-    setPendingFiles(prev => {
-      const newFiles = { ...prev };
-      delete newFiles[key];
-      return newFiles;
-    });
-    handleSettingUpdate(key, '');
   };
 
   const handleSave = async () => {

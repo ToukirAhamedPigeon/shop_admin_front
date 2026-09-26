@@ -27,7 +27,6 @@ export default function OptionFilterForm({
   filterValues,
   setFilterValues,
   onResetRef,
-  onClose,
   showTrash = false,
   onShowTrashChange,
 }: OptionFilterFormProps) {

@@ -22,7 +22,6 @@ import {
   RowActions,
   IndexCell,
   EmptyState,
-  TrashViewIndicator,
   TableWithLoader
 } from '@/components/custom/Table'
 import Modal from '@/components/custom/Modal'

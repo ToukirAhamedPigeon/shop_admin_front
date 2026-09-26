@@ -1,6 +1,5 @@
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb'
 import VerifyPasswordChange from './../components/VerifyPasswordChange'
-import ChangePassword from '../components/ChangePassword'
 
 export default function VerifyPasswordChangePage() {
   return (

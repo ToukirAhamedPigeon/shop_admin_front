@@ -11,7 +11,6 @@ import {
   Star,
   Reply,
   Trash2,
-  Download,
   MailOpen,
   Mail as MailIcon,
   X,
@@ -205,7 +204,7 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
     }
   };
 
-  const handleDownloadAttachment = (url: string, fileName: string) => {
+  const handleDownloadAttachment = (url: string, _fileName: string) => {
     const fullUrl = getFullFileUrl(url);
     window.open(fullUrl, '_blank');
   };

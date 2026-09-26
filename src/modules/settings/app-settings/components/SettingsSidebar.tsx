@@ -2,7 +2,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/hooks/useTranslations';
-import { useAppSelector } from '@/hooks/useRedux';
 import { CATEGORY_CONFIG, CATEGORY_ORDER } from '../config/categories';
 import { 
   PaintBucket, 
@@ -29,11 +28,9 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   isDeveloper
 }) => {
   const { t } = useTranslations();
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
   // Filter categories based on user role
   const visibleCategories = CATEGORY_ORDER.filter((categoryKey) => {
-    const config = CATEGORY_CONFIG[categoryKey as keyof typeof CATEGORY_CONFIG];
     // If it's Branding, only show for Developer users
     if (categoryKey === 'Branding') {
       return isDeveloper === true;

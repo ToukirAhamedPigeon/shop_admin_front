@@ -34,7 +34,6 @@ export function UserFilterForm({
   filterValues,
   setFilterValues,
   onResetRef,
-  onClose,
   showTrash = false,
   onShowTrashChange,
 }: UserFilterFormProps) {

@@ -24,7 +24,6 @@ export default function PermissionFilterForm({
   filterValues,
   setFilterValues,
   onResetRef,
-  onClose,
   showTrash = false,
   onShowTrashChange,
 }: PermissionFilterFormProps) {

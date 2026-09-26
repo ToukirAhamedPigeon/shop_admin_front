@@ -74,7 +74,6 @@ const getAllColumns = ({
   confirmDelete,
   confirmRestore,
   confirmPermanentDelete,
-  authRoles,
   showDetail = true,
   showEdit = true,
   showDelete = true,
@@ -368,7 +367,7 @@ export default function Users() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteInfo, setDeleteInfo] = useState<DeleteInfoResponse | null>(null)
-  const [checkingDelete, setCheckingDelete] = useState(false)
+  const [, setCheckingDelete] = useState(false)
   
   // Error dialog state
   const [errorDialogOpen, setErrorDialogOpen] = useState(false)
@@ -757,7 +756,7 @@ export default function Users() {
       )
     },
     enableSorting: true,
-    sortingFn: (rowA, rowB, columnId) => {
+    sortingFn: (rowA, rowB) => {
       const isSelectedA = rowA.getIsSelected()
       const isSelectedB = rowB.getIsSelected()
       

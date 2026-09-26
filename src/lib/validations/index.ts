@@ -43,17 +43,6 @@ export const checkValueExists = async (
   }
 }
 
-interface CheckOverlapOptions {
-  exceptField?: string;
-  exceptValue?: string;
-}
-
-interface AllotmentInput {
-  slotId: string;
-  allotment_from: Date;
-  allotment_to: Date;
-}
-
 export const checkAllotmentOverlap = async (
   input: {
     slotId: string

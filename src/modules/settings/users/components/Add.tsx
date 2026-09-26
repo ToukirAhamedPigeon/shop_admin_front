@@ -9,13 +9,11 @@ import { checkValueExists } from '@/lib/validations'
 import { useProfilePicture } from '@/hooks/useProfilePicture'
 import DateTimeInput, { BasicInput, BasicTextarea, CustomSelect, PasswordInput, SingleImageInput, UniqueInput } from '@/components/custom/FormInputs'
 import { useTranslations } from "@/hooks/useTranslations";
-import { useAppDispatch } from '@/hooks/useRedux';
 import { dispatchShowToast } from "@/lib/dispatch";
 import { BOOLEAN_OPTIONS, GENDER_OPTIONS } from '@/constants'
 import { createUsers } from '../api'
-import { UserPlus, Shield, Mail, Phone, Key, Calendar, MapPin, FileText, User as UserIcon } from 'lucide-react'
+import { UserPlus, Key, User as UserIcon } from 'lucide-react'
 
-const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
 export const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -77,7 +75,6 @@ export default function Add({ fetchData }: RegisterProps) {
   const { t } = useTranslations();
   const [submitLoading, setSubmitLoading] = useState(false)
   const model = 'User'
-  const dispatch = useAppDispatch();
 
   const {
     register,

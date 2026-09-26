@@ -1,6 +1,5 @@
 import api from '@/lib/axios';
 import type {
-  ITranslation,
   TranslationFilterRequest,
   CreateTranslationRequest,
   UpdateTranslationRequest,
