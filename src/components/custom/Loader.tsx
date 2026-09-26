@@ -11,25 +11,18 @@ export default function Loader({ type = "circular", size = 48 }: LoaderProps) {
     <div className="flex items-center justify-center">
       {type === "circular" && (
         <div
-          className="rounded-full border-4 border-muted border-t-primary animate-spin"
+          className="rounded-full border-[3px] border-primary/15 border-t-primary animate-spin"
           style={baseSize}
         />
       )}
 
       {type === "bars" && (
-        <div className="flex gap-1.5">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="w-2 rounded-full bg-primary animate-bounce"
-              style={{
-                height: size / 2,
-                animationDelay: `${i * 0.1}s`,
-                animationDuration: '0.8s',
-              }}
-            />
-          ))}
-        </div>
+        <div
+          role="status"
+          aria-label="Loading"
+          className="rounded-full border-[3px] border-primary/15 border-t-primary animate-spin"
+          style={{ width: size * 0.66, height: size * 0.66 }}
+        />
       )}
 
       {type === "pulse" && (

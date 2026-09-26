@@ -9,8 +9,22 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
+  --shadow-xs: 0 1px 2px 0 oklch(0.2 0.02 265 / 0.04);
+  --shadow-sm: 0 1px 2px 0 oklch(0.2 0.02 265 / 0.05), 0 1px 3px 0 oklch(0.2 0.02 265 / 0.04);
+  --shadow: 0 1px 3px 0 oklch(0.2 0.02 265 / 0.06), 0 1px 2px -1px oklch(0.2 0.02 265 / 0.06);
+  --shadow-md: 0 4px 12px -2px oklch(0.2 0.02 265 / 0.08), 0 2px 4px -2px oklch(0.2 0.02 265 / 0.05);
+  --shadow-lg: 0 12px 24px -6px oklch(0.2 0.02 265 / 0.12), 0 4px 8px -4px oklch(0.2 0.02 265 / 0.06);
+  --shadow-xl: 0 20px 40px -12px oklch(0.2 0.02 265 / 0.18);
+  --shadow-2xl: 0 28px 56px -16px oklch(0.2 0.02 265 / 0.24);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -50,338 +64,234 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ========== Light Theme ========== */
+/* ========== Light Theme ==========
+   Cool, very slightly blue-tinted neutrals (hue 260) so greys read as one
+   family with the indigo primary. Page canvas is a hair off-white so white
+   cards get definition from contrast instead of heavy shadows. */
 :root {
   --radius: 0.625rem;
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.985 0.002 260);
+  --foreground: oklch(0.21 0.02 265);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.21 0.02 265);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.21 0.02 265);
 
-  /* Primary: a single, restrained indigo-blue used consistently in both themes */
-  --primary: oklch(0.52 0.14 258);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.52 0.16 262);
+  --primary-foreground: oklch(0.99 0 0);
 
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.965 0.004 260);
+  --secondary-foreground: oklch(0.27 0.02 265);
 
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted: oklch(0.965 0.004 260);
+  --muted-foreground: oklch(0.52 0.018 262);
 
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent: oklch(0.955 0.012 262);
+  --accent-foreground: oklch(0.27 0.03 265);
 
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --destructive: oklch(0.58 0.2 25);
+  --success: oklch(0.6 0.13 155);
+  --warning: oklch(0.72 0.15 70);
+  --info: oklch(0.6 0.13 240);
 
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --border: oklch(0.92 0.006 260);
+  --input: oklch(0.89 0.008 260);
+  --ring: oklch(0.52 0.16 262 / 0.45);
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
+  --chart-1: oklch(0.52 0.16 262);
+  --chart-2: oklch(0.62 0.12 185);
+  --chart-3: oklch(0.72 0.15 70);
+  --chart-4: oklch(0.6 0.16 320);
+  --chart-5: oklch(0.6 0.13 155);
+
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.37 0.02 265);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: oklch(0.96 0.014 262);
+  --sidebar-accent-foreground: oklch(0.21 0.02 265);
+  --sidebar-border: oklch(0.92 0.006 260);
+  --sidebar-ring: var(--ring);
 
+  --scrollbar-thumb: oklch(0.82 0.01 260);
+  --scrollbar-thumb-hover: oklch(0.7 0.015 260);
 }
 
 
 /* ========== Dark Theme ========== */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: oklch(0.155 0.008 265);
+  --foreground: oklch(0.96 0.004 260);
 
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --card: oklch(0.195 0.01 265);
+  --card-foreground: oklch(0.96 0.004 260);
+  --popover: oklch(0.215 0.011 265);
+  --popover-foreground: oklch(0.96 0.004 260);
 
-  --primary: oklch(0.68 0.15 258);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.68 0.14 262);
+  --primary-foreground: oklch(0.16 0.02 265);
 
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.255 0.012 265);
+  --secondary-foreground: oklch(0.96 0.004 260);
 
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted: oklch(0.24 0.01 265);
+  --muted-foreground: oklch(0.7 0.015 262);
 
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.27 0.02 265);
+  --accent-foreground: oklch(0.96 0.004 260);
 
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --destructive: oklch(0.66 0.19 22);
+  --success: oklch(0.7 0.14 155);
+  --warning: oklch(0.78 0.14 75);
+  --info: oklch(0.7 0.12 240);
 
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.68 0.14 262 / 0.5);
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
+  --chart-1: oklch(0.68 0.14 262);
+  --chart-2: oklch(0.7 0.12 185);
+  --chart-3: oklch(0.78 0.14 75);
+  --chart-4: oklch(0.7 0.15 320);
+  --chart-5: oklch(0.7 0.14 155);
+
+  --sidebar: oklch(0.175 0.009 265);
+  --sidebar-foreground: oklch(0.8 0.012 262);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-accent: oklch(0.25 0.02 265);
+  --sidebar-accent-foreground: oklch(0.97 0.004 260);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: var(--ring);
+
+  --scrollbar-thumb: oklch(0.34 0.012 265);
+  --scrollbar-thumb-hover: oklch(0.44 0.015 265);
 }
 
-/* ===== Scrollbar (Light Mode) ===== */
+/* ===== Scrollbars: thin, token-driven, no track fill ===== */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #e5e7eb; /* gray-200 */
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background-color: #9ca3af; /* gray-400 */
-  border-radius: 6px;
-  border: 2px solid #e5e7eb;
-  cursor:pointer;
+  background-color: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #6b7280; /* gray-500 */
+  background-color: var(--scrollbar-thumb-hover);
 }
-
-/* ===== Scrollbar (Dark Mode) ===== */
-.dark ::-webkit-scrollbar-track {
-  background: #111827; /* gray-900 */
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
-
-.dark ::-webkit-scrollbar-thumb {
-  background-color: #374151; /* gray-700 */
-  border: 2px solid #111827;
-  cursor: pointer;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background-color: #4b5563; /* gray-600 */
-}
-
-
-
-/* ===== Firefox Support ===== */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #9ca3af #e5e7eb;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
-.dark * {
-  scrollbar-color: #374151 #111827;
-}
-
-.react-datepicker-popper {
+/* ===== react-datepicker, restyled on theme tokens ===== */
+.react-datepicker-popper,
+.datepicker-popper {
   overflow: visible !important;
   z-index: 999999 !important;
   pointer-events: auto !important;
 }
-
-.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle {
-  display: block;
-}
-
-/* Always above modal */
-.datepicker-popper {
-  z-index: 999999 !important;
-}
-
-/* Ensure arrow is visible */
 .react-datepicker__triangle {
-  z-index: 999999 !important;
+  display: none;
 }
-
 .react-datepicker {
-  @apply bg-white dark:bg-[#1b2a3f] text-black dark:text-white border border-gray-300 dark:border-[#4a607a] rounded-lg shadow-lg;
+  @apply bg-popover text-popover-foreground border border-border rounded-lg shadow-lg font-sans text-sm overflow-hidden;
   z-index: 999999;
 }
-
-/* Month and year header */
 .react-datepicker__header {
-  @apply bg-gray-100 dark:bg-[#2a405a] border-b border-gray-300 dark:border-[#4a607a] rounded-t-lg;
+  @apply bg-muted border-b border-border rounded-none pt-2;
 }
-
-/* Current month text */
 .react-datepicker__current-month {
-  @apply text-gray-700 dark:text-gray-200 font-semibold;
+  @apply text-foreground font-semibold text-sm mb-1;
 }
-
-/* Weekdays row */
 .react-datepicker__day-name {
-  @apply text-gray-500 dark:text-gray-400 font-medium;
+  @apply text-muted-foreground font-medium text-xs;
 }
-
-/* Day cells */
 .react-datepicker__day {
-  @apply text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#3a4e68] rounded-full cursor-pointer;
+  @apply text-foreground rounded-md cursor-pointer transition-colors;
 }
-
-/* Selected day */
-.react-datepicker__day--selected {
-  @apply bg-primary text-white dark:bg-blue-600 dark:text-white;
+.react-datepicker__day:hover {
+  @apply bg-accent text-accent-foreground rounded-md;
 }
-
-/* Today */
+.react-datepicker__day--outside-month {
+  @apply text-muted-foreground/60;
+}
+.react-datepicker__day--disabled {
+  @apply text-muted-foreground/40 cursor-not-allowed;
+}
 .react-datepicker__day--today {
-  @apply border border-primary dark:border-blue-500 text-primary dark:text-blue-400;
+  @apply font-semibold text-primary;
 }
-
-/* Weekend days */
-.react-datepicker__day--weekend {
-  @apply text-red-500 dark:text-red-400;
+.react-datepicker__day--selected,
+.react-datepicker__day--in-range,
+.react-datepicker__day--keyboard-selected,
+.react-datepicker__month-text--keyboard-selected,
+.react-datepicker__quarter-text--keyboard-selected,
+.react-datepicker__year-text--keyboard-selected {
+  @apply bg-primary! text-primary-foreground! rounded-md;
 }
-
-/* Navigation buttons */
-/* .react-datepicker__navigation {
-  @apply bg-gray-200 dark:bg-[#2a405a] text-gray-700 dark:text-gray-200 rounded-full hover:bg-gray-300 dark:hover:bg-[#3a4e68];
-} */
-.react-datepicker__day--keyboard-selected, .react-datepicker__month-text--keyboard-selected, .react-datepicker__quarter-text--keyboard-selected, .react-datepicker__year-text--keyboard-selected {
-  background-color: rgb(6 145 255) !important;
-  color: #fff !important;
+.react-datepicker__navigation-icon::before {
+  @apply border-muted-foreground;
 }
-/* Arrow triangle */
-.react-datepicker__triangle {
-  @apply text-white dark:text-[#1b2a3f];
-}
-
-/* Popper wrapper */
-.react-datepicker-popper {
-  @apply z-[999999] overflow-visible;
-}
-
-/* Input container (optional, if using inline styling) */
 .react-datepicker__input-container input {
-  @apply bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-400 dark:border-[#4a607a] rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring dark:focus:ring-blue-500;
+  @apply w-full bg-background text-foreground border border-input rounded-md px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none;
 }
-
-.react-datepicker__month-dropdown-container--select{
-  @apply bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-400 dark:border-[#4a607a] rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring dark:focus:ring-blue-500 cursor-pointer;
+.react-datepicker__input-container input:focus {
+  @apply border-primary ring-[3px] ring-ring;
 }
-.react-datepicker__month-dropdown-container--select select{
-  @apply cursor-pointer;
+.react-datepicker__month-dropdown-container--select select,
+.react-datepicker__year-dropdown-container--select select {
+  @apply bg-background text-foreground border border-input rounded-md px-2 py-1 text-xs cursor-pointer outline-none;
 }
-
-.react-datepicker__month-dropdown-container--select select option{
-  @apply bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-400 dark:border-[#4a607a] rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring dark:focus:ring-blue-500 cursor-pointer;
-}
-.react-datepicker__year-dropdown-container--select{
-  @apply bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-400 dark:border-[#4a607a] rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring dark:focus:ring-blue-500 cursor-pointer;
-}
-.react-datepicker__year-dropdown-container--select select{
-  @apply cursor-pointer;
-}
-.react-datepicker__year-dropdown-container--select select option{
-  @apply bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-400 dark:border-[#4a607a] rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring dark:focus:ring-blue-500 cursor-pointer;
-}
-.react-datepicker__day--selected.react-datepicker__day--weekend{
-  @apply bg-primary !text-white dark:bg-blue-600 dark:text-white;
-}
-.react-datepicker__current-month.react-datepicker__current-month--hasYearDropdown.react-datepicker__current-month--hasMonthDropdown{
-  @apply mb-2;
-}
-.react-datepicker__day.react-datepicker__day--selected.react-datepicker__day--today{
-  @apply border border-primary text-white dark:border-white text-primary dark:text-white;
-}
-
-
 
 /* ========== Base Layer ========== */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+  }
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 22%, transparent);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 
-  .right-deep-shadow {
-    box-shadow: 8px 0 10px -5px rgba(0, 0, 0, 0.6);
-  }
   .sheet-close {
     display: none !important;
   }
 
-  /* Gradients */
-  .main-gradient {
-    background: linear-gradient(to right, #141e30, #243b55);
-  }
-  .success-gradient {
-    /* background: linear-gradient(to right, #0f9b8e, #007965); */
-    background: linear-gradient(135deg, #0f9b8e, #0d5c63);
-  }
+  /* Legacy header accents still referenced by FormHolderSheet callers.
+     Kept as no-op hooks: the sheet derives its accent from the class name. */
+  .success-gradient,
   .warning-gradient {
-    background: linear-gradient(to right, #d97706, #b45309);
+    background: none;
   }
-  .main-link-gradient {
-    background: linear-gradient(to left, #fc39b4, #b80175);
-  }
-
-  .secondary-link-gradient {
-    @apply relative bg-cover bg-center bg-no-repeat;
-    background-image:
-      linear-gradient(to top right, rgba(252, 57, 180, 0.85), rgba(184, 1, 117, 0.85)),
-      url('/full-load-bg.jpg');
-    background-blend-mode: multiply;
-  }
-
-  .secondary-gradient {
-    @apply relative bg-cover bg-center bg-no-repeat;
-    background-image:
-      linear-gradient(to top right, rgba(0, 0, 0, 0.7), rgba(30, 41, 59, 0.7)),
-      url('/sidebar-bg.jpg');
-    background-blend-mode: multiply;
-  }
-
-  .secondary-gradient-dark {
-    @apply relative bg-cover bg-center bg-no-repeat;
-    background-image:
-      linear-gradient(to top right, rgba(0, 0, 0, 0.7), rgba(30, 41, 59, 0.7)),
-      url('/sidebar-bg-dark.jpg');
-    background-blend-mode: multiply;
-  }
-
-  /* Input Border */
-  .border-input {
-    @apply border border-gray-600 rounded-md focus:ring focus:ring-blue-300 focus:border-blue-300;
-  }
-
-  /* index.css */
-.btn-success-gradient {
-  @apply text-white font-semibold rounded-md px-4 py-2 transition-all duration-300;
-
-  background: linear-gradient(to right, #0f9b8e, #007965);
-}
-
-.btn-success-gradient:hover {
-  background: linear-gradient(to right, #12b29e, #009e72);
-}
-
-.dark .btn-success-gradient {
-  background: linear-gradient(to right, #0f9b8e, #007965);
-}
-
-.dark .btn-success-gradient:hover {
-  background: linear-gradient(to right, #12b29e, #009e72);
-}
-
 
   /* NProgress */
   #nprogress {
@@ -393,7 +303,8 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 4px;
+    height: 2px;
+    background: var(--primary);
   }
 
   /* Number Input Cleanup */
@@ -406,5 +317,15 @@
     -moz-appearance: textfield;
   }
 
-  
+  /* Respect users who ask the OS for less motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

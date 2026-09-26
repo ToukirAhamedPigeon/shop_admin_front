@@ -12,27 +12,27 @@ const typeStyles: Record<
   { iconBg: string; icon: React.ReactElement | null; accent: string }
 > = {
   success: {
-    iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
-    icon: <CheckCircle2 className="text-emerald-600 dark:text-emerald-400" />,
+    iconBg: "",
+    icon: <CheckCircle2 className="text-success" />,
     accent: "bg-emerald-500"
   },
   danger: {
-    iconBg: "bg-red-100 dark:bg-red-900/30",
-    icon: <XCircle className="text-red-600 dark:text-red-400" />,
+    iconBg: "",
+    icon: <XCircle className="text-destructive" />,
     accent: "bg-red-500"
   },
   warning: {
-    iconBg: "bg-amber-100 dark:bg-amber-900/30",
-    icon: <AlertTriangle className="text-amber-600 dark:text-amber-400" />,
+    iconBg: "",
+    icon: <AlertTriangle className="text-warning" />,
     accent: "bg-amber-500"
   },
   info: {
-    iconBg: "bg-primary/10",
+    iconBg: "",
     icon: <Info className="text-primary" />,
     accent: "bg-primary"
   },
   custom: {
-    iconBg: "bg-muted",
+    iconBg: "",
     icon: null,
     accent: "bg-muted-foreground"
   },
@@ -54,22 +54,22 @@ const animationVariants: Record<
   { initial: any; animate: any; exit: any }
 > = {
   "slide-right-in": {
-    initial: { x: 50, opacity: 0 },
+    initial: { x: 16, opacity: 0 },
     animate: { x: 0, opacity: 1 },
     exit: { x: 50, opacity: 0 },
   },
   "slide-left-in": {
-    initial: { x: -50, opacity: 0 },
+    initial: { x: -16, opacity: 0 },
     animate: { x: 0, opacity: 1 },
     exit: { x: -50, opacity: 0 },
   },
   "slide-up-in": {
-    initial: { y: 50, opacity: 0 },
+    initial: { y: 12, opacity: 0 },
     animate: { y: 0, opacity: 1 },
     exit: { y: 50, opacity: 0 },
   },
   "slide-down-in": {
-    initial: { y: -50, opacity: 0 },
+    initial: { y: -12, opacity: 0 },
     animate: { y: 0, opacity: 1 },
     exit: { y: -50, opacity: 0 },
   },
@@ -94,7 +94,7 @@ export default function ToastContainer() {
   return (
     <>
       {positions.map((pos) => (
-        <div key={pos} className={`fixed z-[9999] ${positionClasses[pos]} space-y-3`}>
+        <div key={pos} className={`fixed z-[9999] ${positionClasses[pos]} space-y-2`}>
           <AnimatePresence>
             {toasts
               .filter((t) => t.position === pos)
@@ -108,19 +108,16 @@ export default function ToastContainer() {
                     initial={anim.initial}
                     animate={anim.animate}
                     exit={anim.exit}
-                    transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 25 }}
+                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                     className="relative overflow-hidden"
                   >
-                    <div className="relative flex items-center gap-3 rounded-xl shadow-md p-4 min-w-[320px] bg-popover border border-border">
-                      {/* Colored accent line */}
-                      <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-full ${style.accent}`} />
-
+                    <div className="relative flex items-start gap-3 rounded-lg shadow-lg px-4 py-3 w-[360px] max-w-[calc(100vw-2rem)] bg-popover border border-border">
                       {/* Icon */}
-                      <div className={`p-2 rounded-xl ${style.iconBg}`}>
+                      <div className="mt-0.5 shrink-0 [&_svg]:size-[18px]">
                         {style.icon}
                       </div>
 
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground">
                           {toast.message}
                         </p>
@@ -129,7 +126,7 @@ export default function ToastContainer() {
                       {toast.showClose && (
                         <button
                           onClick={() => dispatch(removeToast(toast.id))}
-                          className="p-1 rounded-lg hover:bg-accent transition-colors"
+                          className="-mr-1 p-1 rounded-md hover:bg-accent transition-colors"
                         >
                           <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                         </button>

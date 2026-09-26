@@ -140,7 +140,7 @@ export default function ChangePassword() {
                 <Mail className="w-3 h-3" />
                 {t("Next steps:")}
               </p>
-              <ol className="text-xs text-gray-700 dark:text-gray-300 list-decimal pl-4 space-y-2">
+              <ol className="text-xs text-foreground/80 list-decimal pl-4 space-y-2">
                 <li>{t("Click the verification link in the email we sent you")}</li>
                 <li>{t("Your password will be changed immediately")}</li>
                 <li>{t("You can continue using the app with your new password")}</li>

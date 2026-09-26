@@ -313,7 +313,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                   "p-1.5 px-3 transition-colors cursor-pointer",
                   viewMode === 'grid'
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                    : "hover:bg-accent"
                 )}
                 title="Grid View"
               >
@@ -325,7 +325,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                   "p-1.5 px-3 transition-colors cursor-pointer border-l border-border",
                   viewMode === 'list'
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                    : "hover:bg-accent"
                 )}
                 title="List View"
               >
@@ -336,7 +336,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
             {/* Bulk Actions */}
             {selectedCount > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-muted-foreground">
                   {selectedCount} selected
                 </span>
                 <Button
@@ -353,7 +353,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               {totalCount} backup{totalCount !== 1 ? 's' : ''}
             </div>
             <Button 
@@ -372,7 +372,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
         {showFilters && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 rounded-xl bg-gray-50/50 dark:bg-gray-800/30">
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">From Date</label>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">From Date</label>
               <DateTimeInput
                 id="fromDate"
                 label=""
@@ -387,7 +387,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
             </div>
             
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">To Date</label>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">To Date</label>
               <DateTimeInput
                 id="toDate"
                 label=""
@@ -402,7 +402,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
             </div>
             
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Backup Type</label>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Backup Type</label>
               <Select value={backupType} onValueChange={setBackupType}>
                 <SelectTrigger className="w-full cursor-pointer">
                   <SelectValue placeholder="All Types" />
@@ -416,7 +416,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
             </div>
             
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Storage Location</label>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Storage Location</label>
               <Select value={storageType} onValueChange={setStorageType}>
                 <SelectTrigger className="w-full cursor-pointer">
                   <SelectValue placeholder="All Locations" />
@@ -448,7 +448,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
         <div className="flex items-center gap-2 py-2 px-1">
           <button
             onClick={handleSelectAll}
-            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
           >
             {selectedIds.size === backups.length ? (
               <CheckSquare className="w-4 h-4" />
@@ -519,7 +519,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                     
                     {/* Name - Full with word break */}
                     <div className="mb-2">
-                      <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm break-words">
+                      <h3 className="font-semibold text-foreground text-sm break-words">
                         {backup.name}
                       </h3>
                     </div>
@@ -527,20 +527,20 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                     {/* Meta Info */}
                     <div className="space-y-1.5 mb-3">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Type</span>
+                        <span className="text-muted-foreground">Type</span>
                         <Badge variant={isManual ? "default" : "secondary"} className="text-xs">
                           {isManual ? 'Manual' : 'Auto'}
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Size</span>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                        <span className="text-muted-foreground">Size</span>
+                        <span className="font-medium text-foreground/80">
                           {formatFileSize(backup.fileSize)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Created</span>
-                        <span className="text-gray-700 dark:text-gray-300">
+                        <span className="text-muted-foreground">Created</span>
+                        <span className="text-foreground/80">
                           {format(new Date(backup.createdAt), 'MMM dd, yyyy HH:mm')}
                         </span>
                       </div>
@@ -585,7 +585,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
           // List View
           <div className="space-y-2">
             {/* List Header */}
-            <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200/50 dark:border-gray-700/50">
+            <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground border-b border-gray-200/50 dark:border-gray-700/50">
               <div className="col-span-1">Select</div>
               <div className="col-span-3">Name</div>
               <div className="col-span-2">Storage</div>
@@ -617,7 +617,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                     />
                   </div>
                   <div className="col-span-3 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100 break-words">
+                    <p className="text-sm font-medium text-foreground break-words">
                       {backup.name}
                     </p>
                   </div>
@@ -635,13 +635,13 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
                       {isManual ? 'Manual' : 'Auto'}
                     </Badge>
                   </div>
-                  <div className="col-span-1 text-sm text-gray-700 dark:text-gray-300">
+                  <div className="col-span-1 text-sm text-foreground/80">
                     {formatFileSize(backup.fileSize)}
                   </div>
                   <div className="col-span-1">
                     {getStatusBadge(backup.status)}
                   </div>
-                  <div className="col-span-1 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="col-span-1 text-xs text-muted-foreground">
                     {format(new Date(backup.createdAt), 'MMM dd, yyyy HH:mm')}
                   </div>
                   <div className="col-span-2 flex items-center gap-1">
@@ -683,7 +683,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-gray-200/30 dark:border-gray-700/30">
-          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-xs sm:text-sm text-muted-foreground">
             Page {page} of {totalPages}
           </span>
           <div className="flex gap-1 sm:gap-2">
@@ -756,7 +756,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
       >
         <div className="space-y-2">
           <p className="text-yellow-600 dark:text-yellow-400 font-medium">Are you sure you want to restore this backup?</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">This will replace the current database with the backup data.</p>
+          <p className="text-sm text-muted-foreground">This will replace the current database with the backup data.</p>
         </div>
       </ConfirmDialog>
 
@@ -771,7 +771,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
       >
         <div className="space-y-2">
           <p className="text-red-600 dark:text-red-400 font-medium">Delete backups older than 7 days?</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">This action cannot be undone.</p>
+          <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
         </div>
       </ConfirmDialog>
 
@@ -788,7 +788,7 @@ export default function BackupList({ isMobile = false, onRefresh, refreshKey }: 
           <p className="text-red-600 dark:text-red-400 font-medium">
             Are you sure you want to delete {selectedCount} selected backup(s)?
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">This action cannot be undone.</p>
+          <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
         </div>
       </ConfirmDialog>
     </GlassCard>

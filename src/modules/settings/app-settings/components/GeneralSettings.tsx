@@ -73,14 +73,13 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
   return (
     <div className="space-y-6">
       <Card className="p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
+        <h3 className="text-base font-semibold text-foreground">
           {t('Localization')}
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               {t('Default Language')}
             </label>
             <CustomSelect
@@ -95,7 +94,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               {t('Default Timezone')}
             </label>
             <CustomSelect
@@ -110,7 +109,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               {t('Date Format')}
             </label>
             <CustomSelect
@@ -125,7 +124,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               {t('Time Format')}
             </label>
             <CustomSelect
@@ -140,7 +139,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               {t('Currency')}
             </label>
             <CustomSelect

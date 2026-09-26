@@ -110,7 +110,7 @@ export default function MailboxPage() {
     return (
       <div className="flex items-center justify-center h-96">
         <GlassCard variant="default" padding="lg">
-          <p className="text-gray-500 dark:text-gray-400 text-center">
+          <p className="text-muted-foreground text-center">
             You don't have permission to access this page.
           </p>
         </GlassCard>
@@ -189,8 +189,8 @@ export default function MailboxPage() {
                 className="flex items-center justify-between p-2 sm:p-3 rounded-xl bg-black/5 dark:bg-white/5"
               >
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
-                  <p className="text-lg sm:text-2xl font-bold mt-1 text-gray-800 dark:text-gray-100">
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  <p className="text-lg sm:text-2xl font-bold mt-1 text-foreground">
                     {stat.value}
                   </p>
                 </div>

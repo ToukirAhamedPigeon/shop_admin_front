@@ -38,8 +38,8 @@ export default function Modal({
           initial="hidden"
           animate="visible"
           exit="exit"
-          transition={{ duration: 0.25 }}
-          className="fixed inset-0 w-full h-full flex items-center justify-center z-50 bg-black/60"
+          transition={{ duration: 0.18 }}
+          className="fixed inset-0 w-full h-full flex items-center justify-center z-50 bg-black/40"
           onClick={onClose}
         >
           <div className="w-full h-full flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>

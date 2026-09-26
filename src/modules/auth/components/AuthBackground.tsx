@@ -14,19 +14,22 @@ export default function AuthBackground({ theme, children }: AuthBackgroundProps)
   const isDark = theme === 'dark';
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-background">
-      {/* Single subtle, static tint — no images, no animation */}
+    <div className="fixed inset-0 flex items-center justify-center overflow-y-auto bg-background">
+      {/* Fine dot grid, faded toward the edges — static, theme-aware. */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        aria-hidden
+        className="absolute inset-0 pointer-events-none text-foreground"
         style={{
-          background: isDark
-            ? 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59,90,180,0.12) 0%, transparent 60%)'
-            : 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59,90,180,0.06) 0%, transparent 60%)',
+          backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)',
+          backgroundSize: '22px 22px',
+          opacity: isDark ? 0.07 : 0.06,
+          maskImage: 'radial-gradient(ellipse 60% 55% at 50% 45%, #000 30%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 60% 55% at 50% 45%, #000 30%, transparent 100%)',
         }}
       />
 
       {/* Content */}
-      <div className="relative z-10 w-full flex items-center justify-center px-4">
+      <div className="relative z-10 w-full flex items-center justify-center px-4 py-16">
         {children}
       </div>
     </div>

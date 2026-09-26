@@ -148,7 +148,7 @@ export default function Fancybox(props: SingleImageProps | GroupImageProps) {
                 {(title || description) && (
                   <div className="mt-4 text-center">
                     {title && (
-                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-500">
+                      <div className="text-lg font-semibold text-foreground0">
                         {title}
                       </div>
                     )}

@@ -8,6 +8,7 @@ import { Provider } from "react-redux";
 import { store } from "./redux/store";
 
 // Global CSS
+import "@fontsource-variable/inter";
 import "./index.css";
 
 // Auth

@@ -36,7 +36,7 @@ export default function Sidebar() {
               <div className="p-1.5 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                 <User className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[9px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-primary transition-colors">Profile</span>
+              <span className="text-[9px] font-medium text-muted-foreground group-hover:text-primary transition-colors">Profile</span>
             </Link>
           </Can>
 
@@ -49,7 +49,7 @@ export default function Sidebar() {
               <div className="p-1.5 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                 <Settings className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[9px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-primary transition-colors">Settings</span>
+              <span className="text-[9px] font-medium text-muted-foreground group-hover:text-primary transition-colors">Settings</span>
             </Link>
           </Can>
 
@@ -65,7 +65,7 @@ export default function Sidebar() {
               <div className="p-1.5 rounded-lg bg-muted text-muted-foreground group-hover:bg-destructive/10 group-hover:text-destructive transition-colors">
                 <LogOut className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[9px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-destructive transition-colors">Logout</span>
+              <span className="text-[9px] font-medium text-muted-foreground group-hover:text-destructive transition-colors">Logout</span>
             </button>
           </Can>
         </div>

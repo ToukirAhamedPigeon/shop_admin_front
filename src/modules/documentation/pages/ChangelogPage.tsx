@@ -80,7 +80,7 @@ export default function ChangelogPage() {
 
         {totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">
+            <span className="text-muted-foreground">
               {t('documentation.changelog.total_count', 'Total entries')}: {totalCount}
             </span>
             <div className="flex items-center gap-2">
@@ -93,7 +93,7 @@ export default function ChangelogPage() {
               >
                 {t('common.Previous', 'Previous')}
               </Button>
-              <span className="px-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">
+              <span className="px-2 text-muted-foreground whitespace-nowrap">
                 {t('documentation.changelog.page_of', 'Page')} {page} / {totalPages}
               </span>
               <Button

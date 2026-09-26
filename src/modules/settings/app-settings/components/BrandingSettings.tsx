@@ -42,16 +42,16 @@ const ImageUploadField: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label className="text-sm font-medium text-foreground/80">
         {t(label)}
       </label>
       
       {hasImage ? (
-        <div className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="relative rounded-lg overflow-hidden border border-border">
           <img
             src={preview || value || ''}
             alt={label}
-            className="w-full h-24 object-contain bg-gray-50 dark:bg-gray-900"
+            className="w-full h-24 object-contain bg-muted/50"
           />
           <div className="absolute top-2 right-2">
             <Button
@@ -72,19 +72,19 @@ const ImageUploadField: React.FC<{
             "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200",
             isDragActive
               ? "border-primary bg-primary/5"
-              : "border-gray-300 dark:border-gray-600 hover:border-primary/50 hover:bg-gray-50 dark:hover:bg-gray-800/50",
+              : "border-input hover:border-primary/50 hover:bg-accent/50",
             "min-h-[100px] flex flex-col items-center justify-center"
           )}
         >
           <input {...getInputProps()} />
-          <Upload className="w-6 h-6 text-gray-400 dark:text-gray-500 mb-1" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <Upload className="w-6 h-6 text-muted-foreground mb-1" />
+          <p className="text-sm text-muted-foreground">
             {isDragActive
               ? t('Drop your image here')
               : t('Click or drag to upload')}
           </p>
           {recommended && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {t(recommended)}
             </p>
           )}
@@ -149,10 +149,10 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
     return (
       <Card className="p-6">
         <div className="text-center py-8">
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-muted-foreground">
             {t('Branding settings can only be modified by Developer users.')}
           </p>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             {t('Contact your system administrator for changes.')}
           </p>
         </div>
@@ -164,8 +164,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
     <div className="space-y-6">
       {/* Application Name */}
       <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
+        <h3 className="text-base font-semibold text-foreground">
           {t('Application Name')}
         </h3>
         <div>
@@ -175,7 +174,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
             placeholder={t('Enter application name')}
             className="max-w-md"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {t('This name appears in the browser tab and header')}
           </p>
         </div>
@@ -183,8 +182,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
 
       {/* Logo */}
       <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
+        <h3 className="text-base font-semibold text-foreground">
           {t('Logo')}
         </h3>
         <ImageUploadField
@@ -199,8 +197,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
 
       {/* Favicon */}
       <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
+        <h3 className="text-base font-semibold text-foreground">
           {t('Favicon')}
         </h3>
         <ImageUploadField
@@ -215,8 +212,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
 
       {/* Footer Text */}
       <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
+        <h3 className="text-base font-semibold text-foreground">
           {t('Footer Text')}
         </h3>
         <div>
@@ -226,7 +222,7 @@ export const BrandingSettings: React.FC<BrandingSettingsProps> = ({
             placeholder={t('Enter footer copyright text')}
             className="max-w-md"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {t('This appears at the bottom of every page')}
           </p>
         </div>

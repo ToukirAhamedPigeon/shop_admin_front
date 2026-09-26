@@ -34,7 +34,7 @@ export default function SidebarMobileSheet() {
                   <span className="text-md font-bold text-foreground">
                     AIMS
                   </span>
-                  <span className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                  <span className="text-[10px] text-muted-foreground leading-tight">
                     AI Powered Management System
                   </span>
                 </div>
@@ -70,13 +70,13 @@ export default function SidebarMobileSheet() {
                   <div className="p-2 rounded-xl bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                     <User className="w-4 h-4" />
                   </div>
-                  <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-primary transition-colors">Profile</span>
+                  <span className="text-[10px] font-medium text-muted-foreground group-hover:text-primary transition-colors">Profile</span>
                 </Link>
               </Can>
 
               <Can anyOf={['read-admin-settings']}>
                 <Link
-                  to="/settings/app"
+                  to="/settings/app-settings"
                   className="group flex flex-col items-center gap-1 transition-colors duration-200"
                   title="Settings"
                   onClick={() => setOpen(false)}
@@ -84,7 +84,7 @@ export default function SidebarMobileSheet() {
                   <div className="p-2 rounded-xl bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                     <Settings className="w-4 h-4" />
                   </div>
-                  <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-primary transition-colors">Settings</span>
+                  <span className="text-[10px] font-medium text-muted-foreground group-hover:text-primary transition-colors">Settings</span>
                 </Link>
               </Can>
 
@@ -101,7 +101,7 @@ export default function SidebarMobileSheet() {
                   <div className="p-2 rounded-xl bg-muted text-muted-foreground group-hover:bg-destructive/10 group-hover:text-destructive transition-colors">
                     <LogOut className="w-4 h-4" />
                   </div>
-                  <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-destructive transition-colors">Logout</span>
+                  <span className="text-[10px] font-medium text-muted-foreground group-hover:text-destructive transition-colors">Logout</span>
                 </button>
               </Can>
             </div>

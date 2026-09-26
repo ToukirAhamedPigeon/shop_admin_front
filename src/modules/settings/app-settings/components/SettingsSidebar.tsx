@@ -43,9 +43,9 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   });
 
   return (
-    <div className="w-64 border-r border-gray-200 dark:border-gray-700 p-4 space-y-2">
-      <div className="mb-4">
-        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+    <div className="w-60 border-r border-border p-3 space-y-0.5">
+      <div className="px-3 pt-1 pb-3">
+        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {t('Categories')}
         </h3>
       </div>
@@ -60,22 +60,19 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             key={categoryKey}
             onClick={() => onSelect(categoryKey)}
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left whitespace-nowrap cursor-pointer",
+              "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors duration-150 text-left whitespace-nowrap cursor-pointer",
               isActive
-                ? "bg-primary/10 text-primary font-medium"
-                : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                ? "bg-accent text-primary font-medium"
+                : "hover:bg-accent text-foreground/80 hover:text-foreground"
             )}
           >
             {Icon && (
               <Icon className={cn(
-                "w-5 h-5 flex-shrink-0",
-                isActive ? "text-primary" : "text-gray-400 dark:text-gray-500"
+                "w-4 h-4 flex-shrink-0",
+                isActive ? "text-primary" : "text-muted-foreground"
               )} />
             )}
             <span className="truncate">{t(config.displayName)}</span>
-            {isActive && (
-              <div className="ml-auto w-1.5 h-6 rounded-full bg-primary flex-shrink-0" />
-            )}
           </button>
         );
       })}

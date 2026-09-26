@@ -77,7 +77,7 @@ export default function RichTextEditor({
 
   if (!editor) {
     return (
-      <div className="border rounded-md p-4 bg-gray-50 dark:bg-gray-800 animate-pulse">
+      <div className="border rounded-md p-4 bg-muted/50 animate-pulse">
         <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
       </div>
     );
@@ -89,7 +89,7 @@ export default function RichTextEditor({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors",
+        "p-2 rounded-md hover:bg-accent transition-colors",
         isActive && "bg-gray-200 dark:bg-gray-600 text-primary",
         disabled && "opacity-50 cursor-not-allowed"
       )}
@@ -116,7 +116,7 @@ export default function RichTextEditor({
   return (
     <div className="border rounded-md overflow-hidden">
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 border-b bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+      <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/50 sticky top-0 z-10">
         {/* Text Formatting */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -255,7 +255,7 @@ export default function RichTextEditor({
       <EditorContent editor={editor} />
       
       {/* Character count (optional) */}
-      <div className="px-4 py-2 text-xs text-gray-500 border-t bg-gray-50 dark:bg-gray-800">
+      <div className="px-4 py-2 text-xs text-gray-500 border-t bg-muted/50">
         {editor.storage.characterCount?.characters() || editor.getText().length} characters
       </div>
     </div>

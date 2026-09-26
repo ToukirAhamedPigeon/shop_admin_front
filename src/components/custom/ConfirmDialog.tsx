@@ -119,25 +119,25 @@ const ConfirmDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-      <DialogContent className="max-w-md overflow-hidden p-0 rounded-2xl shadow-2xl border-0 [&>button]:hidden">
+      <DialogContent className="max-w-md overflow-hidden p-0 rounded-xl shadow-2xl border-0 [&>button]:hidden">
         <AnimatePresence>
           {open && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="relative rounded-2xl overflow-hidden bg-card border border-border"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="relative rounded-xl overflow-hidden bg-card border border-border"
             >
               <div className="p-6 relative z-10">
                 <DialogHeader className="space-y-4">
                   <div className="flex items-start gap-4">
                     {/* Animated Icon */}
                     <motion.div
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ duration: 0.3, type: "spring", stiffness: 260, damping: 20 }}
-                      className={`flex-shrink-0 w-14 h-14 rounded-2xl ${variantStyles.iconBg} flex items-center justify-center`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className={`flex-shrink-0 size-10 rounded-full ${variantStyles.iconBg} flex items-center justify-center [&_svg]:size-5`}
                     >
                       {icon || (
                         <div className={variantStyles.iconColor}>
@@ -148,7 +148,7 @@ const ConfirmDialog = ({
 
                     {/* Title */}
                     <div className="flex-1">
-                      <DialogTitle className={`text-2xl font-bold ${variantStyles.titleColor} mb-2`}>
+                      <DialogTitle className="text-lg font-semibold text-foreground pt-1.5">
                         {t(title)}
                       </DialogTitle>
                     </div>
@@ -164,7 +164,7 @@ const ConfirmDialog = ({
                 </DialogHeader>
 
                 {/* Content */}
-                <div className="mt-4 ml-16">
+                <div className="mt-1 ml-14 text-sm">
                   {children ? (
                     <div className="text-muted-foreground space-y-3">
                       {children}
@@ -177,18 +177,18 @@ const ConfirmDialog = ({
                 </div>
 
                 {/* Action Buttons */}
-                <DialogFooter className="mt-8 pt-4 flex gap-3 sm:justify-end">
+                <DialogFooter className="mt-6 flex gap-2 sm:justify-end">
                   {showCancelButton && (
                     <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={false}
+                      animate={{ opacity: 1 }}
                       transition={{ delay: 0.1 }}
                     >
                       <Button
                         variant="outline"
                         onClick={onCancel}
                         disabled={loading}
-                        className={`rounded-xl px-6 ${cancelButtonClassName}`}
+                        className={`px-4 ${cancelButtonClassName}`}
                       >
                         {t(cancelLabel)}
                       </Button>
@@ -197,15 +197,15 @@ const ConfirmDialog = ({
 
                   {showPermanentDeleteButton && onPermanentDelete && (
                     <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={false}
+                      animate={{ opacity: 1 }}
                       transition={{ delay: 0.15 }}
                     >
                       <Button
                         variant={permanentDeleteVariant}
                         onClick={onPermanentDelete}
                         disabled={loading}
-                        className={`rounded-xl px-6 ${confirmButtonClassName}`}
+                        className={`px-4 ${confirmButtonClassName}`}
                       >
                         {loading ? (
                           <>
@@ -227,15 +227,15 @@ const ConfirmDialog = ({
 
                   {showConfirmButton && (
                     <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={false}
+                      animate={{ opacity: 1 }}
                       transition={{ delay: 0.2 }}
                     >
                       <Button
                         variant={variantStyles.buttonVariant}
                         onClick={onConfirm}
                         disabled={loading}
-                        className={`rounded-xl px-6 ${confirmButtonClassName}`}
+                        className={`px-4 ${confirmButtonClassName}`}
                       >
                         {loading ? (
                           <>

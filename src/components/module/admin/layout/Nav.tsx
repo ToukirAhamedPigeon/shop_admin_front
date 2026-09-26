@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  ChevronUp,
   ChevronDown,
   LayoutDashboard,
   Settings,
@@ -28,7 +27,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Can } from "@/components/custom/Can";
 import { useTranslations } from "@/hooks/useTranslations";
 import { API_BASE_URL } from "@/constants/index";
-import { useAppSelector } from "@/hooks/useRedux";
 
 interface MenuItem {
   label: string;
@@ -46,7 +44,7 @@ const menuItems: MenuItem[] = [
   {
     label: "common.dashboard.title",
     defaultLabel: "Dashboard",
-    icon: <LayoutDashboard size={22} className="mr-2" />,
+    icon: <LayoutDashboard size={18} strokeWidth={1.75} />,
     iconName: "LayoutDashboard",
     basePath: "/dashboard",
     permissions: ["read-admin-dashboard"],
@@ -54,7 +52,7 @@ const menuItems: MenuItem[] = [
   {
     label: "common.mail.title",
     defaultLabel: "Mailbox",
-    icon: <Mail size={22} className="mr-2" />,
+    icon: <Mail size={18} strokeWidth={1.75} />,
     iconName: "Mail",
     basePath: "/mail",
     permissions: ["read-admin-mails"],
@@ -62,7 +60,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.mail.mailbox",
         defaultLabel: "Mailbox",
-        icon: <Inbox size={18} className="mr-2" />,
+        icon: <Inbox size={16} strokeWidth={1.75} />,
         iconName: "Inbox",
         basePath: "/mail",
         permissions: ["read-admin-mails"],
@@ -70,7 +68,7 @@ const menuItems: MenuItem[] = [
       {
         label: "mail.templates",
         defaultLabel: "Templates",
-        icon: <FileText size={18} className="mr-2" />,
+        icon: <FileText size={16} strokeWidth={1.75} />,
         iconName: "FileText",
         basePath: "/mail/templates",
         permissions: ["read-admin-mail-templates"],
@@ -80,7 +78,7 @@ const menuItems: MenuItem[] = [
   {
     label: "common.documentation.title",
     defaultLabel: "Documentation",
-    icon: <BookOpen size={22} className="mr-2" />,
+    icon: <BookOpen size={18} strokeWidth={1.75} />,
     iconName: "BookOpen",
     basePath: "/docs",
     permissions: ["read-admin-doc-developer", "read-admin-doc-user-guide"],
@@ -88,7 +86,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.documentation.developer",
         defaultLabel: "Developer Guide",
-        icon: <BookMarked size={18} className="mr-2" />,
+        icon: <BookMarked size={16} strokeWidth={1.75} />,
         iconName: "BookMarked",
         basePath: "/docs/developer",
         permissions: ["read-admin-doc-developer"],
@@ -96,7 +94,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.documentation.user_guide",
         defaultLabel: "User Guide",
-        icon: <BookOpen size={18} className="mr-2" />,
+        icon: <BookOpen size={16} strokeWidth={1.75} />,
         iconName: "BookOpen",
         basePath: "/docs/guide",
         permissions: ["read-admin-doc-user-guide"],
@@ -104,7 +102,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.documentation.changelog",
         defaultLabel: "Changelog",
-        icon: <GitCommitHorizontal size={18} className="mr-2" />,
+        icon: <GitCommitHorizontal size={16} strokeWidth={1.75} />,
         iconName: "GitCommitHorizontal",
         basePath: "/docs/changelog",
         permissions: ["read-admin-doc-developer"],
@@ -114,7 +112,7 @@ const menuItems: MenuItem[] = [
   {
     label: "common.settings.title",
     defaultLabel: "Settings",
-    icon: <Settings size={22} className="mr-2" />,
+    icon: <Settings size={18} strokeWidth={1.75} />,
     iconName: "Settings",
     basePath: "/settings",
     permissions: [
@@ -132,7 +130,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.app_settings.title",
         defaultLabel: "App Settings",
-        icon: <SlidersHorizontal size={18} className="mr-2" />,
+        icon: <SlidersHorizontal size={16} strokeWidth={1.75} />,
         iconName: "SlidersHorizontal",
         basePath: "/settings/app-settings",
         permissions: ["read-admin-settings"],
@@ -140,7 +138,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.users.title",
         defaultLabel: "Users",
-        icon: <Users size={18} className="mr-2" />,
+        icon: <Users size={16} strokeWidth={1.75} />,
         iconName: "Users",
         basePath: "/settings/users",
         permissions: ["read-admin-users"],
@@ -148,7 +146,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.profile.title",
         defaultLabel: "My Profile",
-        icon: <User size={18} className="mr-2" />,
+        icon: <User size={16} strokeWidth={1.75} />,
         iconName: "User",
         basePath: "/settings/profile",
         permissions: ["read-admin-profile"],
@@ -156,7 +154,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.change_password.title",
         defaultLabel: "Change Password",
-        icon: <Lock size={18} className="mr-2" />,
+        icon: <Lock size={16} strokeWidth={1.75} />,
         iconName: "Lock",
         basePath: "/settings/change-password",
         permissions: ["change-admin-password"],
@@ -164,7 +162,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.roles.title",
         defaultLabel: "Roles",
-        icon: <Shield size={18} className="mr-2" />,
+        icon: <Shield size={16} strokeWidth={1.75} />,
         iconName: "Shield",
         basePath: "/settings/roles",
         permissions: ["read-admin-roles"],
@@ -172,7 +170,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.permissions.title",
         defaultLabel: "Permissions",
-        icon: <Key size={18} className="mr-2" />,
+        icon: <Key size={16} strokeWidth={1.75} />,
         iconName: "Key",
         basePath: "/settings/permissions",
         permissions: ["read-admin-permissions"],
@@ -180,7 +178,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.options.title",
         defaultLabel: "Options",
-        icon: <ListChecks size={18} className="mr-2" />,
+        icon: <ListChecks size={16} strokeWidth={1.75} />,
         iconName: "ListChecks",
         basePath: "/settings/options",
         permissions: ["read-admin-options"],
@@ -188,7 +186,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.translations.title",
         defaultLabel: "Translations",
-        icon: <Languages size={18} className="mr-2" />,
+        icon: <Languages size={16} strokeWidth={1.75} />,
         iconName: "Languages",
         basePath: "/settings/translations",
         permissions: ["read-admin-translations"],
@@ -196,7 +194,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.user_logs.title",
         defaultLabel: "User Logs",
-        icon: <History size={18} className="mr-2" />,
+        icon: <History size={16} strokeWidth={1.75} />,
         iconName: "History",
         basePath: "/settings/user-logs",
         permissions: ["read-admin-user-logs"],
@@ -204,7 +202,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.backup.title",
         defaultLabel: "Backup",
-        icon: <Database size={18} className="mr-2" />,
+        icon: <Database size={16} strokeWidth={1.75} />,
         iconName: "Database",
         basePath: "/backup",
         permissions: ["read-admin-backups"],
@@ -212,7 +210,7 @@ const menuItems: MenuItem[] = [
       {
         label: "common.api_docs.title",
         defaultLabel: "API Documentation",
-        icon: <FileCode size={18} className="mr-2" />,
+        icon: <FileCode size={16} strokeWidth={1.75} />,
         iconName: "FileCode",
         basePath: `${API_BASE_URL}/swagger`,
         permissions: ["read-admin-api-docs"],
@@ -226,7 +224,6 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const { t } = useTranslations();
-  const isDarkMode = useAppSelector((state) => state.theme.current) === 'dark';
 
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) =>
@@ -246,34 +243,28 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
     );
   };
 
-  // A single, consistent icon treatment: muted by default, accent color when active.
-  const getIconColor = (_iconName: string | undefined, isActive: boolean) => {
-    if (isActive) return "text-primary";
-    return isDarkMode ? "text-gray-400" : "text-gray-500";
-  };
+  // Icons stay muted; only the active leaf picks up the primary accent.
+  const getIconColor = (_iconName: string | undefined, isActive: boolean) =>
+    isActive ? "text-primary" : "text-muted-foreground group-hover:text-sidebar-accent-foreground";
 
-  // Flat, single-accent classes for menu items (no gradients).
-  const getLevelClasses = (level: number, isActive: boolean) => {
-    if (level === 0) {
-      if (isActive) {
-        return "bg-primary/10 text-primary font-semibold";
-      }
-      return isDarkMode
-        ? "text-gray-300 hover:bg-white/10 hover:text-white"
-        : "text-[#282d34] hover:bg-gray-100 hover:text-gray-900";
+  // Flat, token-driven item states. A parent whose child is active is only
+  // emphasised typographically so the highlight lives on a single row.
+  const getLevelClasses = (level: number, isActive: boolean, isParent = false) => {
+    if (isParent) {
+      return isActive
+        ? "text-sidebar-accent-foreground font-medium"
+        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
     }
-
-    // Level >= 1 (submenu)
     if (isActive) {
-      return "bg-primary/10 text-primary font-semibold border-l-2 border-primary";
+      return "bg-sidebar-accent text-primary font-medium";
     }
-    return isDarkMode
-      ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-      : "text-[#282d34] hover:bg-gray-50 hover:text-gray-800";
+    return level === 0
+      ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
   };
 
   const renderMenu = (items: MenuItem[], level = 0) => (
-    <div className={level > 0 ? "ml-3 space-y-0.5" : "space-y-0.5"}>
+    <div className={level > 0 ? "ml-[18px] mt-0.5 space-y-0.5 border-l border-sidebar-border pl-2.5" : "space-y-0.5"}>
       {items.map(({ label, defaultLabel, icon, iconName, basePath, children, permissions, external }) => {
         const isParentActive = isActiveMenu(basePath);
         const hasChildActive = hasActiveChild(children);
@@ -287,25 +278,21 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
             <div className="space-y-0.5">
               {children && children.length > 0 ? (
                 <button
-                  className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition-all duration-200 rounded-xl cursor-pointer
-                    ${getLevelClasses(level, shouldBeActive)}`}
+                  className={`group w-full flex items-center justify-between px-3 py-2 text-left transition-colors duration-150 rounded-lg cursor-pointer
+                    ${getLevelClasses(level, shouldBeActive, true)}`}
                   onClick={() => toggleMenu(label)}
                 >
                   <span className="flex items-center gap-2.5 text-sm">
                     {icon && (
-                      <span className={`flex-shrink-0 transition-all duration-200 ${getIconColor(iconName, shouldBeActive)}`}>
+                      <span className={`flex-shrink-0 transition-colors duration-150 ${shouldBeActive ? "text-sidebar-accent-foreground" : getIconColor(iconName, false)}`}>
                         {icon}
                       </span>
                     )}
-                    <span className={shouldBeActive ? "font-semibold" : ""}>{t(label, defaultLabel)}</span>
+                    <span>{t(label, defaultLabel)}</span>
                   </span>
-                  <span className="flex-shrink-0">
-                    {isOpen ? (
-                      <ChevronUp className="w-3.5 h-3.5" />
-                    ) : (
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    )}
-                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 flex-shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                  />
                 </button>
               ) : external ? (
                 <a
@@ -313,11 +300,11 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={onLinkClick}
-                  className={`flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl transition-all duration-200 cursor-pointer
+                  className={`group flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors duration-150 cursor-pointer
                     ${getLevelClasses(level, isActiveSubmenu(basePath))}`}
                 >
                   {icon && (
-                    <span className={`flex-shrink-0 transition-all duration-200 ${getIconColor(iconName, isActiveSubmenu(basePath))}`}>
+                    <span className={`flex-shrink-0 transition-colors duration-150 ${getIconColor(iconName, isActiveSubmenu(basePath))}`}>
                       {icon}
                     </span>
                   )}
@@ -327,15 +314,15 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
                 <Link
                   to={basePath}
                   onClick={onLinkClick}
-                  className={`flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl transition-all duration-200 cursor-pointer
+                  className={`group flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors duration-150 cursor-pointer
                     ${getLevelClasses(level, isActiveSubmenu(basePath))}`}
                 >
                   {icon && (
-                    <span className={`flex-shrink-0 transition-all duration-200 ${getIconColor(iconName, isActiveSubmenu(basePath))}`}>
+                    <span className={`flex-shrink-0 transition-colors duration-150 ${getIconColor(iconName, isActiveSubmenu(basePath))}`}>
                       {icon}
                     </span>
                   )}
-                  <span className={isActiveSubmenu(basePath) ? "font-semibold" : ""}>{t(label, defaultLabel)}</span>
+                  <span className="truncate">{t(label, defaultLabel)}</span>
                 </Link>
               )}
 
@@ -345,8 +332,8 @@ export default function Nav({ onLinkClick }: { onLinkClick?: () => void }) {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2, ease: "easeInOut" }}
-                    className="ml-2 overflow-hidden"
+                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
                   >
                     {renderMenu(children, level + 1)}
                   </motion.div>

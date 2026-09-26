@@ -140,10 +140,10 @@ const EmailTable = memo(({
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-sm sm:text-base">
+        <table className="w-full text-left border-collapse text-sm">
           <thead className="sticky top-0 z-20">
-            <tr className="border-b border-border">
-              <th className="p-2 sm:p-4 text-center w-8 sm:w-10">
+            <tr className="border-b border-border bg-muted">
+              <th className="px-2 py-3 sm:px-4 text-center w-8 sm:w-10">
                 <div
                   className="flex justify-center cursor-pointer group"
                   onClick={(e) => {
@@ -169,18 +169,18 @@ const EmailTable = memo(({
                   </div>
                 </div>
               </th>
-              <th className="p-2 sm:p-4 text-center w-8 sm:w-10"></th>
-              <th className="p-2 sm:p-4 text-center w-8 sm:w-10"></th>
+              <th className="px-2 py-3 sm:px-4 text-center w-8 sm:w-10"></th>
+              <th className="px-2 py-3 sm:px-4 text-center w-8 sm:w-10"></th>
               <th className={cn(
-                "p-2 sm:p-4 font-semibold text-foreground bg-muted",
-                isMobile ? "text-xs" : "text-sm"
+                "px-2 py-3 sm:px-4 text-xs font-medium uppercase tracking-wide text-muted-foreground",
+                isMobile ? "" : ""
               )}>{isMobile ? senderColumnHeader.slice(0, 1) : senderColumnHeader}</th>
               <th className={cn(
-                "p-2 sm:p-4 font-semibold text-foreground bg-muted",
-                isMobile ? "text-xs" : "text-sm"
+                "px-2 py-3 sm:px-4 text-xs font-medium uppercase tracking-wide text-muted-foreground",
+                isMobile ? "" : ""
               )}>{isMobile ? 'Subj' : 'Subject'}</th>
               <th className={cn(
-                "p-2 sm:p-4 text-center font-semibold text-foreground bg-muted",
+                "px-2 py-3 sm:px-4 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground",
                 isMobile ? "text-xs w-20" : "text-sm w-32"
               )}>{isMobile ? 'Date' : 'Date'}</th>
             </tr>
@@ -209,7 +209,7 @@ const EmailTable = memo(({
                     !selectedMail || selectedMail?.id !== mail.id && "hover:bg-muted/50"
                   )}
                 >
-                  <td className="p-2 sm:p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-2 py-2.5 sm:px-4 text-center" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-center">
                       <div className="cursor-pointer group">
                         <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-2 flex items-center justify-center transition-colors duration-200 ${
@@ -226,10 +226,10 @@ const EmailTable = memo(({
                       </div>
                     </div>
                   </td>
-                  <td className="p-2 sm:p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-2 py-2.5 sm:px-4 text-center" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={(e) => onStarClick(e, mail)}
-                      className="focus:outline-none cursor-pointer group transition-all duration-200 hover:scale-110"
+                      className="focus:outline-none cursor-pointer group transition-colors duration-150"
                     >
                       <Star className={cn(
                         "w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-200",
@@ -239,7 +239,7 @@ const EmailTable = memo(({
                       )} />
                     </button>
                   </td>
-                  <td className="p-2 sm:p-4 text-center">
+                  <td className="px-2 py-2.5 sm:px-4 text-center">
                     {!mail.isRead && !mail.isSent ? (
                       <MailOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                     ) : (
@@ -247,20 +247,20 @@ const EmailTable = memo(({
                     )}
                   </td>
                   <td className={cn(
-                    "p-2 sm:p-4 text-foreground",
+                    "px-2 py-2.5 sm:px-4 text-foreground",
                     !mail.isRead && !mail.isSent ? "font-semibold" : "",
                     isMobile ? "text-xs max-w-[60px] truncate" : "text-sm"
                   )}>
                     {isMobile ? getSenderDisplay(mail, mailbox).slice(0, 10) : getSenderDisplay(mail, mailbox)}
                   </td>
                   <td className={cn(
-                    "p-2 sm:p-4 text-foreground",
+                    "px-2 py-2.5 sm:px-4 text-foreground",
                     !mail.isRead && !mail.isSent ? "font-semibold" : "",
                     isMobile ? "text-xs max-w-[80px] truncate" : "text-sm max-w-[300px] truncate"
                   )}>
                     {isMobile ? mail.subject.slice(0, 15) : mail.subject}
                   </td>
-                  <td className="p-2 sm:p-4 text-muted-foreground text-xs sm:text-sm whitespace-nowrap text-center">
+                  <td className="px-2 py-2.5 sm:px-4 text-muted-foreground text-xs sm:text-sm whitespace-nowrap text-center tabular-nums">
                     {isMobile ? format(new Date(mail.createdAt), 'MM/dd/yy') : format(new Date(mail.createdAt), 'MMM dd, yyyy')}
                   </td>
                 </tr>
@@ -492,7 +492,7 @@ export default function MailList({
       {totalCount > ITEMS_PER_PAGE && (
         <div className="relative z-10 p-2 sm:p-4 border-t border-border">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-            <span className="text-xs sm:text-sm text-muted-foreground bg-muted px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               {isMobile
                 ? `${((page - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(page * ITEMS_PER_PAGE, totalCount)} of ${totalCount}`
                 : `Showing ${((page - 1) * ITEMS_PER_PAGE) + 1} - ${Math.min(page * ITEMS_PER_PAGE, totalCount)} of ${totalCount}`

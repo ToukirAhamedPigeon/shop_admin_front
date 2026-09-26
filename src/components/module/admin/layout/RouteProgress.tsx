@@ -6,6 +6,8 @@ import nprogress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { useAppSelector } from '@/hooks/useRedux'
 
+nprogress.configure({ showSpinner: false, trickleSpeed: 120, minimum: 0.15 })
+
 interface RouteProgressProps {
   color?: string
   darkColor?: string
@@ -36,7 +38,7 @@ export default function RouteProgress({
         background: ${barColor} !important;
       }
       #nprogress .peg {
-        box-shadow: 0 0 10px ${barColor}, 0 0 5px ${barColor} !important;
+        box-shadow: none !important;
       }
       #nprogress .spinner-icon {
         border-top-color: ${barColor} !important;

@@ -42,13 +42,13 @@ const ImageUploadField: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label className="text-sm font-medium text-foreground/80">
         {t(label)}
       </label>
       
       {hasImage ? (
         // Preview mode
-        <div className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="relative rounded-lg overflow-hidden border border-border">
           <img
             src={preview || value || ''}
             alt={label}
@@ -80,18 +80,18 @@ const ImageUploadField: React.FC<{
             "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200",
             isDragActive
               ? "border-primary bg-primary/5"
-              : "border-gray-300 dark:border-gray-600 hover:border-primary/50 hover:bg-gray-50 dark:hover:bg-gray-800/50",
+              : "border-input hover:border-primary/50 hover:bg-accent/50",
             "min-h-[120px] flex flex-col items-center justify-center"
           )}
         >
           <input {...getInputProps()} />
-          <Upload className="w-8 h-8 text-gray-400 dark:text-gray-500 mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">
             {isDragActive
               ? t('Drop your image here')
               : t('Drag & drop or click to select an image')}
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {t(recommended)}
           </p>
         </div>
@@ -170,8 +170,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
     <div className="space-y-6">
       {/* Color Scheme */}
       <Card className="p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
+        <h3 className="text-base font-semibold text-foreground">
           {t('Color Scheme')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -181,7 +180,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
               value={localSettings.primary_color}
               onChange={(color: string) => handleColorChange('primary_color', color)}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {t('Affects: Buttons, Links, Headers')}
             </p>
             <div 
@@ -195,7 +194,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
               value={localSettings.secondary_color}
               onChange={(color: string) => handleColorChange('secondary_color', color)}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {t('Affects: Cards, Borders, Badges')}
             </p>
             <div 
@@ -208,8 +207,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
 
       {/* Background Images */}
       <Card className="p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
+        <h3 className="text-base font-semibold text-foreground">
           {t('Background Images')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -234,16 +232,15 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
 
       {/* Theme Preferences */}
       <Card className="p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
+        <h3 className="text-base font-semibold text-foreground">
           {t('Theme Preferences')}
         </h3>
         <div className="flex items-center justify-between">
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="text-sm font-medium text-foreground/80">
               {t('Dark Mode')}
             </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               {t('Toggle between light and dark theme')}
             </p>
           </div>
@@ -267,17 +264,16 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
 
       {/* Custom CSS */}
       <Card className="p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
+        <h3 className="text-base font-semibold text-foreground">
           {t('Custom CSS')}
         </h3>
         <Textarea
           value={localSettings.custom_css}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleTextChange('custom_css', e.target.value)}
           placeholder="/* Add custom CSS here */"
-          className="font-mono h-32 bg-gray-50 dark:bg-gray-900"
+          className="font-mono h-32 bg-muted/50"
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           {t('Advanced: Add custom CSS to override default styles')}
         </p>
       </Card>

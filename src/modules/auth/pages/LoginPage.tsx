@@ -68,19 +68,19 @@ export default function LoginPage() {
 
       {/* Login Card */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-sm"
       >
-        <Card className="border border-border shadow-md rounded-2xl overflow-hidden bg-card py-0">
+        <Card className="border border-border shadow-xl rounded-xl overflow-hidden bg-card py-0">
           <CardContent className="p-8">
             {/* Logo + Title */}
             <div className="flex flex-col items-center mb-7">
-              <div className="mb-3 p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <div className="mb-4">
                 <img src="/logo.png" alt="App Logo" className="w-12 h-12" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 {t("common.appName", "AIMS")}
               </h1>
               <p className="text-sm mt-1 text-muted-foreground">
@@ -122,7 +122,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-10 rounded-lg font-semibold text-sm mt-2"
+                className="w-full h-10 rounded-lg font-medium text-sm mt-2"
                 disabled={loading}
               >
                 {loading ? t("common.loggingIn", "Logging in...") : t("common.login.title", "Sign In")}

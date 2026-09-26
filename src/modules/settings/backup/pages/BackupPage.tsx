@@ -275,8 +275,8 @@ export default function BackupPage() {
                 className="flex items-center justify-between p-2 sm:p-3 rounded-xl bg-black/5 dark:bg-white/5"
               >
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
-                  <p className="text-lg sm:text-2xl font-bold mt-1 text-gray-800 dark:text-gray-100">
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  <p className="text-lg sm:text-2xl font-bold mt-1 text-foreground">
                     {stat.value}
                   </p>
                 </div>
@@ -329,7 +329,7 @@ export default function BackupPage() {
                 className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
                   selectedDestinations.includes(dest.type)
                     ? 'border-primary bg-primary/5'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    : 'border-border hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <Checkbox
@@ -341,7 +341,7 @@ export default function BackupPage() {
                 <Label htmlFor={`dest-${dest.id}`} className="cursor-pointer flex items-center gap-2 flex-1">
                   {getStorageIcon(dest.type)}
                   <span className="font-medium">{dest.name}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
+                  <span className="text-xs text-muted-foreground ml-auto">
                     {dest.isPrimary ? 'Primary' : 'Secondary'}
                   </span>
                 </Label>

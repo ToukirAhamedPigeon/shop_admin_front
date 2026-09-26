@@ -57,11 +57,11 @@ export const BasicInput=({
   
     return (
       <div className="w-full space-y-1 ">
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-          {t(label, label)} {isRequired && <span className="text-red-500">*</span>}
+        <label htmlFor={id} className="block text-sm font-medium text-foreground/80">
+          {t(label, label)} {isRequired && <span className="text-destructive">*</span>}
         </label>
-        <Input type={type} id={id} placeholder={placeholder && t(placeholder, placeholder)} className="bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600" {...register} {...rest}/>
-        {error && <p className="text-red-500 dark:text-red-400 text-sm">{getErrorMessage()}</p>}
+        <Input type={type} id={id} placeholder={placeholder && t(placeholder, placeholder)} {...register} {...rest}/>
+        {error && <p className="text-destructive text-sm">{getErrorMessage()}</p>}
       </div>
     );
 }
@@ -139,9 +139,9 @@ export const UniqueInput = ({
 
   return (
     <div className="space-y-1 w-full relative">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+      <label htmlFor={id} className="block text-sm font-medium text-foreground/80">
         {t(label, label )}{" "}
-        {isRequired && <span className="text-red-500">*</span>}
+        {isRequired && <span className="text-destructive">*</span>}
       </label>
 
       <Input
@@ -151,8 +151,7 @@ export const UniqueInput = ({
         {...register}
         {...rest}
         className={cn(
-        "bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600",
-        exists && "border-red-500 dark:border-red-500",
+        exists && "border-destructive",
         rest.className
       )}
 
@@ -160,7 +159,7 @@ export const UniqueInput = ({
 
       {checking && (
         <div className="absolute right-3 top-9">
-          <svg className="h-4 w-4 animate-spin text-gray-400 dark:text-gray-300" viewBox="0 0 24 24" fill="none">
+          <svg className="h-4 w-4 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.25" />
             <path d="M4 12a8 8 0 018-8v8H4z" fill="currentColor" opacity="0.75" />
           </svg>
@@ -170,7 +169,7 @@ export const UniqueInput = ({
       <AnimatePresence>
         {(exists || error) && (
           <motion.p
-            className="text-red-500 dark:text-red-400 text-sm mt-1"
+            className="text-destructive text-sm mt-1"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
@@ -208,18 +207,18 @@ export const BasicTextarea: React.FC<BasicTextareaProps> = ({
   const {t} = useTranslations();
   return (
     <div className="space-y-1 w-full">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-        {t(label)} {isRequired && <span className="text-red-500">*</span>}
+      <label htmlFor={id} className="block text-sm font-medium text-foreground/80">
+        {t(label)} {isRequired && <span className="text-destructive">*</span>}
       </label>
       <Textarea
         id={id}
         placeholder={placeholder ? t(placeholder) : ""}
         rows={rows}
         {...register}
-        className="w-full border border-gray-400 dark:border-slate-600 rounded-md p-2 text-sm bg-white dark:bg-slate-800 dark:text-white"
+        className="w-full border border-input rounded-md px-3 py-2 text-sm bg-card dark:bg-input/20 text-foreground shadow-xs outline-none focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring"
       />
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400 mt-1">{t(error.message)}</p>
+        <p className="text-sm text-destructive mt-1">{t(error.message)}</p>
       )}
     </div>
   );
@@ -263,20 +262,20 @@ export const SingleImageInput: React.FC<SingleImageInputProps> = ({
   return (
     <div className={cn('space-y-1', className)}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-          {t(label)} {isRequired && <span className="text-red-500">*</span>}
+        <label className="block text-sm font-medium text-foreground/80">
+          {t(label)} {isRequired && <span className="text-destructive">*</span>}
         </label>
       )}
 
       <div
         {...getRootProps()}
         className={cn(
-          "border border-dashed border-gray-400 dark:border-slate-600 p-4 text-center rounded-md cursor-pointer bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition flex flex-col items-center justify-center",
-          disabled && "bg-gray-100 dark:bg-slate-700 cursor-not-allowed opacity-70",minHeightClass
+          "border border-dashed border-input p-4 text-center rounded-lg cursor-pointer bg-muted/30 hover:bg-accent hover:border-primary/40 text-muted-foreground transition-colors flex flex-col items-center justify-center",
+          disabled && "bg-muted cursor-not-allowed opacity-70",minHeightClass
         )}
       >
         <input {...getInputProps()} />
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t('Drag & drop or click to select an image')}</p>
+        <p className="text-sm text-muted-foreground">{t('Drag & drop or click to select an image')}</p>
 
         {preview && (
           <div className="mt-2 flex flex-col items-center justify-center gap-2">
@@ -285,7 +284,7 @@ export const SingleImageInput: React.FC<SingleImageInputProps> = ({
               alt="Preview"
               width={100}
               height={100}
-              className="rounded-md border shadow dark:border-slate-600"
+              className="rounded-md border border-border shadow-xs"
             />
             <Button
               type="button"
@@ -305,7 +304,7 @@ export const SingleImageInput: React.FC<SingleImageInputProps> = ({
       <AnimatePresence>
         {error?.message && (
           <motion.p
-            className="text-red-500 dark:text-red-400 text-sm mt-1"
+            className="text-destructive text-sm mt-1"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
@@ -570,42 +569,42 @@ export function CustomSelect<T extends Record<string, any>>({
 
   return (
     <div className="space-y-1 w-full">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+      <label htmlFor={id} className="block text-sm font-medium text-foreground/80">
         {t(label, label)}{" "}
-        {isRequired && <span className="text-red-500">*</span>}
+        {isRequired && <span className="text-destructive">*</span>}
       </label>
 
       <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
-          <div className="relative w-full bg-white dark:bg-slate-800">
+          <div className="relative w-full">
             <Input
               readOnly
               ref={inputRef}
-              className="text-left cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 dark:bg-slate-800 dark:text-white pr-10 border border-gray-500 dark:border-slate-600"
+              className="text-left cursor-pointer hover:bg-accent/50 pr-10"
               value={displayValue}
               placeholder={t(placeholder, placeholder)}
               onClick={() => setOpen(true)}
             />
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 w-4 h-4 pointer-events-none" />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
           </div>
         </PopoverTrigger>
 
         <PopoverContent
-          className="p-0 mt-[-4px] w-full bg-white dark:bg-slate-800 border dark:border-slate-600 overflow-hidden"
+          className="p-0 w-full bg-popover border border-border shadow-lg overflow-hidden"
           style={{ width: inputRef.current?.offsetWidth }}
         >
           {/* Search Input */}
           {(multiple || allOptions.length > 10) && (
-            <div className="p-2 border-b border-gray-200 dark:border-slate-700">
+            <div className="p-2 border-b border-border">
               <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   ref={searchInputRef}
                   type="text"
                   placeholder={t("Search", "Search") + "..."}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-8 pr-2 py-1.5 text-sm border border-input rounded-md bg-card dark:bg-input/20 text-foreground focus:outline-none focus:border-primary focus:ring-[3px] focus:ring-ring"
                 />
               </div>
             </div>
@@ -614,13 +613,13 @@ export function CustomSelect<T extends Record<string, any>>({
           {/* Options List */}
           <div className="max-h-[250px] overflow-auto">
             {loading && (
-              <div className="p-2 text-center text-gray-500 dark:text-gray-400">
+              <div className="p-2 text-center text-muted-foreground">
                 {t("Loading", "Loading") + "..."}
               </div>
             )}
             
             {!loading && filteredOptions.length === 0 && (
-              <div className="p-2 text-center text-gray-500 dark:text-gray-400">
+              <div className="p-2 text-center text-muted-foreground">
                 {t("No options found", "No options found.")}
               </div>
             )}
@@ -633,8 +632,8 @@ export function CustomSelect<T extends Record<string, any>>({
                   key={opt.value}
                   className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${
                     selected
-                      ? "bg-blue-50 dark:bg-slate-700"
-                      : "hover:bg-gray-100 dark:hover:bg-slate-700"
+                      ? "bg-accent"
+                      : "hover:bg-accent"
                   }`}
                   onClick={() => handleToggleOption(opt.value)}
                 >
@@ -642,13 +641,13 @@ export function CustomSelect<T extends Record<string, any>>({
                     <Checkbox
                       checked={selected}
                       onCheckedChange={(checked) => handleCheckboxChange(opt.value, checked as boolean)}
-                      className="h-4 w-4 border-gray-400 bg-gray-50 dark:border-gray-600 dark:bg-slate-700 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 dark:data-[state=checked]:bg-blue-400 dark:data-[state=checked]:border-blue-400"
+                      className="h-4 w-4"
                     />
                   )}
                   <span className={`flex-1 text-sm ${
                     selected
-                      ? "text-blue-700 dark:text-blue-300 font-medium"
-                      : "text-gray-700 dark:text-gray-300"
+                      ? "text-primary font-medium"
+                      : "text-foreground/80"
                   }`}>
                     {labelFormatter(opt.label)}
                   </span>
@@ -659,7 +658,7 @@ export function CustomSelect<T extends Record<string, any>>({
         </PopoverContent>
       </Popover>
 
-      {error && <p className="text-red-500 text-sm">{error.message}</p>}
+      {error && <p className="text-destructive text-sm">{error.message}</p>}
     </div>
   );
 }
@@ -701,16 +700,16 @@ export const PasswordInput = ({
     <div className="space-y-1 w-full">
       <div className="flex justify-between items-center">
       <label
-        className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        className="block text-sm font-medium text-foreground/80"
       >
         {t(label, labelFallback)}{" "}
-        {isRequiredStar && <span className="text-red-500">*</span>}
+        {isRequiredStar && <span className="text-destructive">*</span>}
       </label>
       {showForgotPasswordLink && (
         <button
           type="button"
           onClick={() => navigate("/forgot-password")}
-          className="text-sm text-blue-600 hover:underline dark:text-blue-400 cursor-pointer"
+          className="text-sm text-primary hover:underline cursor-pointer"
         >
           {t("common.forgotPassword", "Forgot Password?")}
         </button>
@@ -721,7 +720,7 @@ export const PasswordInput = ({
         <Input
           type={hidden ? "password" : "text"}
           className={cn(
-            "pr-10 bg-white dark:bg-slate-800 dark:text-white dark:border-slate-600",
+            "pr-10",
             inputClassName
           )}
           placeholder={placeholder && t(placeholder, placeholderFallback)}
@@ -731,7 +730,7 @@ export const PasswordInput = ({
         <button
           type="button"
           onClick={() => setHidden(!hidden)}
-          className="absolute inset-y-0 right-2 flex items-center text-gray-500 dark:text-gray-400"
+          className="absolute inset-y-0 right-2 flex items-center text-muted-foreground"
         >
           {hidden ? (
             <Eye className="h-4 w-4 cursor-pointer" />
@@ -740,8 +739,8 @@ export const PasswordInput = ({
           )}
         </button>
       </div>
-      {helperText && <p className="text-sm text-gray-500 dark:text-gray-400">{helperText}</p>}
-      {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
+      {helperText && <p className="text-sm text-muted-foreground">{helperText}</p>}
+      {error && <p className="text-destructive text-sm">{error}</p>}
     </div>
   );
 };
@@ -795,8 +794,8 @@ const DateTimeInput = React.forwardRef<React.ComponentRef<typeof DatePicker>, Da
 
     return (
       <div className="w-full space-y-1">
-        <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-white">
-          {t(label, label)} {isRequired && <span className="text-red-500">*</span>}
+        <label htmlFor={id} className="text-sm font-medium text-foreground">
+          {t(label, label)} {isRequired && <span className="text-destructive">*</span>}
         </label>
         <div className="relative">
           <DatePicker
@@ -827,8 +826,8 @@ const DateTimeInput = React.forwardRef<React.ComponentRef<typeof DatePicker>, Da
             showPopperArrow
             popperClassName="z-[9999] overflow-hidden"
             className={cn(
-              "w-full border border-gray-400 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white rounded-lg h-[38px] px-3 py-2 text-sm placeholder:text-sm placeholder:text-gray-500 dark:placeholder:text-gray-400",
-              error && "border-red-500 dark:border-red-500",
+              "w-full border border-input bg-card dark:bg-input/20 text-foreground rounded-md h-9 px-3 py-2 text-sm shadow-xs placeholder:text-sm placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-[3px] focus:ring-ring",
+              error && "border-destructive",
               className
             )}
           />
@@ -838,15 +837,15 @@ const DateTimeInput = React.forwardRef<React.ComponentRef<typeof DatePicker>, Da
               type="button"
               onClick={handleReset}
               aria-label="Clear date"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-red-400"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               tabIndex={-1} // exclude from tab order, optional
             >
-              <span className="text-xs text-gray-800 hover:text-red-700 cursor-pointer hover:font-bold dark:text-white dark:hover:text-red-700">&#10005;</span> {/* or use an SVG icon for 'X' */}
+              <span className="text-xs cursor-pointer">&#10005;</span> {/* or use an SVG icon for 'X' */}
             </button>
           )}
         </div>
         {error && (
-          <p className="text-sm text-red-500 dark:text-red-400">
+          <p className="text-sm text-destructive">
             {error.message}
           </p>
         )}

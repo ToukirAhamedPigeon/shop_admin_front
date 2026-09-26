@@ -12,7 +12,7 @@ export function ThemeToggleButton() {
   return (
     <button
       onClick={() => dispatch(toggleTheme())}
-      className="cursor-pointer p-1.5 rounded-md transition-colors bg-primary/10 text-primary hover:bg-primary/20"
+      className="cursor-pointer inline-flex size-9 items-center justify-center rounded-md transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
       aria-label="Toggle Dark Mode"
     >
       {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}

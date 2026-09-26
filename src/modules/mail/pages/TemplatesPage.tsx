@@ -180,7 +180,7 @@ export default function TemplatesPage() {
           className="pb-0"
         />
         {hasCreatePermission && (
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <motion.div>
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="w-4 h-4 mr-2" />
               New Template
@@ -199,7 +199,7 @@ export default function TemplatesPage() {
         <GlassCard variant="primary" padding="md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Templates</p>
+              <p className="text-sm text-muted-foreground">Total Templates</p>
               <p className="text-2xl font-bold mt-1">{templates.length}</p>
             </div>
             <div className="p-3 rounded-xl bg-primary/10">
@@ -211,7 +211,7 @@ export default function TemplatesPage() {
         <GlassCard variant="accent" padding="md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Global Templates</p>
+              <p className="text-sm text-muted-foreground">Global Templates</p>
               <p className="text-2xl font-bold mt-1">{globalCount}</p>
             </div>
             <div className="p-3 rounded-xl bg-emerald-500/10">
@@ -223,7 +223,7 @@ export default function TemplatesPage() {
         <GlassCard variant="secondary" padding="md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Personal Templates</p>
+              <p className="text-sm text-muted-foreground">Personal Templates</p>
               <p className="text-2xl font-bold mt-1">{personalCount}</p>
             </div>
             <div className="p-3 rounded-xl bg-muted">
@@ -328,8 +328,6 @@ export default function TemplatesPage() {
                         <div className="flex justify-center gap-1">
                           {hasEditPermission && (
                             <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.95 }}
                               onClick={() => handleOpenDialog(template)}
                               className="p-2 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer group"
                             >
@@ -338,8 +336,6 @@ export default function TemplatesPage() {
                           )}
                           {hasDeletePermission && (
                             <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.95 }}
                               onClick={() => {
                                 setDeletingId(template.id);
                                 setDeleteDialogOpen(true);

@@ -123,7 +123,7 @@ export default function DeveloperGuidePage() {
               <Loader type="circular" size={28} />
             </div>
           ) : treeError ? (
-            <div className="flex flex-col items-center gap-2 py-10 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col items-center gap-2 py-10 text-sm text-muted-foreground">
               <AlertTriangle className="w-6 h-6 text-amber-500" />
               {t('documentation.developer.tree_error', 'Failed to load documentation tree')}
             </div>
@@ -138,16 +138,16 @@ export default function DeveloperGuidePage() {
               <Loader type="circular" size={36} />
             </div>
           ) : pageError ? (
-            <div className="flex flex-col items-center gap-2 py-16 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col items-center gap-2 py-16 text-sm text-muted-foreground">
               <AlertTriangle className="w-8 h-8 text-amber-500" />
               {t('documentation.developer.page_error', 'Failed to load documentation page')}
             </div>
           ) : page ? (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{page.title}</h2>
+                <h2 className="text-lg font-semibold text-foreground">{page.title}</h2>
                 {page.updatedAt && (
-                  <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Clock className="w-3.5 h-3.5" />
                     {new Date(page.updatedAt).toLocaleString()}
                   </span>
@@ -155,13 +155,13 @@ export default function DeveloperGuidePage() {
               </div>
               <MarkdownRenderer markdown={page.markdown} />
               {page.sourcePaths && page.sourcePaths.length > 0 && (
-                <div className="pt-3 mt-4 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                <div className="pt-3 mt-4 border-t border-border">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">
                     {t('documentation.developer.source_paths', 'Source')}
                   </p>
                   <ul className="space-y-0.5">
                     {page.sourcePaths.map((path) => (
-                      <li key={path} className="text-xs font-mono text-gray-500 dark:text-gray-400 truncate">
+                      <li key={path} className="text-xs font-mono text-muted-foreground truncate">
                         {path}
                       </li>
                     ))}
@@ -170,7 +170,7 @@ export default function DeveloperGuidePage() {
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-center py-16 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
               {t('documentation.developer.select_page', 'Select a page from the sidebar')}
             </div>
           )}

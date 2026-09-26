@@ -67,7 +67,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   return (
     <div className={cn("relative", className)}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+        <label className="block text-sm font-medium text-foreground/80 mb-2">
           {label}
         </label>
       )}
@@ -77,10 +77,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         onClick={() => setIsOpen(!isOpen)}
       >
         <div
-          className="w-10 h-10 rounded-lg border-2 border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200"
+          className="w-10 h-10 rounded-lg border-2 border-input shadow-sm hover:shadow-md transition-all duration-200"
           style={{ backgroundColor: value }}
         />
-        <span className="text-sm font-mono text-gray-600 dark:text-gray-400">
+        <span className="text-sm font-mono text-muted-foreground">
           {value}
         </span>
         <svg
@@ -107,7 +107,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               <button
                 key={color}
                 className={cn(
-                  "w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110 hover:shadow-lg",
+                  "w-8 h-8 rounded-lg border-2 transition-[box-shadow,border-color] duration-150 hover:ring-2 hover:ring-ring",
                   value === color
                     ? "border-primary ring-2 ring-primary/30"
                     : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"
@@ -119,7 +119,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           </div>
 
           {/* Custom Color Input */}
-          <div className="flex items-center gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3 pt-3 border-t border-border">
             <input
               type="color"
               value={customColor}
@@ -130,7 +130,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               type="text"
               value={customColor}
               onChange={handleInputChange}
-              className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-input bg-card text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="#3B82F6"
             />
             <button

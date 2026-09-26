@@ -185,7 +185,7 @@ export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?:
       ) : user.emailVerifiedAt ? (
         <span className="text-green-600 font-semibold">
           Verified 
-          <small className="text-xs text-gray-700 dark:text-gray-200 ml-1">
+          <small className="text-xs text-foreground/80 ml-1">
             at {getCustomDateTime(user.emailVerifiedAt, 'YYYY-MM-DD HH:mm:ss')}
           </small>
         </span>

@@ -28,12 +28,12 @@ export default function FormHolderSheet({
   // Accent color based on titleDivClassName
   const getAccentColor = () => {
     if (titleDivClassName?.includes('success')) {
-      return { bar: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' };
+      return { bar: 'bg-success' };
     }
     if (titleDivClassName?.includes('warning')) {
-      return { bar: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400' };
+      return { bar: 'bg-warning' };
     }
-    return { bar: 'bg-primary', text: 'text-foreground' };
+    return { bar: 'bg-primary' };
   };
   const accent = getAccentColor();
 
@@ -44,7 +44,7 @@ export default function FormHolderSheet({
         className={cn(
           "p-0 flex flex-col w-full sm:max-w-[50%]",
           "sm:h-screen h-[75vh]",
-          "shadow-md bg-background",
+          "shadow-2xl bg-background",
           "border-l border-border",
         )}
         style={{
@@ -56,14 +56,11 @@ export default function FormHolderSheet({
         {/* Header */}
         <div
           className={cn(
-            "relative flex items-center justify-between px-6 py-4 bg-background border-b border-border",
-            titleDivClassName
+            "relative flex items-center justify-between px-6 py-4 bg-card border-b border-border"
           )}
         >
-          {/* Accent line */}
-          <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${accent.bar}`} />
-
-          <SheetTitle className={`text-2xl font-bold ${accent.text}`}>
+          <SheetTitle className="flex items-center gap-2.5 text-lg font-semibold text-foreground">
+            <span className={cn("size-2 rounded-full", accent.bar)} aria-hidden />
             {t(title)}
           </SheetTitle>
 
@@ -71,9 +68,9 @@ export default function FormHolderSheet({
             variant="ghost"
             size="icon"
             onClick={() => onOpenChange(false)}
-            className="rounded-full"
+            className="rounded-md text-muted-foreground hover:text-foreground"
           >
-            <X className="h-5 w-5 text-muted-foreground" />
+            <X className="h-5 w-5" />
           </Button>
         </div>
 

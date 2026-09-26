@@ -301,11 +301,11 @@ export default function ProfileEdit() {
                       <div>
                         <div className="flex items-center gap-1 mb-1">
                           <Key className="w-3 h-3 text-gray-500" />
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-xs text-muted-foreground">
                             {t("Username")}
                           </span>
                         </div>
-                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        <span className="text-sm font-semibold text-foreground">
                           @{userData.username}
                         </span>
                       </div>
@@ -313,7 +313,7 @@ export default function ProfileEdit() {
                       <div>
                         <div className="flex items-center gap-1 mb-1">
                           <Shield className="w-3 h-3 text-gray-500" />
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-xs text-muted-foreground">
                             {t("Roles")}
                           </span>
                         </div>
@@ -334,7 +334,7 @@ export default function ProfileEdit() {
                     <div>
                       <div className="flex items-center gap-1 mb-1">
                         <Shield className="w-3 h-3 text-gray-500" />
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           {t("Permissions")}
                         </span>
                       </div>
