@@ -13,7 +13,6 @@ import {
   Trash2,
   MailOpen,
   Mail as MailIcon,
-  X,
   File,
   Image,
   FileText,
@@ -215,21 +214,23 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{mail?.subject || 'Mail Detail'}</DialogTitle>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="text-left">
+          <DialogTitle className="pr-8 text-lg leading-snug sm:text-xl">{mail?.subject || 'Mail Detail'}</DialogTitle>
           <div className="flex justify-between items-start">
             <div className="flex gap-1">
               <button
                 onClick={handleToggleStar}
                 className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer"
+                title={mail?.isStarred ? "Unstar" : "Star"}
+                aria-label={mail?.isStarred ? "Unstar" : "Star"}
               >
                 <Star
                   className={cn(
                     "w-5 h-5",
                     mail?.isStarred
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-400"
+                      ? "fill-warning text-warning"
+                      : "text-muted-foreground"
                   )}
                 />
               </button>
@@ -237,6 +238,7 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
                 onClick={mail?.isRead ? handleMarkAsUnread : handleMarkAsRead}
                 className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer"
                 title={mail?.isRead ? "Mark as unread" : "Mark as read"}
+                aria-label={mail?.isRead ? "Mark as unread" : "Mark as read"}
               >
                 {mail?.isRead ? (
                   <MailIcon className="w-5 h-5 text-muted-foreground" />
@@ -247,14 +249,10 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
               <button
                 onClick={handleMoveToTrash}
                 className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer"
+                title="Move to trash"
+                aria-label="Move to trash"
               >
                 <Trash2 className="w-5 h-5 text-muted-foreground" />
-              </button>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
           </div>
@@ -268,20 +266,20 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
           <div className="space-y-4">
             {/* Email metadata */}
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between items-center">
-                <div>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div className="min-w-0 [overflow-wrap:anywhere]">
                   <div><span className="font-medium">From:</span> {mail.fromMail}</div>
                   <div><span className="font-medium">To:</span> {mail.toMail}</div>
                   {mail.ccMail && <div><span className="font-medium">Cc:</span> {mail.ccMail}</div>}
                 </div>
-                <div className="text-gray-500">
+                <div className="shrink-0 text-xs text-muted-foreground sm:text-sm">
                   {format(new Date(mail.createdAt), 'MMMM dd, yyyy h:mm a')}
                 </div>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 pb-4 border-b">
+            <div className="flex gap-2 pb-4 border-b border-border">
               <Button size="sm" variant="outline" onClick={onReply} className="cursor-pointer">
                 <Reply className="w-4 h-4 mr-1" />
                 Reply
@@ -290,7 +288,7 @@ export default function MailDetail({ mailId, open, onClose, onRefresh, onReply }
 
             {/* Email Body */}
             <div
-              className="prose max-w-none"
+              className="markdown-body max-w-none [overflow-wrap:anywhere]"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(mail.body) }}
             />
 

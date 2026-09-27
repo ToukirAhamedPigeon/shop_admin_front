@@ -1,17 +1,17 @@
 // src/modules/mail/components/MailList.tsx
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
-import { format } from 'date-fns';
+import { format, isThisYear, isToday } from 'date-fns';
 import {
   Star,
-  Mail as MailIcon,
-  MailOpen,
+  Inbox,
+  Paperclip,
   Trash2,
   RotateCcw,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { getMails, bulkMailAction, toggleStar, markAsRead } from '../api';
@@ -27,7 +27,6 @@ interface MailListProps {
   selectedMail: Mail | null;
   onRefreshList: () => void;
   onRefreshStatistics: () => void;
-  isMobile?: boolean;
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -45,24 +44,43 @@ const getSenderDisplay = (mail: Mail, mailbox: MailboxType): string => {
   }
 };
 
-const getSenderColumnHeader = (mailbox: MailboxType): string => {
-  switch (mailbox) {
-    case 'sent': return 'To';
-    case 'inbox': return 'From';
-    default: return 'From/To';
-  }
+// Short, scannable date: time for today, day and month this year, full date before.
+const shortDate = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  if (isToday(d)) return format(d, 'h:mm a');
+  if (isThisYear(d)) return format(d, 'MMM d');
+  return format(d, 'dd/MM/yy');
+};
+
+// Plain-text preview of an HTML body. DOMParser builds an inert document
+// (no scripts run, nothing is inserted into the page).
+const previewCache = new Map<number, string>();
+const previewOf = (mail: Mail) => {
+  const cached = previewCache.get(mail.id);
+  if (cached !== undefined) return cached;
+  const text = (new DOMParser().parseFromString(mail.body || '', 'text/html').body.textContent || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 160);
+  previewCache.set(mail.id, text);
+  return text;
+};
+
+const initialsOf = (address: string) => {
+  const name = address.split('@')[0].replace(/[._-]+/g, ' ').trim();
+  const parts = name.split(' ').filter(Boolean);
+  return ((parts[0]?.[0] ?? '?') + (parts[1]?.[0] ?? '')).toUpperCase();
 };
 
 const SearchInputComponent = memo(({
   value,
   onChange,
   placeholder,
-  isMobile
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
-  isMobile?: boolean;
 }) => {
   const [localValue, setLocalValue] = useState(value);
 
@@ -70,40 +88,55 @@ const SearchInputComponent = memo(({
     setLocalValue(value);
   }, [value]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setLocalValue(newValue);
-    onChange(newValue);
-  };
-
   return (
-    <div className="relative flex-1 group">
-      <Input
+    <div className="relative min-w-0 flex-1">
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <input
+        type="search"
         placeholder={placeholder}
         value={localValue}
-        onChange={handleChange}
-        className={cn(
-          "w-full rounded-xl shadow-sm transition-colors duration-200 focus-visible:ring-primary/40 focus-visible:border-primary",
-          isMobile ? "pl-8 text-sm h-9" : "pl-10 h-10"
-        )}
+        aria-label={placeholder}
+        onChange={(e) => {
+          setLocalValue(e.target.value);
+          onChange(e.target.value);
+        }}
+        className="h-10 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/40"
       />
-      <svg
-        className={cn(
-          "absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors duration-200 group-focus-within:text-primary",
-          isMobile ? "left-2.5" : "left-3"
-        )}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
     </div>
   );
 });
 
 SearchInputComponent.displayName = 'SearchInputComponent';
 
+const Checkbox = ({ checked, partial, onToggle, label }: { checked: boolean; partial?: boolean; onToggle: () => void; label: string }) => (
+  <button
+    type="button"
+    role="checkbox"
+    aria-checked={partial ? 'mixed' : checked}
+    aria-label={label}
+    onClick={(e) => {
+      e.stopPropagation();
+      onToggle();
+    }}
+    className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  >
+    <span
+      className={cn(
+        'flex size-4 items-center justify-center rounded border-2 transition-colors',
+        checked ? 'border-primary bg-primary' : partial ? 'border-primary/60 bg-primary/20' : 'border-border bg-background hover:border-primary/60'
+      )}
+    >
+      {checked && (
+        <svg className="size-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      )}
+      {partial && !checked && <span className="h-0.5 w-1.5 bg-primary" />}
+    </span>
+  </button>
+);
+
+/** Message rows, email-client style: works the same on phones and desktops. */
 const EmailTable = memo(({
   mails,
   mailbox,
@@ -111,9 +144,8 @@ const EmailTable = memo(({
   selectedIds,
   onMailClick,
   onStarClick,
-  onSelectAll,
+  onSelectChange,
   loading,
-  isMobile
 }: {
   mails: Mail[];
   mailbox: MailboxType;
@@ -122,152 +154,104 @@ const EmailTable = memo(({
   onMailClick: (mail: Mail) => void;
   onStarClick: (e: React.MouseEvent, mail: Mail) => void;
   onSelectChange: (id: number, checked: boolean | string) => void;
-  onSelectAll: (checked: boolean | string) => void;
   loading: boolean;
-  isMobile?: boolean;
 }) => {
-  const senderColumnHeader = getSenderColumnHeader(mailbox);
+  if (mails.length === 0) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Inbox className="size-7" />
+        </span>
+        <p className="text-base font-medium text-foreground">No messages in {mailbox}</p>
+        <p className="max-w-xs text-sm text-muted-foreground">New mail will show up here. Try another folder or clear your search.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex-1 overflow-auto relative" style={{ maxHeight: isMobile ? 'calc(100vh - 420px)' : 'calc(100vh - 380px)', minHeight: '200px' }}>
-      {loading && mails.length > 0 && (
-        <div className="absolute inset-0 bg-background/60 z-10 flex items-center justify-center">
-          <div className="bg-card border border-border rounded-2xl p-4 shadow-md">
-            <Loader type="bars" size={32} />
+    <div className="relative min-h-0 flex-1 overflow-y-auto">
+      {loading && (
+        <div className="absolute inset-0 z-10 flex items-start justify-center bg-background/50 pt-16">
+          <div className="rounded-2xl border border-border bg-card p-3 shadow-md">
+            <Loader type="bars" size={28} />
           </div>
         </div>
       )}
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-sm">
-          <thead className="sticky top-0 z-20">
-            <tr className="border-b border-border bg-muted">
-              <th className="px-2 py-3 sm:px-4 text-center w-8 sm:w-10">
-                <div
-                  className="flex justify-center cursor-pointer group"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectAll(selectedIds.size !== mails.length);
-                  }}
+      <ul role="list" className="divide-y divide-border">
+        {mails.map((mail) => {
+          const unread = !mail.isRead && !mail.isSent;
+          const selected = selectedIds.has(mail.id);
+          const active = selectedMail?.id === mail.id;
+          const who = getSenderDisplay(mail, mailbox);
+          const prefix = mail.isSent && mailbox !== 'sent' ? 'To: ' : mailbox === 'sent' ? 'To: ' : '';
+          return (
+            <li
+              key={mail.id}
+              onClick={() => onMailClick(mail)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onMailClick(mail);
+                }
+              }}
+              tabIndex={0}
+              aria-label={`${unread ? 'Unread, ' : ''}${who}: ${mail.subject}`}
+              className={cn(
+                'group relative flex cursor-pointer items-start gap-1 py-2.5 pl-1.5 pr-3 outline-none transition-colors sm:gap-2 sm:pl-2 sm:pr-4',
+                'focus-visible:bg-accent',
+                active || selected ? 'bg-primary/[0.07]' : unread ? 'bg-primary/[0.03] hover:bg-accent' : 'hover:bg-accent'
+              )}
+            >
+              {unread && <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-primary" />}
+              <div className="flex shrink-0 items-center">
+                <Checkbox checked={selected} onToggle={() => onSelectChange(mail.id, !selected)} label={`Select ${mail.subject}`} />
+                <button
+                  type="button"
+                  onClick={(e) => onStarClick(e, mail)}
+                  aria-label={mail.isStarred ? 'Unstar' : 'Star'}
+                  aria-pressed={mail.isStarred}
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-2 flex items-center justify-center transition-colors duration-200 ${
-                    selectedIds.size === mails.length && mails.length > 0
-                      ? 'bg-primary border-primary'
-                      : selectedIds.size > 0
-                        ? 'bg-primary/20 border-primary/50'
-                        : 'border-border bg-background hover:border-primary/60'
-                  }`}>
-                    {selectedIds.size === mails.length && mails.length > 0 && (
-                      <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
+                  <Star
+                    className={cn(
+                      'size-4 transition-colors',
+                      mail.isStarred ? 'fill-warning text-warning' : 'text-muted-foreground/60 group-hover:text-muted-foreground hover:!text-warning'
                     )}
-                    {selectedIds.size > 0 && selectedIds.size !== mails.length && (
-                      <div className="w-1.5 h-0.5 bg-primary" />
-                    )}
-                  </div>
+                  />
+                </button>
+              </div>
+              <span
+                aria-hidden
+                className={cn(
+                  'mt-0.5 hidden size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold sm:flex',
+                  unread ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
+                )}
+              >
+                {initialsOf(who)}
+              </span>
+              <div className="min-w-0 flex-1 pl-1 sm:pl-2">
+                <div className="flex items-baseline gap-2">
+                  <p className={cn('min-w-0 flex-1 truncate text-sm', unread ? 'font-semibold text-foreground' : 'text-foreground/85')}>
+                    <span className="text-muted-foreground">{prefix}</span>
+                    {who}
+                  </p>
+                  {mail.attachments?.length > 0 && <Paperclip aria-label="Has attachments" className="size-3.5 shrink-0 text-muted-foreground" />}
+                  <time
+                    dateTime={mail.createdAt}
+                    className={cn('shrink-0 text-xs tabular-nums', unread ? 'font-semibold text-primary' : 'text-muted-foreground')}
+                  >
+                    {shortDate(mail.createdAt)}
+                  </time>
                 </div>
-              </th>
-              <th className="px-2 py-3 sm:px-4 text-center w-8 sm:w-10"></th>
-              <th className="px-2 py-3 sm:px-4 text-center w-8 sm:w-10"></th>
-              <th className={cn(
-                "px-2 py-3 sm:px-4 text-xs font-medium uppercase tracking-wide text-muted-foreground",
-                isMobile ? "" : ""
-              )}>{isMobile ? senderColumnHeader.slice(0, 1) : senderColumnHeader}</th>
-              <th className={cn(
-                "px-2 py-3 sm:px-4 text-xs font-medium uppercase tracking-wide text-muted-foreground",
-                isMobile ? "" : ""
-              )}>{isMobile ? 'Subj' : 'Subject'}</th>
-              <th className={cn(
-                "px-2 py-3 sm:px-4 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground",
-                isMobile ? "text-xs w-20" : "text-sm w-32"
-              )}>{isMobile ? 'Date' : 'Date'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mails.length === 0 ? (
-              <tr className="border-b border-border">
-                <td colSpan={6} className="p-4 text-center text-muted-foreground py-12">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <MailIcon className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground/50" />
-                    <p className="text-sm sm:text-base">No messages in {mailbox}</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              mails.map((mail, index) => (
-                <tr
-                  key={mail.id}
-                  onClick={() => onMailClick(mail)}
-                  className={cn(
-                    "transition-colors duration-150 cursor-pointer",
-                    "border-b border-border",
-                    index !== mails.length - 1 && "border-b",
-                    selectedMail?.id === mail.id && "bg-primary/10",
-                    !mail.isRead && !mail.isSent && "bg-primary/5",
-                    !selectedMail || selectedMail?.id !== mail.id && "hover:bg-muted/50"
-                  )}
-                >
-                  <td className="px-2 py-2.5 sm:px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-center">
-                      <div className="cursor-pointer group">
-                        <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-2 flex items-center justify-center transition-colors duration-200 ${
-                          selectedIds.has(mail.id)
-                            ? 'bg-primary border-primary'
-                            : 'border-border bg-background hover:border-primary/60'
-                        }`}>
-                          {selectedIds.has(mail.id) && (
-                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-2 py-2.5 sm:px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={(e) => onStarClick(e, mail)}
-                      className="focus:outline-none cursor-pointer group transition-colors duration-150"
-                    >
-                      <Star className={cn(
-                        "w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-200",
-                        mail.isStarred
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-400 group-hover:text-yellow-400"
-                      )} />
-                    </button>
-                  </td>
-                  <td className="px-2 py-2.5 sm:px-4 text-center">
-                    {!mail.isRead && !mail.isSent ? (
-                      <MailOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-                    ) : (
-                      <MailIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
-                    )}
-                  </td>
-                  <td className={cn(
-                    "px-2 py-2.5 sm:px-4 text-foreground",
-                    !mail.isRead && !mail.isSent ? "font-semibold" : "",
-                    isMobile ? "text-xs max-w-[60px] truncate" : "text-sm"
-                  )}>
-                    {isMobile ? getSenderDisplay(mail, mailbox).slice(0, 10) : getSenderDisplay(mail, mailbox)}
-                  </td>
-                  <td className={cn(
-                    "px-2 py-2.5 sm:px-4 text-foreground",
-                    !mail.isRead && !mail.isSent ? "font-semibold" : "",
-                    isMobile ? "text-xs max-w-[80px] truncate" : "text-sm max-w-[300px] truncate"
-                  )}>
-                    {isMobile ? mail.subject.slice(0, 15) : mail.subject}
-                  </td>
-                  <td className="px-2 py-2.5 sm:px-4 text-muted-foreground text-xs sm:text-sm whitespace-nowrap text-center tabular-nums">
-                    {isMobile ? format(new Date(mail.createdAt), 'MM/dd/yy') : format(new Date(mail.createdAt), 'MMM dd, yyyy')}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                <p className={cn('truncate text-sm', unread ? 'font-medium text-foreground' : 'text-foreground/80')}>
+                  {mail.subject || '(no subject)'}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">{previewOf(mail)}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 });
@@ -280,7 +264,6 @@ export default function MailList({
   selectedMail,
   onRefreshList,
   onRefreshStatistics,
-  isMobile = false
 }: MailListProps) {
   const [mails, setMails] = useState<Mail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -412,65 +395,53 @@ export default function MailList({
   }, [actionDialog, onRefreshList, onRefreshStatistics]);
 
   const selectedCount = selectedIds.size;
+  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
+  const allSelected = mails.length > 0 && selectedCount === mails.length;
 
   if (loading && mails.length === 0) {
     return (
-      <div className="flex-1 rounded-xl overflow-hidden border border-border bg-card flex items-center justify-center">
-        <Loader type="circular" size={isMobile ? 32 : 48} />
+      <div className="flex flex-1 items-center justify-center py-20">
+        <Loader type="circular" size={40} />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 rounded-xl overflow-hidden flex flex-col relative bg-card border border-border shadow-sm">
-      <div className="relative z-10 p-2 sm:p-4 border-b border-border">
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <SearchInputComponent
-            value={searchValue}
-            onChange={handleSearchChange}
-            placeholder="Search emails..."
-            isMobile={isMobile}
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      {/* Toolbar: select all, search, and bulk actions for the selection. */}
+      <div className="flex items-center gap-1 border-b border-border p-2 sm:gap-2 sm:p-3">
+        <div className="pl-0 sm:pl-0.5">
+          <Checkbox
+            checked={allSelected}
+            partial={selectedCount > 0 && !allSelected}
+            onToggle={() => handleSelectAll(!allSelected)}
+            label={allSelected ? 'Clear selection' : 'Select all on this page'}
           />
-          {selectedCount > 0 && (
-            <div className="flex gap-1 sm:gap-2 flex-wrap">
-              {!isTrashView ? (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleBulkAction('trash')}
-                  className={cn(isMobile ? "text-xs px-2 py-1" : "")}
-                >
-                  <Trash2 className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
-                  {!isMobile && `Trash (${selectedCount})`}
-                  {isMobile && selectedCount}
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={() => handleBulkAction('restore')}
-                    className={cn(isMobile ? "text-xs px-2 py-1" : "")}
-                  >
-                    <RotateCcw className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
-                    {!isMobile && `Restore (${selectedCount})`}
-                    {isMobile && selectedCount}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleBulkAction('delete')}
-                    className={cn(isMobile ? "text-xs px-2 py-1" : "")}
-                  >
-                    <Trash2 className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
-                    {!isMobile && `Delete (${selectedCount})`}
-                    {isMobile && selectedCount}
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
         </div>
+        {selectedCount > 0 ? (
+          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:justify-start">
+            <span className="mr-auto text-sm font-medium text-foreground sm:mr-2">{selectedCount} selected</span>
+            {!isTrashView ? (
+              <Button variant="destructive" size="sm" onClick={() => handleBulkAction('trash')}>
+                <Trash2 className="size-4" />
+                <span className="hidden sm:inline">Move to trash</span>
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => handleBulkAction('restore')}>
+                  <RotateCcw className="size-4" />
+                  <span className="hidden sm:inline">Restore</span>
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => handleBulkAction('delete')}>
+                  <Trash2 className="size-4" />
+                  <span className="hidden sm:inline">Delete forever</span>
+                </Button>
+              </>
+            )}
+          </div>
+        ) : (
+          <SearchInputComponent value={searchValue} onChange={handleSearchChange} placeholder="Search mail" />
+        )}
       </div>
 
       <EmailTable
@@ -481,46 +452,36 @@ export default function MailList({
         onMailClick={handleMailClick}
         onStarClick={handleStarClick}
         onSelectChange={handleSelectChange}
-        onSelectAll={handleSelectAll}
         loading={loading}
-        isMobile={isMobile}
       />
 
-      {/* Pagination - Always visible if totalCount > ITEMS_PER_PAGE */}
       {totalCount > ITEMS_PER_PAGE && (
-        <div className="relative z-10 p-2 sm:p-4 border-t border-border">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-            <span className="text-xs sm:text-sm text-muted-foreground">
-              {isMobile
-                ? `${((page - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(page * ITEMS_PER_PAGE, totalCount)} of ${totalCount}`
-                : `Showing ${((page - 1) * ITEMS_PER_PAGE) + 1} - ${Math.min(page * ITEMS_PER_PAGE, totalCount)} of ${totalCount}`
-              }
+        <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2.5 sm:px-4">
+          <span className="text-xs text-muted-foreground tabular-nums sm:text-sm">
+            {(page - 1) * ITEMS_PER_PAGE + 1}–{Math.min(page * ITEMS_PER_PAGE, totalCount)} of {totalCount.toLocaleString()}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="min-w-12 text-center text-xs text-muted-foreground tabular-nums">
+              {page} / {totalPages}
             </span>
-            <div className="flex gap-1 sm:gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className={cn(isMobile ? "text-xs px-2 py-1" : "")}
-              >
-                <ChevronLeft className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "mr-0.5" : "mr-1")} />
-                {!isMobile && "Previous"}
-              </Button>
-              <span className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm text-muted-foreground bg-muted rounded-lg">
-                {isMobile ? `${page}/${Math.ceil(totalCount / ITEMS_PER_PAGE)}` : `Page ${page} of ${Math.ceil(totalCount / ITEMS_PER_PAGE)}`}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => Math.min(Math.ceil(totalCount / ITEMS_PER_PAGE), p + 1))}
-                disabled={page === Math.ceil(totalCount / ITEMS_PER_PAGE)}
-                className={cn(isMobile ? "text-xs px-2 py-1" : "")}
-              >
-                {!isMobile && "Next"}
-                <ChevronRight className={cn("w-3 h-3 sm:w-4 sm:h-4", isMobile ? "ml-0.5" : "ml-1")} />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              aria-label="Next page"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
           </div>
         </div>
       )}

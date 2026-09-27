@@ -119,7 +119,7 @@ const ConfirmDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-      <DialogContent className="max-w-md overflow-hidden p-0 rounded-xl shadow-2xl border-0 [&>button]:hidden">
+      <DialogContent className="sm:max-w-md overflow-hidden p-0 rounded-xl shadow-2xl border-0 [&>button]:hidden">
         <AnimatePresence>
           {open && (
             <motion.div

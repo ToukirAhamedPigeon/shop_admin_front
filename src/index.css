@@ -81,6 +81,8 @@
 
   --primary: oklch(0.52 0.16 262);
   --primary-foreground: oklch(0.99 0 0);
+  /* Blue used as text or icon colour; the same as the fill in light mode. */
+  --primary-text: var(--primary);
 
   --secondary: oklch(0.965 0.004 260);
   --secondary-foreground: oklch(0.27 0.02 265);
@@ -130,8 +132,13 @@
   --popover: oklch(0.215 0.011 265);
   --popover-foreground: oklch(0.96 0.004 260);
 
-  --primary: oklch(0.68 0.14 262);
-  --primary-foreground: oklch(0.16 0.02 265);
+  /* Dark mode splits blue in two. No single blue can carry white text
+     (needs L <= ~0.57) and also read as text on the dark background (needs
+     L >= ~0.6). Fills (buttons, badges) use --primary with white text at
+     4.6:1; blue text and icons use --primary-text at 8.4:1. */
+  --primary: oklch(0.57 0.17 262);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-text: oklch(0.74 0.13 262);
 
   --secondary: oklch(0.255 0.012 265);
   --secondary-foreground: oklch(0.96 0.004 260);
@@ -469,6 +476,12 @@ aside.app-sidebar::before {
   box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.1), 0 4px 12px -4px oklch(0.1 0.05 270 / 0.6);
 }
 
+@layer utilities {
+  :where(.dark) .text-primary {
+    color: var(--primary-text);
+  }
+}
+
 @layer components {
 /* Square icon buttons in the header (menu, collapse, search, language, theme). */
 .header-icon-btn {
@@ -525,7 +538,7 @@ aside.app-sidebar::before {
 .markdown-body h2 { font-size: 1.3125rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
 .markdown-body h3 { font-size: 1.125rem; }
 .markdown-body :where(h4, h5, h6) { font-size: 1rem; }
-.markdown-body a { color: var(--primary); text-underline-offset: 3px; }
+.markdown-body a { color: var(--primary-text); text-underline-offset: 3px; }
 .markdown-body a:hover { text-decoration: underline; }
 .markdown-body :where(ul, ol) { padding-left: 1.5rem; }
 .markdown-body ul { list-style: disc; }

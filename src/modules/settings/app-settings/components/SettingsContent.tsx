@@ -187,7 +187,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex-1 h-full overflow-y-auto p-6"
+      className="flex-1 h-full overflow-y-auto p-4 sm:p-6"
     >
       <div className="max-w-4xl mx-auto">
         {/* Header */}

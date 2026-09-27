@@ -167,13 +167,14 @@ export default function TemplatesPage() {
       className="flex flex-col gap-4"
     >
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap items-end justify-between gap-3 [&>*:first-child]:min-w-0">
         <Breadcrumb
           title="common.mail.templates.title"
+          defaultTitle="Mail Templates"
           showTitle={true}
           items={[
-            { label: "common.mail.title", href: "/mail" },
-            { label: "common.mail.templates.title", href: "/mail/templates" },
+            { label: "common.mail.title", defaultLabel: "Mailbox", href: "/mail" },
+            { label: "common.mail.templates.title", defaultLabel: "Templates", href: "/mail/templates" },
           ]}
           className="pb-0"
         />
@@ -356,7 +357,7 @@ export default function TemplatesPage() {
 
       {/* Template Form Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <GlassCard variant="primary" padding="md" className="border-0 shadow-none">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">

@@ -75,19 +75,20 @@ const ModalCore: React.FC<ModalCoreProps> = ({
         display: "flex",
         flexDirection: "column",
         width: widthPercent ? `${widthPercent}%` : "100%",
-        minWidth: "320px",
-        maxWidth: "90vw",
+        // Never wider than the screen; the old fixed 320px minimum overflowed small phones.
+        minWidth: "min(320px, 100%)",
+        maxWidth: "min(90vw, 100%)",
       }}
     >
       {/* Header */}
       <div
         className={cn(
-          "sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-card",
+          "sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-card",
           "border-b border-border",
           titleClassName
         )}
       >
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className="min-w-0 truncate text-lg font-semibold text-foreground">
           {t(title)}
         </h2>
 
@@ -112,7 +113,7 @@ const ModalCore: React.FC<ModalCoreProps> = ({
 
       {/* Body */}
       <div
-        className="px-6 py-4 overflow-y-auto"
+        className="px-4 py-4 overflow-y-auto overflow-x-auto sm:px-6"
         style={{ flexGrow: 1, maxHeight: "calc(90vh - 80px)" }}
         ref={printRef}
       >

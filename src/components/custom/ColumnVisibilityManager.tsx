@@ -261,7 +261,7 @@ export function ColumnVisibilityManager<T>({
       if (isOpen) loadSettings()
       else onClose()
     }}>
-      <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-5xl overflow-hidden rounded-2xl p-0 shadow-xl border-0">
+      <DialogContent className="sm:max-w-4xl lg:max-w-5xl overflow-hidden rounded-2xl p-0 shadow-xl border-0">
         <div className="relative rounded-2xl bg-card border border-border">
           {/* Header */}
           <div className="relative z-10 px-6 py-5 border-b border-border">

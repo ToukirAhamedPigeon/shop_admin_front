@@ -75,9 +75,9 @@ export const SettingsPage: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="flex h-[calc(100vh-100px)] overflow-hidden"
+      className="flex flex-col md:flex-row md:h-[calc(100vh-100px)] md:overflow-hidden"
     >
-      <div className="rounded-l-2xl flex-shrink-0 bg-card border border-border">
+      <div className="flex-shrink-0 rounded-t-2xl border border-border bg-card md:rounded-t-none md:rounded-l-2xl">
         <SettingsSidebar
           activeCategory={activeCategory}
           onSelect={setActiveCategory}
@@ -85,7 +85,7 @@ export const SettingsPage: React.FC = () => {
         />
       </div>
 
-      <div className="flex-1 rounded-r-2xl overflow-hidden bg-background border border-border">
+      <div className="min-w-0 flex-1 overflow-hidden rounded-b-2xl border border-t-0 border-border bg-background md:rounded-b-none md:rounded-r-2xl md:border-t md:border-l-0">
         <SettingsContent
           category={activeCategory}
           data={data}
