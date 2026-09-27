@@ -21,6 +21,7 @@ import {
   RowActions,
   IndexCell,
   EmptyState,
+  ErrorState,
   TrashViewIndicator, 
   TableWithLoader,
   SelectAllCheckbox
@@ -1097,7 +1098,13 @@ export default function Users() {
       {/* TABLE */}
       <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
         <TableWithLoader loading={loading} id="printable-user-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
-          {showEmptyState ? (
+          {showErrorState ? (
+            <ErrorState
+              message="Couldn't load users"
+              suggestion="The server sent an unexpected response. Check your connection and try again."
+              onRetry={() => fetchData()}
+            />
+          ) : showEmptyState ? (
             <EmptyState
               message={showTrash ? "No deleted users found" : "No users found"}
               suggestion={showTrash ? "Deleted users will appear here once you move them to trash." : "Try adjusting your search or filter criteria to see more results."}
