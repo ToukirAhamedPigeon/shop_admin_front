@@ -1,39 +1,19 @@
 // src/modules/dashboard/api/index.ts
-// Thin wrappers over existing list endpoints. The API has no dedicated
-// dashboard endpoint, so counts come from `totalCount` with `limit: 1`.
 import api from "@/lib/axios";
 import type { IUserLog } from "@/types";
+import type { MailStatistics } from "@/modules/mail/types";
 
-export { getMailStatistics } from "@/modules/mail/api";
+/** Sections the caller can't read come back as null. */
+export interface DashboardSummary {
+  timeZone: string;
+  users: { total: number; active: number } | null;
+  mail: MailStatistics | null;
+  activity: { ownOnly: boolean; days: { date: string; count: number }[] } | null;
+  recentLogs: IUserLog[] | null;
+}
 
-export const getUserCount = async (): Promise<number> => {
-  const res = await api.post("/users", { page: 1, limit: 1, isDeletedStr: "false" });
-  return Number(res.data?.grandTotalCount ?? res.data?.totalCount ?? 0);
-};
-
-type LogQuery = {
-  from?: Date;
-  to?: Date;
-  /** Limit to one user's logs (users without read-all-logs permission). */
-  createdBy?: string;
-};
-
-const logPayload = ({ from, to, createdBy }: LogQuery, limit: number) => ({
-  page: 1,
-  limit,
-  sortBy: "createdAt",
-  sortOrder: "desc",
-  ...(from && { createdAtFrom: from }),
-  ...(to && { createdAtTo: to }),
-  ...(createdBy && { createdBy: [createdBy] }),
-});
-
-export const getLogCount = async (query: LogQuery): Promise<number> => {
-  const res = await api.post("/UserLog", logPayload(query, 1));
-  return Number(res.data?.totalCount ?? 0);
-};
-
-export const getRecentLogs = async (query: LogQuery, limit = 6): Promise<IUserLog[]> => {
-  const res = await api.post("/UserLog", logPayload(query, limit));
-  return (res.data?.logs ?? []) as IUserLog[];
-};
+/** One call for the whole dashboard; days split at local midnight in the browser's time zone. */
+export const getDashboardSummary = (days: number) =>
+  api.get<DashboardSummary>("/Dashboard/summary", {
+    params: { days, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+  });

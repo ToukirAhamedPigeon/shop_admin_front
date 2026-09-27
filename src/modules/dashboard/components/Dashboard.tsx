@@ -26,10 +26,13 @@ export default function Dashboard() {
   const tiles = [
     {
       title: t("dashboard.stat.users", "Total users"),
-      section: users,
+      section: pick(users, (u) => u.total),
       icon: Users,
       tone: "primary" as const,
-      caption: t("dashboard.stat.usersCaption", "Active accounts"),
+      caption:
+        users.status === "ready"
+          ? `${users.data.active.toLocaleString()} ${t("dashboard.stat.usersActive", "active")}`
+          : t("dashboard.stat.usersCaption", "Registered accounts"),
       to: "/settings/users",
     },
     {

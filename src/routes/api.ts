@@ -16,6 +16,7 @@
 // [8] AUTH > PASSWORD RESET > Request Password Reset : POST /auth/forgot-password
 // [9] AUTH > PASSWORD RESET > Validate Reset Token : GET /auth/reset-password/validate/:token
 // [10] SETTINGS > User Table Column Settings : GET /user-table-combination
+// [11] DASHBOARD > SUMMARY > Dashboard Summary : GET /Dashboard/summary
 
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
