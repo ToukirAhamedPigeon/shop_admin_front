@@ -21,6 +21,7 @@ import {
   IndexCell,
   EmptyState,
   TrashViewIndicator,
+  ErrorState,
   TableWithLoader,
   SelectAllCheckbox
 } from '@/components/custom/Table'
@@ -797,7 +798,13 @@ export default function Roles() {
       {/* TABLE */}
       <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
         <TableWithLoader loading={loading} id="printable-role-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
-          {showEmptyState ? (
+          {showErrorState ? (
+            <ErrorState
+              message="Couldn't load roles"
+              suggestion="The server didn't respond as expected. Check your connection and try again."
+              onRetry={() => fetchData()}
+            />
+          ) : showEmptyState ? (
             <EmptyState
               message={showTrash ? "No deleted roles found" : "No roles found"}
               suggestion={showTrash ? "Deleted roles will appear here once you move them to trash." : "Try adjusting your search or filter criteria to see more results."}

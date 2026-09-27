@@ -22,6 +22,7 @@ import {
   RowActions,
   IndexCell,
   EmptyState,
+  ErrorState,
   TableWithLoader,
 } from '@/components/custom/Table'
 import { getCustomDateTime } from '@/lib/formatDate'
@@ -480,9 +481,10 @@ export default function LogListTable() {
                 {showErrorState && (
                   <tr>
                     <td colSpan={table.getVisibleFlatColumns().length} className="p-0">
-                      <EmptyState
-                        message="Error loading logs"
-                        suggestion="Please try again or contact support"
+                      <ErrorState
+                        message="Couldn't load logs"
+                        suggestion="The server didn't respond as expected. Check your connection and try again."
+                        onRetry={() => fetchData()}
                       />
                     </td>
                   </tr>

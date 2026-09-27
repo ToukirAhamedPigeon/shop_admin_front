@@ -58,6 +58,12 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
 - `useTranslations().t` is memoized. Keep it stable: effects list `t` as a
   dependency, and a new function each render caused an infinite fetch loop
   on the docs pages.
+- Keep `framer-motion` at 12.43 or later. 12.23 dropped every fade back to
+  opacity 0 for one frame as it finished, so pages blinked once or twice
+  after loading.
+- Table pages use `useTable`. It treats a reply without a list as a failed
+  load, and only the newest request updates the table. Show failures with
+  `ErrorState` (message plus "Try again") from `components/custom/Table`.
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
 
 ## Security notes

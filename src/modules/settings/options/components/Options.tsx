@@ -20,6 +20,7 @@ import {
   RowActions,
   IndexCell,
   TrashViewIndicator,
+  ErrorState,
   TableWithLoader,
   SelectAllCheckbox
 } from '@/components/custom/Table';
@@ -909,7 +910,13 @@ export default function Options() {
       {/* TABLE */}
       <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
         <TableWithLoader loading={loading} id="printable-option-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
-          {showEmptyState ? (
+          {showErrorState ? (
+            <ErrorState
+              message="Couldn't load options"
+              suggestion="The server didn't respond as expected. Check your connection and try again."
+              onRetry={() => fetchData()}
+            />
+          ) : showEmptyState ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <div className="w-24 h-24 mb-6 rounded-full bg-muted flex items-center justify-center">
                 <List className="w-12 h-12 text-muted-foreground" />
