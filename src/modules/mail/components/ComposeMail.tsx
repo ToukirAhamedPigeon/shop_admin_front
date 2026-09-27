@@ -42,6 +42,8 @@ interface ComposeMailProps {
   onClose: () => void;
   onSent: () => void;
   replyTo?: { id?: number; toMail?: string; subject?: string; fromMail?: string };
+  /** Start from this template (the Templates page's "Use" button). */
+  template?: MailTemplate;
 }
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
@@ -72,7 +74,7 @@ const getFileExtension = (fileName: string): string => {
   return dot > 0 ? fileName.slice(dot + 1).toLowerCase() : '';
 };
 
-export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeMailProps) {
+export default function ComposeMail({ open, onClose, onSent, replyTo, template }: ComposeMailProps) {
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showCc, setShowCc] = useState(false);
@@ -114,12 +116,20 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
     }
   }, [replyTo, open, setValue]);
 
-  const handleTemplateChange = (templateId: string) => {
-    const template = templates.find(t => t.id.toString() === templateId);
-    if (template) {
+  useEffect(() => {
+    if (template && open) {
       setValue('subject', template.subject);
       setValue('body', template.body || '');
       setTemplateBody(template.body || '');
+    }
+  }, [template, open, setValue]);
+
+  const handleTemplateChange = (templateId: string) => {
+    const picked = templates.find(t => t.id.toString() === templateId);
+    if (picked) {
+      setValue('subject', picked.subject);
+      setValue('body', picked.body || '');
+      setTemplateBody(picked.body || '');
     }
   };
 
