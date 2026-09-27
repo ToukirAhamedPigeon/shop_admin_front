@@ -53,6 +53,7 @@ export function useTable<T>({
   
   // Refs for managing loading state
   const loadingStartTime = useRef<number | null>(null)
+  const latestRequest = useRef(0)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const pendingData = useRef<{ 
     data: T[]; 
@@ -62,6 +63,9 @@ export function useTable<T>({
   } | null>(null)
 
   const fetchData = useCallback(async (targetPage?: number) => {
+    // Only the newest request may update the table; an older reply that lands
+    // late (fast filter changes, retries) is dropped.
+    const requestId = ++latestRequest.current
     setLoading(true)
     setError(null)
     loadingStartTime.current = Date.now()
@@ -73,7 +77,7 @@ export function useTable<T>({
     const pageToFetch = targetPage !== undefined ? targetPage + 1 : pageIndex + 1
 
     try {
-      const res = await fetcher({
+      const raw = await fetcher({
         q: globalFilter,
         page: pageToFetch,
         limit: pageSize,
@@ -81,6 +85,18 @@ export function useTable<T>({
         sortOrder,
         ...(enableTrashView && { showTrash }),
       })
+      // A reply without a list (an error page, a proxy response, an API
+      // change) used to become `data = undefined` and crash the page on
+      // `data.length`. Treat it as a failed load instead.
+      if (requestId !== latestRequest.current) return
+      if (!Array.isArray(raw?.data)) {
+        throw new Error('Unexpected response from the server')
+      }
+      const res = {
+        data: raw.data,
+        total: Number(raw.total) || 0,
+        grandTotalCount: Number(raw.grandTotalCount) || 0,
+      }
       
       // Store the data temporarily
       pendingData.current = {
@@ -106,6 +122,7 @@ export function useTable<T>({
         timeoutRef.current = setTimeout(() => {
           if (pendingData.current) {
             setData(pendingData.current.data)
+            setError(null)
             setTotalCount(pendingData.current.total)
             setGrandTotalCount(pendingData.current.grandTotalCount)
             
@@ -120,6 +137,7 @@ export function useTable<T>({
         }, remainingTime)
       } else {
         setData(res.data)
+        setError(null)
         setTotalCount(res.total)
         setGrandTotalCount(res.grandTotalCount)
         
@@ -131,6 +149,7 @@ export function useTable<T>({
         pendingData.current = null
       }
     } catch (err) {
+      if (requestId !== latestRequest.current) return
       setError(err instanceof Error ? err.message : 'Failed to fetch data')
       console.error('Error fetching data:', err)
       setLoading(false)

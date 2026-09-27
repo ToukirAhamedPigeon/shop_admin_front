@@ -735,6 +735,32 @@ export const EmptyState = ({ message, suggestion }: { message?: string; suggesti
   </div>
 )
 
+/** Shown in place of the table when loading fails, with an optional retry. */
+export const ErrorState = ({
+  message,
+  suggestion,
+  onRetry,
+}: {
+  message?: string
+  suggestion?: string
+  onRetry?: () => void
+}) => (
+  <div role="alert" className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+    <div className="size-14 mb-4 rounded-xl bg-destructive/10 flex items-center justify-center">
+      <svg className="size-7 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m0 3.75h.008M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+      </svg>
+    </div>
+    <p className="text-base font-medium text-foreground">{message || "Couldn't load the data"}</p>
+    {suggestion && <p className="text-sm text-muted-foreground mt-1 max-w-sm text-center">{suggestion}</p>}
+    {onRetry && (
+      <Button variant="outline" size="sm" className="mt-4 cursor-pointer" onClick={onRetry}>
+        Try again
+      </Button>
+    )}
+  </div>
+)
+
 interface TrashViewIndicatorProps {
   type: 'trash' | 'store'
   className?: string
