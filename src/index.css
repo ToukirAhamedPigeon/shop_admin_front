@@ -291,43 +291,45 @@
   mask-image: linear-gradient(to right, transparent var(--in), #000 var(--solid));
   -webkit-mask-image: linear-gradient(to right, transparent var(--in), #000 var(--solid));
 }
+/* The glass is a deep navy in both themes: the scene behind it is dark, so a
+   light wash only turned it grey. The card on top carries the theme. */
 .login-glass-tint {
   position: absolute;
   inset: 0;
-  /* Lavender where the glass begins, so the dark-to-light blend reads as
-     colour rather than grey; plain frosted background toward the form. */
+  background:
+    radial-gradient(60% 50% at 70% 50%, oklch(0.3 0.08 275 / 0.35), transparent 70%),
+    oklch(0.15 0.03 272 / 0.62);
+  mask-image: linear-gradient(to right, transparent 12%, #000 55%);
+  -webkit-mask-image: linear-gradient(to right, transparent 12%, #000 55%);
+}
+/* A faint hairline where the glass becomes solid, like a pane edge. */
+.login-glass-tint::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: linear-gradient(
     to right,
-    oklch(0.82 0.07 290 / 0.55) 20%,
-    color-mix(in oklch, var(--background) 78%, transparent) 55%
+    transparent 38%,
+    oklch(1 0 0 / 0.05) 42%,
+    transparent 46%
   );
-  mask-image: linear-gradient(to right, transparent 16%, #000 58%);
-  -webkit-mask-image: linear-gradient(to right, transparent 16%, #000 58%);
-}
-.dark .login-glass-tint {
-  background: color-mix(in oklch, var(--background) 40%, transparent);
 }
 /* No backdrop blur (mobile, low-power devices): a denser tint stands in. */
 .login-glass--lite .login-glass-tint {
-  background: linear-gradient(
-    to right,
-    oklch(0.82 0.07 290 / 0.6) 20%,
-    color-mix(in oklch, var(--background) 90%, transparent) 55%
-  );
-}
-.dark .login-glass--lite .login-glass-tint {
-  background: color-mix(in oklch, var(--background) 84%, transparent);
+  background:
+    radial-gradient(60% 50% at 70% 50%, oklch(0.3 0.08 275 / 0.3), transparent 70%),
+    oklch(0.14 0.03 272 / 0.86);
 }
 @media (max-width: 1023px) {
   .login-glass-tint {
     mask-image: none;
     -webkit-mask-image: none;
   }
-  .login-glass--lite .login-glass-tint {
-    background: color-mix(in oklch, var(--background) 55%, transparent);
+  .login-glass-tint::before {
+    display: none;
   }
-  .dark .login-glass--lite .login-glass-tint {
-    background: color-mix(in oklch, var(--background) 45%, transparent);
+  .login-glass--lite .login-glass-tint {
+    background: oklch(0.14 0.03 272 / 0.55);
   }
 }
 

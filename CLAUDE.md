@@ -36,7 +36,9 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   (`src/components/aceternity/`). Three.js must stay lazy-loaded (desktop only,
   `BrainScene` chunk), and every effect must respect `prefers-reduced-motion`.
   The glass drops its backdrop blur on mobile, on low-power devices, and when
-  the measured frame rate falls below 40 fps. Keep that fallback.
+  the measured frame rate falls below 40 fps. Keep that fallback. The brain
+  mesh is built in a Web Worker (`brain.worker.ts` → `brainGeometry.ts`); keep
+  heavy geometry work off the main thread so the form stays responsive.
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
 
 ## Security notes
