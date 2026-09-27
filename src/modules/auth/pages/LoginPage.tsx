@@ -24,8 +24,8 @@ const loginSchema = z.object({
 });
 type LoginForm = z.infer<typeof loginSchema>;
 
-// Full-screen brain scene; its own chunk so three.js stays out of the main bundle.
-const BrainScene = lazy(() => import("@/modules/auth/components/login/BrainScene"));
+// Full-screen neural-network sphere; its own chunk so three.js stays out of the main bundle.
+const NeuralScene = lazy(() => import("@/modules/auth/components/login/NeuralScene"));
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -81,7 +81,7 @@ export default function LoginPage() {
     if (accessToken) navigate("/dashboard", { replace: true });
   }, [accessToken, navigate]);
 
-  // Adaptive quality: once the brain is on screen, sample the real frame rate
+  // Adaptive quality: once the 3D scene is on screen, sample the real frame rate
   // and fall back to the tint-only glass if the blur makes the page stutter.
   useEffect(() => {
     if (!isDesktop || !sceneReady || liteGlass) return;
@@ -150,7 +150,7 @@ export default function LoginPage() {
           transition={{ duration: reduceMotion ? 0 : 1.6, ease: "easeOut" }}
         >
           <Suspense fallback={null}>
-            <BrainScene animate={!reduceMotion} />
+            <NeuralScene animate={!reduceMotion} />
           </Suspense>
         </motion.div>
       )}
@@ -160,7 +160,7 @@ export default function LoginPage() {
 
       <main className="relative flex items-center justify-center px-4 py-20">
         {/* Progressive frosted glass: starts clear left of the column and
-            thickens toward the form, so the brain stays faintly visible. */}
+            thickens toward the form, so the sphere stays faintly visible. */}
         <div
           aria-hidden
           className={cn(

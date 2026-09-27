@@ -1,6 +1,6 @@
 // Left-hand brand copy for the login page (large screens only): a GSAP-revealed
 // headline at the top and the feature list at the bottom, leaving the middle
-// clear for the full-screen brain scene rendered by LoginPage.
+// clear for the full-screen 3D scene rendered by LoginPage.
 import { useLayoutEffect, useRef } from "react";
 import { useReducedMotion } from "framer-motion";
 import gsap from "gsap";

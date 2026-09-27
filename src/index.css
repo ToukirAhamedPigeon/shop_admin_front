@@ -265,7 +265,7 @@
 }
 
 /* ===== Login page (richer motion is intentional here; see CLAUDE.md) ===== */
-/* Dark stage under the whole page; the brain scene draws on top of it. The
+/* Dark stage under the whole page; the 3D scene draws on top of it. The
    static colour pools also carry mobile, where no 3D scene is loaded. */
 .login-stage {
   background:
