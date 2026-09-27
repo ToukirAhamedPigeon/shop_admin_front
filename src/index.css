@@ -333,6 +333,14 @@
   }
 }
 
+/* Status code on the error pages (404/403): soft brand gradient text. */
+.auth-error-code {
+  background: linear-gradient(135deg, var(--primary), var(--chart-4));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* Travelling border beam for SpotlightCard. */
 .aceternity-beam {
   background: conic-gradient(

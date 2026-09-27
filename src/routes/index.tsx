@@ -9,6 +9,7 @@ import PermissionRoute from "@/components/PermissionRoute";
 import PublicRoute from "@/components/PublicRoute";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "@/layouts/AdminLayout";
+import AuthShell from "@/modules/auth/components/AuthShell";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
 import UsersPage from "@/modules/settings/users/pages/UsersPage";
@@ -36,19 +37,15 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-      {/* Public routes */}
-      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-      <Route path="/reset-password/:token" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
-      <Route
-        path="/verify-email"
-        element={
-          <PublicRoute>
-            <VerifyEmailPage />
-          </PublicRoute>
-        }
-      />
-
+      {/* Public pages share AuthShell (3D scene + frosted glass). PublicRoute
+          wraps the shell once, so moving between these pages keeps the scene
+          and runs the auth check only once. */}
+      <Route element={<PublicRoute><AuthShell /></PublicRoute>}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+      </Route>
 
       {/* Protected layout */}
       <Route
@@ -199,11 +196,14 @@ export default function AppRoutes() {
             </PermissionRoute>
           }
         />
+      </Route>
+
+      {/* Error pages: outside the admin layout, same shell, for signed-in and
+          signed-out users alike. */}
+      <Route element={<AuthShell />}>
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />
       </Route>
-      <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
