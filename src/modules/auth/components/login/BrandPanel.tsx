@@ -28,24 +28,38 @@ export default function BrandPanel({ onIntroComplete }: { onIntroComplete?: () =
   ];
 
   useLayoutEffect(() => {
-    if (reduceMotion || !headline.current) {
+    if (reduceMotion || !headline.current || !root.current) {
       onDone.current?.();
       return;
     }
-    const ctx = gsap.context(() => {
-      const split = SplitText.create(headline.current!, { type: "lines,words", mask: "lines" });
-      // Give line masks room for descenders (g, y, p) without shifting layout.
-      split.masks.forEach((m) => {
-        (m as HTMLElement).style.paddingBottom = "0.14em";
-        (m as HTMLElement).style.marginBottom = "-0.14em";
-      });
-      gsap
-        .timeline({ defaults: { ease: "power3.out" }, onComplete: () => onDone.current?.() })
-        .from("[data-brand-logo]", { autoAlpha: 0, y: 12, duration: 0.6 })
-        .from(split.words, { yPercent: 110, duration: 0.9, stagger: 0.06 }, "-=0.3")
-        .from("[data-brand-feature]", { autoAlpha: 0, x: -14, duration: 0.5, stagger: 0.1 }, "-=0.2");
-    }, root);
-    return () => ctx.revert();
+    // Split only once Inter has loaded: splitting against the fallback font
+    // freezes the wrong line breaks. Hide the copy meanwhile to avoid a flash.
+    const el = root.current;
+    gsap.set(el, { autoAlpha: 0 });
+    let ctx: gsap.Context | undefined;
+    let cancelled = false;
+    document.fonts.ready.then(() => {
+      if (cancelled || !headline.current) return;
+      ctx = gsap.context(() => {
+        gsap.set(el, { autoAlpha: 1 });
+        const split = SplitText.create(headline.current!, { type: "lines,words", mask: "lines" });
+        // Give line masks room for descenders (g, y, p) without shifting layout.
+        split.masks.forEach((m) => {
+          (m as HTMLElement).style.paddingBottom = "0.14em";
+          (m as HTMLElement).style.marginBottom = "-0.14em";
+        });
+        gsap
+          .timeline({ defaults: { ease: "power3.out" }, onComplete: () => onDone.current?.() })
+          .from("[data-brand-logo]", { autoAlpha: 0, y: 12, duration: 0.6 })
+          .from(split.words, { yPercent: 110, duration: 0.9, stagger: 0.06 }, "-=0.3")
+          .from("[data-brand-feature]", { autoAlpha: 0, x: -14, duration: 0.5, stagger: 0.1 }, "-=0.2");
+      }, root);
+    });
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+      gsap.set(el, { clearProps: "opacity,visibility" });
+    };
   }, [reduceMotion]);
 
   return (

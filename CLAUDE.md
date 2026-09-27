@@ -29,8 +29,12 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   instead of raw palette classes like `text-gray-500` or `bg-blue-500`.
 - Keep motion short and subtle (fades or small slides, about 150–300 ms,
   ease-out). No springs, bounces or hover scaling.
-- Exception: the login page (`src/modules/auth/pages/LoginPage.tsx`) is
-  intentionally richer, at the owner's request. It has a full-screen Three.js
+- Exception: the public pages (login, forgot/reset password, verify email,
+  403 and 404) are intentionally richer, at the owner's request. They all
+  render inside `AuthShell` (`src/modules/auth/components/AuthShell.tsx`), a
+  layout route, so the scene persists while moving between them. Build new
+  public pages from `AuthKit.tsx` (card, fields, status, error code) rather
+  than restyling from scratch. The shell has a full-screen Three.js
   neural-network sphere (`NeuralScene`), progressive frosted glass behind the
   form, a GSAP headline reveal and Aceternity-style effects
   (`src/components/aceternity/`). Three.js must stay lazy-loaded (desktop only,
