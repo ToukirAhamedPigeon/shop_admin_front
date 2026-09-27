@@ -1,11 +1,10 @@
 // src/modules/dashboard/hooks/useDashboardData.ts
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { addDays, endOfDay, startOfDay } from "date-fns";
 import type { RootState } from "@/redux/store";
 import type { IUserLog } from "@/types";
 import type { MailStatistics } from "@/modules/mail/types";
-import { getLogCount, getMailStatistics, getRecentLogs, getUserCount } from "../api";
+import { getDashboardSummary, type DashboardSummary } from "../api";
 
 /** `hidden` means the user lacks the permission, so the section isn't shown. */
 export type Section<T> =
@@ -15,74 +14,54 @@ export type Section<T> =
   | { status: "hidden" };
 
 export type ActivityDay = { date: Date; count: number };
+export type UsersSummary = { total: number; active: number };
 
 export const ACTIVITY_DAYS = 14;
 
-const loading = { status: "loading" } as const;
-const hidden = { status: "hidden" } as const;
+type State = { status: "loading" } | { status: "error" } | { status: "ready"; data: DashboardSummary };
 
-function load<T>(enabled: boolean, fetcher: () => Promise<T>, set: (s: Section<T>) => void, alive: () => boolean) {
-  if (!enabled) {
-    set(hidden);
-    return;
-  }
-  set(loading);
-  fetcher().then(
-    (data) => {
-      if (alive()) set({ status: "ready", data });
-    },
-    () => {
-      if (alive()) set({ status: "error" });
-    }
-  );
-}
+// "2026-09-27" is a local calendar date; `new Date(string)` would read it as UTC.
+const localDate = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
 
 export function useDashboardData() {
-  const userId = useSelector((state: RootState) => state.auth.user?.id as string | undefined);
   const permissions = useSelector((state: RootState) => state.auth.user?.permissions as string[] | undefined);
   const has = (p: string) => !!permissions?.includes(p);
-
-  const canUsers = has("read-admin-users");
-  const canMail = has("read-admin-mails");
-  const canLogs = has("read-admin-user-logs");
-  // Without read-all, the log endpoints are scoped to the user's own actions,
-  // matching the User Logs page.
-  const ownLogsOnly = !has("read-admin-all-user-logs");
-
-  const [users, setUsers] = useState<Section<number>>(loading);
-  const [mail, setMail] = useState<Section<MailStatistics>>(loading);
-  const [activity, setActivity] = useState<Section<ActivityDay[]>>(loading);
-  const [recent, setRecent] = useState<Section<IUserLog[]>>(loading);
+  const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
     let active = true;
-    const alive = () => active;
-    const createdBy = ownLogsOnly ? userId : undefined;
-
-    load(canUsers, getUserCount, setUsers, alive);
-    load(canMail, () => getMailStatistics().then((r) => r.data), setMail, alive);
-    load(
-      canLogs,
-      () => {
-        const today = startOfDay(new Date());
-        const days = Array.from({ length: ACTIVITY_DAYS }, (_, i) => addDays(today, i - (ACTIVITY_DAYS - 1)));
-        // One count per day keeps the totals exact however busy the log is.
-        return Promise.all(
-          days.map(async (date) => ({
-            date,
-            count: await getLogCount({ from: date, to: endOfDay(date), createdBy }),
-          }))
-        );
+    getDashboardSummary(ACTIVITY_DAYS).then(
+      (res) => {
+        if (active) setState({ status: "ready", data: res.data });
       },
-      setActivity,
-      alive
+      () => {
+        if (active) setState({ status: "error" });
+      }
     );
-    load(canLogs, () => getRecentLogs({ createdBy }), setRecent, alive);
-
     return () => {
       active = false;
     };
-  }, [canUsers, canMail, canLogs, ownLogsOnly, userId]);
+  }, []);
+
+  // While loading, local permissions decide what to show so sections don't
+  // flash in and out; once loaded, the server's nulls are the source of truth.
+  function section<T>(permission: string, pick: (s: DashboardSummary) => T | null): Section<T> {
+    if (state.status !== "ready") return has(permission) ? state : { status: "hidden" };
+    const data = pick(state.data);
+    return data == null ? { status: "hidden" } : { status: "ready", data };
+  }
+
+  const users = section<UsersSummary>("read-admin-users", (s) => s.users);
+  const mail = section<MailStatistics>("read-admin-mails", (s) => s.mail);
+  const activity = section<ActivityDay[]>("read-admin-user-logs", (s) =>
+    s.activity ? s.activity.days.map((d) => ({ date: localDate(d.date), count: d.count })) : null
+  );
+  const recent = section<IUserLog[]>("read-admin-user-logs", (s) => s.recentLogs);
+  const ownLogsOnly =
+    state.status === "ready" ? !!state.data.activity?.ownOnly : !has("read-admin-all-user-logs");
 
   return { users, mail, activity, recent, ownLogsOnly };
 }
