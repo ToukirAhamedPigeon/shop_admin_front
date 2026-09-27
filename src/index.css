@@ -264,6 +264,61 @@
   color: var(--muted-foreground);
 }
 
+/* ===== Login page (richer motion is intentional here; see CLAUDE.md) ===== */
+.login-brand-panel {
+  background:
+    radial-gradient(ellipse 70% 60% at 75% 45%, oklch(0.36 0.16 275 / 0.55), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 10% 100%, oklch(0.32 0.12 250 / 0.5), transparent 70%),
+    oklch(0.17 0.04 268);
+}
+.login-brand-wash {
+  background: linear-gradient(90deg, oklch(0.17 0.04 268) 0%, oklch(0.17 0.04 268 / 0.55) 45%, transparent 75%);
+}
+
+.login-aurora {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  filter: blur(60px);
+  background:
+    radial-gradient(35% 35% at 25% 30%, color-mix(in oklch, var(--primary) 22%, transparent), transparent 70%),
+    radial-gradient(30% 30% at 75% 70%, color-mix(in oklch, var(--chart-4) 16%, transparent), transparent 70%),
+    radial-gradient(25% 25% at 70% 20%, color-mix(in oklch, var(--chart-2) 14%, transparent), transparent 70%);
+  animation: login-aurora-drift 18s ease-in-out infinite alternate;
+}
+@keyframes login-aurora-drift {
+  0% { transform: translate3d(-3%, -2%, 0) rotate(0deg); }
+  100% { transform: translate3d(3%, 2%, 0) rotate(8deg); }
+}
+
+/* Travelling border beam for SpotlightCard. */
+.aceternity-beam {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 280deg,
+    color-mix(in oklch, var(--primary) 70%, transparent) 330deg,
+    transparent 360deg
+  );
+  animation: aceternity-beam-spin 7s linear infinite;
+}
+@keyframes aceternity-beam-spin {
+  to { transform: rotate(1turn); }
+}
+
+/* Light sweep across the sign-in button on hover. */
+.login-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, oklch(1 0 0 / 0.28) 50%, transparent 65%);
+  transform: translateX(-100%);
+}
+.login-shimmer:hover:not(:disabled)::after {
+  transform: translateX(100%);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* ========== Base Layer ========== */
 @layer base {
   * {
