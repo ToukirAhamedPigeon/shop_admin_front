@@ -290,7 +290,7 @@ export default function ComposeMail({ open, onClose, onSent, replyTo }: ComposeM
 
   return (
     <Dialog open={open} onOpenChange={handleDiscard}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-0">
         <GlassCard variant="primary" padding="lg" className="border-0 shadow-none rounded-2xl">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-bold">

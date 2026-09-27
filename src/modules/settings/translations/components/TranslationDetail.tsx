@@ -68,13 +68,13 @@ export default function TranslationDetail({ translation }: { translation: ITrans
           <TableBody>
             {detailRows.slice(4).map((row) => (
               <TableRow key={row.label} className="hover:bg-muted/50 transition-colors">
-                <TableCell className="font-semibold w-40">
+                <TableCell className="font-semibold w-28 sm:w-40 align-top whitespace-normal">
                   <div className="flex items-center gap-2">
                     <row.icon className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-foreground">{row.label}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-foreground break-all">
+                <TableCell className="text-sm text-foreground whitespace-normal [overflow-wrap:anywhere]">
                   {row.value}
                 </TableCell>
               </TableRow>

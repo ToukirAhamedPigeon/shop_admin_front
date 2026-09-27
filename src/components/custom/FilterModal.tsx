@@ -72,7 +72,7 @@ export function FilterModal<T>({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-2xl overflow-hidden rounded-2xl p-0 shadow-xl border-0">
+      <DialogContent className="sm:max-w-2xl overflow-hidden rounded-2xl p-0 shadow-xl border-0">
         <div className="relative bg-card border border-border">
           <div className="p-6">
             <DialogHeader className="mb-4">
@@ -90,7 +90,7 @@ export function FilterModal<T>({
               {renderForm(filterValues, setFilterValues, resetRef)}
             </div>
 
-            <DialogFooter className="flex flex-row justify-end gap-3 mt-6 pt-4 border-t border-border">
+            <DialogFooter className="flex flex-row flex-wrap justify-end gap-2 sm:gap-3 mt-6 pt-4 border-t border-border [&>button]:flex-1 sm:[&>button]:flex-none">
               <Button
                 variant="outline"
                 onClick={handleReset}

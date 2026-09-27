@@ -18,8 +18,8 @@ export default function PermissionDetail({ permission }: { permission: IPermissi
       <TableBody>
         {rows.map(([label, value]) => (
           <TableRow key={label}>
-            <TableCell className="font-semibold w-40">{label}</TableCell>
-            <TableCell>{value}</TableCell>
+            <TableCell className="font-semibold w-28 sm:w-40 align-top whitespace-normal">{label}</TableCell>
+            <TableCell className="whitespace-normal [overflow-wrap:anywhere]">{value}</TableCell>
           </TableRow>
         ))}
       </TableBody>

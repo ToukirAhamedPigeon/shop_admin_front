@@ -40,8 +40,9 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   });
 
   return (
-    <div className="w-60 border-r border-border p-3 space-y-0.5">
-      <div className="px-3 pt-1 pb-3">
+    // Phones: a horizontal row of chips above the content. md+: a vertical list.
+    <div className="flex w-full gap-1 overflow-x-auto border-b border-border p-2 md:block md:w-60 md:space-y-0.5 md:overflow-visible md:border-b-0 md:border-r md:p-3">
+      <div className="hidden px-3 pt-1 pb-3 md:block">
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {t('Categories')}
         </h3>
@@ -57,7 +58,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             key={categoryKey}
             onClick={() => onSelect(categoryKey)}
             className={cn(
-              "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors duration-150 text-left whitespace-nowrap cursor-pointer",
+              "flex shrink-0 items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors duration-150 text-left whitespace-nowrap cursor-pointer md:w-full",
               isActive
                 ? "bg-accent text-primary font-medium"
                 : "hover:bg-accent text-foreground/80 hover:text-foreground"

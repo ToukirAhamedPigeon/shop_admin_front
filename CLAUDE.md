@@ -64,6 +64,17 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
 - Table pages use `useTable`. It treats a reply without a list as a failed
   load, and only the newest request updates the table. Show failures with
   `ErrorState` (message plus "Try again") from `components/custom/Table`.
+- Dark mode splits blue in two: `--primary` is the fill (buttons, badges;
+  white `--primary-foreground`) and `--primary-text` is blue text and icons.
+  `text-primary` maps to `--primary-text` in dark mode automatically. Use
+  `bg-primary text-primary-foreground` for filled buttons, never dark text on
+  blue.
+- Mobile: dialogs size themselves as `calc(100% - 2rem)`. Pass `sm:max-w-*`,
+  not `max-w-*`, or the mobile margin is lost. Rows of header buttons must be
+  allowed to wrap (`flex-wrap`), and side-by-side panels stack below `md`.
+  Check new pages at 360px wide.
+- The Mailbox is one card: a folder rail (chips on phones) and a message
+  list (`MailList` rows with sender, subject, preview and date).
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
 
 ## Security notes

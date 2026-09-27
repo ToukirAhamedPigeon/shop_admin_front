@@ -198,7 +198,7 @@ export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?:
               type="button"
               size="sm"
               disabled={loading}
-              className="text-xs h-auto py-1.5"
+              className="text-xs h-auto py-1.5 whitespace-normal text-left"
               onClick={async () => {
                 try {
                   setLoading(true)
@@ -272,8 +272,8 @@ export default function UserDetail({ user, onUpdated }: { user: any; onUpdated?:
       <TableBody>
         {rows.map(([label, value]) => (
           <TableRow key={label as string}>
-            <TableCell className="font-semibold w-40">{label as string}</TableCell>
-            <TableCell>{value}</TableCell>
+            <TableCell className="font-semibold w-28 sm:w-40 align-top whitespace-normal">{label as string}</TableCell>
+            <TableCell className="whitespace-normal [overflow-wrap:anywhere]">{value}</TableCell>
           </TableRow>
         ))}
       </TableBody>
