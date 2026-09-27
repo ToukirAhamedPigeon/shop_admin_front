@@ -183,7 +183,10 @@ export default function LoginPage() {
             ))}
           <div className="login-glass-tint" />
         </div>
-        <AuthHeader />
+        {/* The header always sits on the dark glass, so scope it to dark tokens. */}
+        <div className="dark">
+          <AuthHeader />
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.98 }}
