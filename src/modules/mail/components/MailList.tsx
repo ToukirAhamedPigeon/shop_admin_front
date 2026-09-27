@@ -1,5 +1,5 @@
 // src/modules/mail/components/MailList.tsx
-import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { useState, useEffect, useCallback, useImperativeHandle, useRef, memo, type Ref } from 'react';
 import { format, isThisYear, isToday } from 'date-fns';
 import {
   Star,
@@ -20,6 +20,7 @@ import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import Loader from '@/components/custom/Loader';
 import { capitalize } from '@/lib/helpers';
 import { useDebounce } from '@/hooks/useDebounce';
+import { initialsOf } from './mailFormat';
 
 interface MailListProps {
   mailbox: MailboxType;
@@ -27,6 +28,17 @@ interface MailListProps {
   selectedMail: Mail | null;
   onRefreshList: () => void;
   onRefreshStatistics: () => void;
+  /** Called with the rows on screen, so the reader can step to the next one. */
+  onMailsChange?: (mails: Mail[]) => void;
+  /** Called after a bulk action takes messages out of this folder. */
+  onRemoved?: (ids: number[]) => void;
+  /** Lets the reader update or drop a row without reloading the page of results. */
+  ref?: Ref<MailListHandle>;
+}
+
+export interface MailListHandle {
+  patch: (id: number, changes: Partial<Mail>) => void;
+  remove: (id: number) => void;
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -65,12 +77,6 @@ const previewOf = (mail: Mail) => {
     .slice(0, 160);
   previewCache.set(mail.id, text);
   return text;
-};
-
-const initialsOf = (address: string) => {
-  const name = address.split('@')[0].replace(/[._-]+/g, ' ').trim();
-  const parts = name.split(' ').filter(Boolean);
-  return ((parts[0]?.[0] ?? '?') + (parts[1]?.[0] ?? '')).toUpperCase();
 };
 
 const SearchInputComponent = memo(({
@@ -156,6 +162,15 @@ const EmailTable = memo(({
   onSelectChange: (id: number, checked: boolean | string) => void;
   loading: boolean;
 }) => {
+  const listRef = useRef<HTMLUListElement>(null);
+  const activeId = selectedMail?.id;
+
+  // Keep the open message in view when stepping through with j / k.
+  useEffect(() => {
+    if (activeId === undefined) return;
+    listRef.current?.querySelector(`[data-mail-id="${activeId}"]`)?.scrollIntoView({ block: 'nearest' });
+  }, [activeId]);
+
   if (mails.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
@@ -177,7 +192,7 @@ const EmailTable = memo(({
           </div>
         </div>
       )}
-      <ul role="list" className="divide-y divide-border">
+      <ul ref={listRef} role="list" className="divide-y divide-border">
         {mails.map((mail) => {
           const unread = !mail.isRead && !mail.isSent;
           const selected = selectedIds.has(mail.id);
@@ -195,11 +210,13 @@ const EmailTable = memo(({
                 }
               }}
               tabIndex={0}
+              data-mail-id={mail.id}
+              aria-current={active ? 'true' : undefined}
               aria-label={`${unread ? 'Unread, ' : ''}${who}: ${mail.subject}`}
               className={cn(
                 'group relative flex cursor-pointer items-start gap-1 py-2.5 pl-1.5 pr-3 outline-none transition-colors sm:gap-2 sm:pl-2 sm:pr-4',
                 'focus-visible:bg-accent',
-                active || selected ? 'bg-primary/[0.07]' : unread ? 'bg-primary/[0.03] hover:bg-accent' : 'hover:bg-accent'
+                active ? 'bg-primary/[0.11]' : selected ? 'bg-primary/[0.07]' : unread ? 'bg-primary/[0.03] hover:bg-accent' : 'hover:bg-accent'
               )}
             >
               {unread && <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-primary" />}
@@ -264,6 +281,9 @@ export default function MailList({
   selectedMail,
   onRefreshList,
   onRefreshStatistics,
+  onMailsChange,
+  onRemoved,
+  ref,
 }: MailListProps) {
   const [mails, setMails] = useState<Mail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -276,7 +296,6 @@ export default function MailList({
 
   const debouncedSearch = useDebounce(searchValue, 500);
 
-  const isInitialMount = useRef(true);
   const isTrashView = mailbox === 'trash';
 
   const loadMails = useCallback(async () => {
@@ -302,13 +321,26 @@ export default function MailList({
   }, [page, mailbox, debouncedSearch]);
 
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      loadMails();
-    } else {
-      loadMails();
-    }
+    loadMails();
   }, [loadMails]);
+
+  useEffect(() => {
+    onMailsChange?.(mails);
+  }, [mails, onMailsChange]);
+
+  useImperativeHandle(ref, () => ({
+    patch: (id, changes) => setMails((prev) => prev.map((m) => (m.id === id ? { ...m, ...changes } : m))),
+    remove: (id) => {
+      setMails((prev) => prev.filter((m) => m.id !== id));
+      setTotalCount((n) => Math.max(0, n - 1));
+      setSelectedIds((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    },
+  }), []);
 
   useEffect(() => {
     setSelectedIds(new Set());
@@ -384,6 +416,7 @@ export default function MailList({
       await bulkMailAction(actionDialog.ids, actionDialog.action);
       dispatchShowToast({ type: 'success', message: `Bulk ${actionDialog.action} completed` });
       setSelectedIds(new Set());
+      if (actionDialog.action !== 'read' && actionDialog.action !== 'unread') onRemoved?.(actionDialog.ids);
       onRefreshList();
       onRefreshStatistics();
     } catch (error) {
@@ -392,7 +425,7 @@ export default function MailList({
       setBulkActionLoading(false);
       setActionDialog(null);
     }
-  }, [actionDialog, onRefreshList, onRefreshStatistics]);
+  }, [actionDialog, onRefreshList, onRefreshStatistics, onRemoved]);
 
   const selectedCount = selectedIds.size;
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
