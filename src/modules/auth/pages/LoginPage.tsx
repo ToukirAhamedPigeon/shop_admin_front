@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,7 +16,6 @@ import { GlowField } from "@/components/aceternity/glow-field";
 import { dispatchLoginUser, dispatchShowLoader, dispatchHideLoader, dispatchShowToast } from "@/lib/dispatch";
 import AuthHeader from "@/modules/auth/components/AuthHeader";
 import BrandPanel from "@/modules/auth/components/login/BrandPanel";
-import LoginBackdrop from "@/modules/auth/components/login/LoginBackdrop";
 import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
@@ -25,7 +24,31 @@ const loginSchema = z.object({
 });
 type LoginForm = z.infer<typeof loginSchema>;
 
+// Full-screen brain scene; its own chunk so three.js stays out of the main bundle.
+const BrainScene = lazy(() => import("@/modules/auth/components/login/BrainScene"));
+
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+// Backdrop blur over a live WebGL scene is re-computed every frame. Skip it on
+// devices that are likely to struggle (few cores, little memory, data saver).
+function prefersLiteGlass() {
+  if (typeof navigator === "undefined") return false;
+  const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
+  return (
+    (nav.hardwareConcurrency ?? 8) <= 4 ||
+    (nav.deviceMemory ?? 8) <= 4 ||
+    nav.connection?.saveData === true
+  );
+}
+
+// Progressive blur bands: each layer blurs only its own strip (plus overlap),
+// so no single heavy blur covers the whole column except the final one.
+const GLASS_BANDS = [
+  { blur: "4px", left: "0%", fadeIn: "0%", solid: "40%", fadeOut: "100%" },
+  { blur: "10px", left: "10%", fadeIn: "0%", solid: "40%", fadeOut: "100%" },
+  { blur: "20px", left: "20%", fadeIn: "0%", solid: "45%", fadeOut: "100%" },
+  { blur: "36px", left: "30%", fadeIn: "0%", solid: "25%", fadeOut: "100%" },
+];
 
 const container: Variants = {
   hidden: {},
@@ -47,6 +70,8 @@ export default function LoginPage() {
   const reduceMotion = useReducedMotion();
   const shake = useAnimationControls();
   const [showPassword, setShowPassword] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
+  const [liteGlass, setLiteGlass] = useState(prefersLiteGlass);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -55,6 +80,31 @@ export default function LoginPage() {
   useEffect(() => {
     if (accessToken) navigate("/dashboard", { replace: true });
   }, [accessToken, navigate]);
+
+  // Adaptive quality: once the brain is on screen, sample the real frame rate
+  // and fall back to the tint-only glass if the blur makes the page stutter.
+  useEffect(() => {
+    if (!isDesktop || !sceneReady || liteGlass) return;
+    let raf = 0;
+    let frames = 0;
+    let start = 0;
+    const warmup = window.setTimeout(() => {
+      start = performance.now();
+      const tick = (now: number) => {
+        frames++;
+        if (now - start < 1500) {
+          raf = requestAnimationFrame(tick);
+        } else if ((frames * 1000) / (now - start) < 40) {
+          setLiteGlass(true);
+        }
+      };
+      raf = requestAnimationFrame(tick);
+    }, 2000);
+    return () => {
+      window.clearTimeout(warmup);
+      cancelAnimationFrame(raf);
+    };
+  }, [isDesktop, sceneReady, liteGlass]);
 
   const nudge = () => {
     if (!reduceMotion) shake.start({ x: [0, -8, 8, -5, 5, 0], transition: { duration: 0.4 } });
@@ -88,11 +138,51 @@ export default function LoginPage() {
   const busy = loading || isSubmitting;
 
   return (
-    <div className="min-h-dvh grid lg:grid-cols-[1.15fr_1fr] bg-background">
-      {isDesktop && <BrandPanel />}
+    <div className="relative min-h-dvh overflow-hidden login-stage">
+      {/* One scene spans the whole page, so the brand side and the form side are
+          literally the same picture; the form side just sees it through glass. */}
+      {isDesktop && sceneReady && (
+        <motion.div
+          aria-hidden
+          className="fixed inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 1.6, ease: "easeOut" }}
+        >
+          <Suspense fallback={null}>
+            <BrainScene animate={!reduceMotion} />
+          </Suspense>
+        </motion.div>
+      )}
 
-      <main className="relative flex items-center justify-center overflow-hidden px-4 py-20">
-        <LoginBackdrop withSeam={isDesktop} />
+      <div className="relative z-10 grid min-h-dvh lg:grid-cols-[1.15fr_1fr]">
+      {isDesktop && <BrandPanel onIntroComplete={() => setSceneReady(true)} />}
+
+      <main className="relative flex items-center justify-center px-4 py-20">
+        {/* Progressive frosted glass: starts clear left of the column and
+            thickens toward the form, so the brain stays faintly visible. */}
+        <div
+          aria-hidden
+          className={cn(
+            "login-glass pointer-events-none absolute inset-y-0 right-0 left-0 lg:-left-40",
+            (liteGlass || !isDesktop) && "login-glass--lite"
+          )}
+        >
+          {isDesktop && !liteGlass &&
+            GLASS_BANDS.map((b) => (
+              <div
+                key={b.blur}
+                className="login-glass-layer"
+                style={{
+                  left: b.left,
+                  ["--blur" as string]: b.blur,
+                  ["--in" as string]: b.fadeIn,
+                  ["--solid" as string]: b.solid,
+                }}
+              />
+            ))}
+          <div className="login-glass-tint" />
+        </div>
         <AuthHeader />
 
         <motion.div
@@ -212,6 +302,7 @@ export default function LoginPage() {
           </motion.div>
         </motion.div>
       </main>
+      </div>
     </div>
   );
 }

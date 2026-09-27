@@ -265,112 +265,70 @@
 }
 
 /* ===== Login page (richer motion is intentional here; see CLAUDE.md) ===== */
-.login-brand-panel {
+/* Dark stage under the whole page; the brain scene draws on top of it. The
+   static colour pools also carry mobile, where no 3D scene is loaded. */
+.login-stage {
   background:
-    radial-gradient(ellipse 70% 60% at 75% 45%, oklch(0.36 0.16 275 / 0.55), transparent 70%),
-    radial-gradient(ellipse 60% 50% at 10% 100%, oklch(0.32 0.12 250 / 0.5), transparent 70%),
-    oklch(0.17 0.04 268);
+    radial-gradient(45% 55% at 32% 48%, oklch(0.34 0.15 290 / 0.55), transparent 70%),
+    radial-gradient(35% 40% at 18% 80%, oklch(0.4 0.12 220 / 0.35), transparent 70%),
+    radial-gradient(35% 40% at 80% 20%, oklch(0.42 0.16 340 / 0.3), transparent 70%),
+    radial-gradient(40% 45% at 85% 85%, oklch(0.38 0.12 200 / 0.3), transparent 70%),
+    oklch(0.13 0.03 272);
 }
-.login-brand-wash {
-  background: linear-gradient(90deg, oklch(0.17 0.04 268) 0%, oklch(0.17 0.04 268 / 0.55) 45%, transparent 75%);
+.login-brand-text {
+  text-shadow: 0 2px 24px oklch(0.1 0.03 270 / 0.85);
 }
 
-/* Layered login backdrop (LoginBackdrop.tsx). */
-.login-backdrop-base {
-  background:
-    radial-gradient(120% 80% at 100% 0%, color-mix(in oklch, var(--primary) 7%, transparent), transparent 60%),
-    radial-gradient(90% 70% at 0% 100%, color-mix(in oklch, var(--chart-4) 6%, transparent), transparent 60%),
-    var(--background);
-}
-
-.login-aurora {
+/* Progressive frosted glass behind the form: stacked backdrop blurs, each
+   masked to start further right, so the blur thickens smoothly. */
+.login-glass-layer {
   position: absolute;
-  inset: -20%;
-  pointer-events: none;
-  opacity: 0.9;
-  background:
-    radial-gradient(28% 32% at 22% 28%, color-mix(in oklch, var(--primary) 30%, transparent), transparent 100%),
-    radial-gradient(26% 28% at 80% 72%, color-mix(in oklch, var(--chart-4) 30%, transparent), transparent 100%),
-    radial-gradient(22% 24% at 74% 18%, color-mix(in oklch, var(--chart-2) 30%, transparent), transparent 100%),
-    radial-gradient(20% 22% at 30% 82%, color-mix(in oklch, var(--primary) 20%, transparent), transparent 100%);
-  animation: login-aurora-drift 20s ease-in-out infinite alternate;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+  mask-image: linear-gradient(to right, transparent var(--in), #000 var(--solid));
+  -webkit-mask-image: linear-gradient(to right, transparent var(--in), #000 var(--solid));
 }
-.dark .login-aurora {
-  opacity: 1;
-  background:
-    radial-gradient(30% 34% at 22% 28%, color-mix(in oklch, var(--primary) 34%, transparent), transparent 100%),
-    radial-gradient(28% 30% at 80% 72%, color-mix(in oklch, var(--chart-4) 30%, transparent), transparent 100%),
-    radial-gradient(24% 26% at 74% 18%, color-mix(in oklch, var(--chart-2) 22%, transparent), transparent 100%),
-    radial-gradient(22% 24% at 30% 82%, color-mix(in oklch, var(--primary) 24%, transparent), transparent 100%);
-}
-@keyframes login-aurora-drift {
-  0% { transform: translate3d(-4%, -3%, 0) rotate(0deg) scale(1); }
-  50% { transform: translate3d(2%, 3%, 0) rotate(6deg) scale(1.06); }
-  100% { transform: translate3d(4%, -1%, 0) rotate(-4deg) scale(1); }
-}
-
-/* Faded grid; the "lit" copy is masked to a circle around the cursor. */
-.login-grid {
-  --grid-line: color-mix(in oklch, var(--foreground) 7%, transparent);
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 36px 36px;
-  background-position: center center;
-  mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 35%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 35%, transparent 100%);
-}
-.dark .login-grid {
-  --grid-line: color-mix(in oklch, var(--foreground) 6%, transparent);
-}
-.login-grid.login-grid-lit {
-  --grid-line: color-mix(in oklch, var(--primary) 55%, transparent);
-}
-
-.login-card-halo {
-  border-radius: 9999px;
-  background: radial-gradient(closest-side, color-mix(in oklch, var(--primary) 20%, transparent), transparent);
-}
-.dark .login-card-halo {
-  background: radial-gradient(closest-side, color-mix(in oklch, var(--primary) 32%, transparent), transparent);
-}
-
-/* Blends the dark brand panel into the form column on desktop. */
-.login-seam {
-  background: linear-gradient(90deg, color-mix(in oklch, var(--primary) 10%, transparent), transparent);
-}
-.dark .login-seam {
-  background: linear-gradient(90deg, oklch(0.17 0.04 268 / 0.7), transparent);
-}
-
-/* Aceternity-style meteor streaks. */
-.aceternity-meteor {
+.login-glass-tint {
   position: absolute;
-  width: 2px;
-  height: 2px;
-  border-radius: 9999px;
-  background: color-mix(in oklch, var(--primary) 80%, white);
-  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent);
-  transform: rotate(215deg);
-  animation-name: aceternity-meteor;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  opacity: 0;
+  inset: 0;
+  /* Lavender where the glass begins, so the dark-to-light blend reads as
+     colour rather than grey; plain frosted background toward the form. */
+  background: linear-gradient(
+    to right,
+    oklch(0.82 0.07 290 / 0.55) 20%,
+    color-mix(in oklch, var(--background) 78%, transparent) 55%
+  );
+  mask-image: linear-gradient(to right, transparent 16%, #000 58%);
+  -webkit-mask-image: linear-gradient(to right, transparent 16%, #000 58%);
 }
-.aceternity-meteor::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 90px;
-  height: 1px;
-  transform: translateY(-50%);
-  background: linear-gradient(90deg, color-mix(in oklch, var(--primary) 70%, transparent), transparent);
+.dark .login-glass-tint {
+  background: color-mix(in oklch, var(--background) 40%, transparent);
 }
-@keyframes aceternity-meteor {
-  0% { transform: rotate(215deg) translateX(0); opacity: 0; }
-  5% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { transform: rotate(215deg) translateX(-900px); opacity: 0; }
+/* No backdrop blur (mobile, low-power devices): a denser tint stands in. */
+.login-glass--lite .login-glass-tint {
+  background: linear-gradient(
+    to right,
+    oklch(0.82 0.07 290 / 0.6) 20%,
+    color-mix(in oklch, var(--background) 90%, transparent) 55%
+  );
+}
+.dark .login-glass--lite .login-glass-tint {
+  background: color-mix(in oklch, var(--background) 84%, transparent);
+}
+@media (max-width: 1023px) {
+  .login-glass-tint {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+  .login-glass--lite .login-glass-tint {
+    background: color-mix(in oklch, var(--background) 55%, transparent);
+  }
+  .dark .login-glass--lite .login-glass-tint {
+    background: color-mix(in oklch, var(--background) 45%, transparent);
+  }
 }
 
 /* Travelling border beam for SpotlightCard. */
