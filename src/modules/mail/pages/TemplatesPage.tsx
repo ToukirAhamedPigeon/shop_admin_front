@@ -1,67 +1,226 @@
 // src/modules/mail/pages/TemplatesPage.tsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import DOMPurify from 'dompurify';
+import { format } from 'date-fns';
+import { Plus, Pencil, Trash2, FileText, Globe, Lock, Search, Send, Eye, X, Loader2 } from 'lucide-react';
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb';
-import GlassCard from '@/components/custom/GlassCard';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, FileText, Mail, Calendar, User, Globe, Lock } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ErrorState } from '@/components/custom/Table';
+import ConfirmDialog from '@/components/custom/ConfirmDialog';
+import RichTextEditor from '@/components/custom/RichTextEditor';
+import ComposeMail from '../components/ComposeMail';
 import { getTemplates, createTemplate, updateTemplate, deleteTemplate } from '../api';
+import { htmlToText, initialsOf } from '../components/mailFormat';
 import type { MailTemplate } from '../types';
 import { can } from '@/lib/authCheck';
 import { dispatchShowToast } from '@/lib/dispatch';
-import Loader from '@/components/custom/Loader';
-import ConfirmDialog from '@/components/custom/ConfirmDialog';
-import RichTextEditor from '@/components/custom/RichTextEditor';
-import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+
+type Scope = 'all' | 'global' | 'personal';
+
+type FormState = { name: string; subject: string; body: string; description: string; isGlobal: boolean };
+type FormErrors = Partial<Record<'name' | 'subject' | 'body', string>>;
+
+const EMPTY_FORM: FormState = { name: '', subject: '', body: '', description: '', isGlobal: false };
+
+const shortDate = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : format(d, 'MMM d, yyyy');
+};
+
+function ScopeBadge({ global }: { global: boolean }) {
+  const Icon = global ? Globe : Lock;
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
+        global ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
+      )}
+    >
+      <Icon className="size-3" />
+      {global ? 'Global' : 'Personal'}
+    </span>
+  );
+}
+
+const CardAction = ({
+  label,
+  onClick,
+  danger,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+  children: React.ReactNode;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    title={label}
+    aria-label={label}
+    className={cn(
+      'flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+      danger ? 'hover:bg-destructive/10 hover:text-destructive' : 'hover:bg-accent hover:text-foreground'
+    )}
+  >
+    {children}
+  </button>
+);
+
+function TemplateCard({
+  template,
+  index,
+  onPreview,
+  onUse,
+  onEdit,
+  onDelete,
+}: {
+  template: MailTemplate;
+  index: number;
+  onPreview: () => void;
+  onUse?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+}) {
+  const preview = useMemo(() => htmlToText(template.body).slice(0, 320), [template.body]);
+
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut', delay: Math.min(index * 0.03, 0.2) }}
+      className="group flex min-w-0 flex-col rounded-xl border border-border bg-card shadow-xs transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-sm"
+    >
+      {/* A miniature of the email; opens the full preview. */}
+      <button
+        type="button"
+        onClick={onPreview}
+        aria-label={`Preview ${template.name}`}
+        className="relative m-3 mb-0 flex h-36 cursor-pointer flex-col justify-start overflow-hidden rounded-lg border border-border bg-muted/40 p-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Subject</p>
+        <p className="truncate text-sm font-semibold text-foreground">{template.subject || '(no subject)'}</p>
+        <div className="my-2 h-px bg-border" />
+        <p className="line-clamp-4 text-xs leading-relaxed text-muted-foreground">
+          {preview || <span className="italic">Empty body</span>}
+        </p>
+        <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card/90 to-transparent" />
+        <span
+          aria-hidden
+          className="absolute inset-0 flex items-center justify-center bg-background/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        >
+          <span className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
+            <Eye className="size-3.5" />
+            Preview
+          </span>
+        </span>
+      </button>
+
+      <div className="flex flex-1 flex-col p-4 pt-3">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="min-w-0 truncate text-[15px] font-semibold text-foreground" title={template.name}>
+            {template.name}
+          </h3>
+          <ScopeBadge global={template.isGlobal} />
+        </div>
+        <p className={cn('mt-1 line-clamp-2 text-sm', template.description ? 'text-muted-foreground' : 'italic text-muted-foreground/70')}>
+          {template.description || 'No description'}
+        </p>
+
+        <div className="mt-auto pt-4">
+          <div className="flex items-center gap-2 border-t border-border pt-3">
+            <span
+              aria-hidden
+              className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary"
+            >
+              {initialsOf(template.createdByName || '?')}
+            </span>
+            <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+              {template.createdByName || 'Unknown'} · {shortDate(template.createdAt)}
+            </p>
+            <div className="-mr-1.5 flex shrink-0 items-center">
+              {onUse && (
+                <CardAction label={`Use ${template.name} in a new mail`} onClick={onUse}>
+                  <Send className="size-4" />
+                </CardAction>
+              )}
+              {onEdit && (
+                <CardAction label={`Edit ${template.name}`} onClick={onEdit}>
+                  <Pencil className="size-4" />
+                </CardAction>
+              )}
+              {onDelete && (
+                <CardAction label={`Delete ${template.name}`} onClick={onDelete} danger>
+                  <Trash2 className="size-4" />
+                </CardAction>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.article>
+  );
+}
+
+function CardSkeleton() {
+  return (
+    <div className="animate-pulse rounded-xl border border-border bg-card p-3" aria-hidden>
+      <div className="h-36 rounded-lg bg-muted" />
+      <div className="space-y-2 p-1 pt-4">
+        <div className="h-4 w-1/2 rounded bg-muted" />
+        <div className="h-3 w-4/5 rounded bg-muted" />
+        <div className="mt-4 h-3 w-1/3 rounded bg-muted" />
+      </div>
+    </div>
+  );
+}
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<MailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<MailTemplate | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    subject: '',
-    body: '',
-    description: '',
-    isGlobal: false,
-  });
-  const [validationErrors, setValidationErrors] = useState<{ name?: string; subject?: string }>({});
+  const [loadError, setLoadError] = useState(false);
+  const [query, setQuery] = useState('');
+  const [scope, setScope] = useState<Scope>('all');
 
-  const hasCreatePermission = can(['create-admin-mail-templates']);
-  const hasEditPermission = can(['update-admin-mail-templates']);
-  const hasDeletePermission = can(['delete-admin-mail-templates']);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<MailTemplate | null>(null);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [saving, setSaving] = useState(false);
+
+  const [previewing, setPreviewing] = useState<MailTemplate | null>(null);
+  const [deleting, setDeleting] = useState<MailTemplate | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [composeTemplate, setComposeTemplate] = useState<MailTemplate | null>(null);
+
+  const canCreate = can(['create-admin-mail-templates']);
+  const canEdit = can(['update-admin-mail-templates']);
+  const canDelete = can(['delete-admin-mail-templates']);
+  const canSendMail = can(['create-admin-mails']);
 
   const loadTemplates = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const response = await getTemplates({ page: 1, limit: 100, includeGlobal: true });
-      setTemplates(response.data.templates);
+      setTemplates(Array.isArray(response.data?.templates) ? response.data.templates : []);
     } catch (error) {
       console.error('Failed to load templates:', error);
-      dispatchShowToast({ type: 'danger', message: 'Failed to load templates' });
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -71,101 +230,167 @@ export default function TemplatesPage() {
     loadTemplates();
   }, [loadTemplates]);
 
-  const handleOpenDialog = (template?: MailTemplate) => {
-    setValidationErrors({});
-    if (template) {
-      setEditingTemplate(template);
-      setFormData({
-        name: template.name,
-        subject: template.subject,
-        body: template.body,
-        description: template.description || '',
-        isGlobal: template.isGlobal,
-      });
-    } else {
-      setEditingTemplate(null);
-      setFormData({
-        name: '',
-        subject: '',
-        body: '',
-        description: '',
-        isGlobal: false,
-      });
-    }
-    setDialogOpen(true);
+  const counts = useMemo(() => {
+    const global = templates.filter((t) => t.isGlobal).length;
+    return { all: templates.length, global, personal: templates.length - global };
+  }, [templates]);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return templates.filter((t) => {
+      if (scope === 'global' && !t.isGlobal) return false;
+      if (scope === 'personal' && t.isGlobal) return false;
+      if (!q) return true;
+      return [t.name, t.subject, t.description ?? ''].some((s) => s.toLowerCase().includes(q));
+    });
+  }, [templates, query, scope]);
+
+  const openForm = (template?: MailTemplate) => {
+    setErrors({});
+    setEditing(template ?? null);
+    setForm(
+      template
+        ? {
+            name: template.name,
+            subject: template.subject,
+            body: template.body,
+            description: template.description || '',
+            isGlobal: template.isGlobal,
+          }
+        : EMPTY_FORM
+    );
+    setPreviewing(null);
+    setFormOpen(true);
   };
 
-  const validateForm = (): boolean => {
-    const errors: { name?: string; subject?: string } = {};
-
-    if (!formData.name.trim()) {
-      errors.name = 'Template name is required';
-    }
-    if (!formData.subject.trim()) {
-      errors.subject = 'Template subject is required';
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+  const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    if (key in errors) setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
   const handleSave = async () => {
-    // Validate before sending
-    if (!validateForm()) {
-      dispatchShowToast({ type: 'danger', message: 'Please fix validation errors' });
-      return;
-    }
+    const next: FormErrors = {};
+    if (!form.name.trim()) next.name = 'Give the template a name';
+    if (!form.subject.trim()) next.subject = 'Add a subject line';
+    if (!htmlToText(form.body)) next.body = 'Write the email body';
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
 
+    setSaving(true);
     try {
-      if (editingTemplate) {
-        await updateTemplate(editingTemplate.id, formData);
-        dispatchShowToast({ type: 'success', message: 'Template updated successfully' });
+      if (editing) {
+        await updateTemplate(editing.id, form);
+        dispatchShowToast({ type: 'success', message: 'Template updated' });
       } else {
-        await createTemplate(formData);
-        dispatchShowToast({ type: 'success', message: 'Template created successfully' });
+        await createTemplate(form);
+        dispatchShowToast({ type: 'success', message: 'Template created' });
       }
-      setDialogOpen(false);
+      setFormOpen(false);
       loadTemplates();
-    } catch (error: any) {
-      dispatchShowToast({
-        type: 'danger',
-        message: error.response?.data?.message || 'Failed to save template'
-      });
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+      dispatchShowToast({ type: 'danger', message: message || 'Failed to save template' });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!deletingId) return;
+    if (!deleting) return;
+    setDeleteBusy(true);
     try {
-      await deleteTemplate(deletingId);
-      dispatchShowToast({ type: 'success', message: 'Template deleted successfully' });
-      loadTemplates();
-    } catch (error) {
+      await deleteTemplate(deleting.id);
+      dispatchShowToast({ type: 'success', message: 'Template deleted' });
+      setTemplates((list) => list.filter((t) => t.id !== deleting.id));
+    } catch {
       dispatchShowToast({ type: 'danger', message: 'Failed to delete template' });
     } finally {
-      setDeleteDialogOpen(false);
-      setDeletingId(null);
+      setDeleteBusy(false);
+      setDeleting(null);
     }
   };
 
-  const globalCount = templates.filter(t => t.isGlobal).length;
-  const personalCount = templates.filter(t => !t.isGlobal).length;
+  const startMailFrom = (template: MailTemplate) => {
+    setPreviewing(null);
+    setComposeTemplate(template);
+  };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader type="circular" size={48} />
+  const scopes: { id: Scope; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'global', label: 'Global' },
+    { id: 'personal', label: 'Personal' },
+  ];
+
+  let content: React.ReactNode;
+  if (loading && templates.length === 0) {
+    content = (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <CardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  } else if (loadError) {
+    content = (
+      <div className="rounded-xl border border-border bg-card">
+        <ErrorState message="Couldn't load templates" suggestion="Check your connection and try again." onRetry={loadTemplates} />
+      </div>
+    );
+  } else if (templates.length === 0) {
+    content = (
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <FileText className="size-7" />
+        </span>
+        <p className="text-base font-medium text-foreground">No templates yet</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Save emails you send often, such as a welcome note or an invoice reminder, and start new mail from them in one click.
+        </p>
+        {canCreate && (
+          <Button onClick={() => openForm()} className="mt-2">
+            <Plus className="size-4" />
+            Create your first template
+          </Button>
+        )}
+      </div>
+    );
+  } else if (visible.length === 0) {
+    content = (
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-6 py-14 text-center">
+        <Search className="size-6 text-muted-foreground" />
+        <p className="text-sm font-medium text-foreground">No templates match</p>
+        <Button
+          variant="link"
+          size="sm"
+          onClick={() => {
+            setQuery('');
+            setScope('all');
+          }}
+        >
+          Clear search and filters
+        </Button>
+      </div>
+    );
+  } else {
+    content = (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {visible.map((template, index) => (
+          <TemplateCard
+            key={template.id}
+            template={template}
+            index={index}
+            onPreview={() => setPreviewing(template)}
+            onUse={canSendMail ? () => startMailFrom(template) : undefined}
+            onEdit={canEdit ? () => openForm(template) : undefined}
+            onDelete={canDelete ? () => setDeleting(template) : undefined}
+          />
+        ))}
       </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="flex flex-col gap-4"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }} className="flex flex-col gap-5">
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3 [&>*:first-child]:min-w-0">
         <Breadcrumb
@@ -173,285 +398,245 @@ export default function TemplatesPage() {
           defaultTitle="Mail Templates"
           showTitle={true}
           items={[
-            { label: "common.mail.title", defaultLabel: "Mailbox", href: "/mail" },
-            { label: "common.mail.templates.title", defaultLabel: "Templates", href: "/mail/templates" },
+            { label: 'common.mail.title', defaultLabel: 'Mailbox', href: '/mail' },
+            { label: 'common.mail.templates.title', defaultLabel: 'Templates', href: '/mail/templates' },
           ]}
           className="pb-0"
         />
-        {hasCreatePermission && (
-          <motion.div>
-            <Button onClick={() => handleOpenDialog()}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Template
-            </Button>
-          </motion.div>
+        {canCreate && (
+          <Button onClick={() => openForm()}>
+            <Plus className="size-4" />
+            New template
+          </Button>
         )}
       </div>
 
-      {/* Stats Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-4"
-      >
-        <GlassCard variant="primary" padding="md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Total Templates</p>
-              <p className="text-2xl font-bold mt-1">{templates.length}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-primary/10">
-              <FileText className="w-6 h-6 text-primary" />
-            </div>
+      {/* Search and scope filter */}
+      {!loadError && templates.length > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search templates"
+              aria-label="Search templates"
+              className="h-10 w-full rounded-xl border border-input bg-card pl-9 pr-9 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/40 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+                className="absolute right-2 top-1/2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
           </div>
-        </GlassCard>
 
-        <GlassCard variant="accent" padding="md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Global Templates</p>
-              <p className="text-2xl font-bold mt-1">{globalCount}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-emerald-500/10">
-              <Globe className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
+          <div role="tablist" aria-label="Filter templates" className="flex w-full rounded-xl border border-border bg-muted/50 p-1 sm:w-auto">
+            {scopes.map(({ id, label }) => {
+              const active = scope === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setScope(id)}
+                  className={cn(
+                    'flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring sm:flex-none',
+                    active ? 'bg-card font-medium text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {label}
+                  <span className={cn('text-xs tabular-nums', active ? 'text-primary' : 'text-muted-foreground')}>{counts[id]}</span>
+                </button>
+              );
+            })}
           </div>
-        </GlassCard>
+        </div>
+      )}
 
-        <GlassCard variant="secondary" padding="md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Personal Templates</p>
-              <p className="text-2xl font-bold mt-1">{personalCount}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-muted">
-              <Lock className="w-6 h-6 text-muted-foreground" />
-            </div>
-          </div>
-        </GlassCard>
-      </motion.div>
+      {content}
 
-      {/* Templates Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <GlassCard variant="default" padding="none" className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow>
-                  <TableHead className="w-10"></TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead className="w-20 text-center">Global</TableHead>
-                  <TableHead>Created By</TableHead>
-                  <TableHead className="w-32">Created At</TableHead>
-                  <TableHead className="w-24 text-center">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {templates.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-gray-500">
-                      <div className="flex flex-col items-center gap-2">
-                        <Mail className="w-12 h-12 text-gray-300" />
-                        <p>No templates found. Create your first template!</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  templates.map((template, index) => (
-                    <motion.tr
-                      key={template.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.03 }}
-                      className="border-b border-border hover:bg-muted/50 transition-colors"
-                    >
-                      <TableCell>
-                        <div className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center",
-                          template.isGlobal
-                            ? "bg-emerald-500/10"
-                            : "bg-muted"
-                        )}>
-                          {template.isGlobal ? (
-                            <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          ) : (
-                            <Lock className="w-4 h-4 text-muted-foreground" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <div>
-                          <p>{template.name}</p>
-                          {template.description && (
-                            <p className="text-xs text-gray-400 truncate max-w-[200px]">
-                              {template.description}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm">{template.subject}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-                          template.isGlobal
-                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                            : "bg-muted text-muted-foreground"
-                        )}>
-                          {template.isGlobal ? 'Yes' : 'No'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm">{template.createdByName || '-'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm">{format(new Date(template.createdAt), 'MMM dd, yyyy')}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-center gap-1">
-                          {hasEditPermission && (
-                            <motion.button
-                              onClick={() => handleOpenDialog(template)}
-                              className="p-2 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer group"
-                            >
-                              <Edit className="w-4 h-4 text-primary" />
-                            </motion.button>
-                          )}
-                          {hasDeletePermission && (
-                            <motion.button
-                              onClick={() => {
-                                setDeletingId(template.id);
-                                setDeleteDialogOpen(true);
-                              }}
-                              className="p-2 rounded-lg hover:bg-destructive/10 transition-colors cursor-pointer group"
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </motion.button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </motion.tr>
-                  ))
+      {/* Preview */}
+      <Dialog open={!!previewing} onOpenChange={(open) => !open && setPreviewing(null)}>
+        <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+          {previewing && (
+            <>
+              <DialogHeader className="border-b border-border p-5 pr-12 text-left">
+                <div className="flex flex-wrap items-center gap-2">
+                  <DialogTitle className="min-w-0 text-lg [overflow-wrap:anywhere]">{previewing.name}</DialogTitle>
+                  <ScopeBadge global={previewing.isGlobal} />
+                </div>
+                <DialogDescription>{previewing.description || 'Template preview'}</DialogDescription>
+              </DialogHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-6">
+                <div className="rounded-xl border border-border bg-card shadow-xs">
+                  <div className="border-b border-border px-5 py-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Subject</p>
+                    <p className="font-semibold text-foreground [overflow-wrap:anywhere]">{previewing.subject}</p>
+                  </div>
+                  <div
+                    className="markdown-body max-w-none px-5 py-4 [overflow-wrap:anywhere]"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewing.body) }}
+                  />
+                </div>
+              </div>
+              <DialogFooter className="flex-row flex-wrap justify-end gap-2 border-t border-border p-4">
+                {canEdit && (
+                  <Button variant="outline" onClick={() => openForm(previewing)}>
+                    <Pencil className="size-4" />
+                    Edit
+                  </Button>
                 )}
-              </TableBody>
-            </Table>
-          </div>
-        </GlassCard>
-      </motion.div>
-
-      {/* Template Form Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-          <GlassCard variant="primary" padding="md" className="border-0 shadow-none">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold">
-                {editingTemplate ? 'Edit Template' : 'Create New Template'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label className="text-sm font-semibold">Template Name *</Label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => {
-                    setFormData({ ...formData, name: e.target.value });
-                    if (validationErrors.name) setValidationErrors({ ...validationErrors, name: undefined });
-                  }}
-                  placeholder="e.g., Welcome Email, Order Confirmation"
-                  className={cn("mt-1", validationErrors.name && "border-red-500")}
-                />
-                {validationErrors.name && (
-                  <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>
+                {canSendMail && (
+                  <Button onClick={() => startMailFrom(previewing)}>
+                    <Send className="size-4" />
+                    Use in new mail
+                  </Button>
                 )}
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">Subject *</Label>
-                <Input
-                  value={formData.subject}
-                  onChange={(e) => {
-                    setFormData({ ...formData, subject: e.target.value });
-                    if (validationErrors.subject) setValidationErrors({ ...validationErrors, subject: undefined });
-                  }}
-                  placeholder="Email subject"
-                  className={cn("mt-1", validationErrors.subject && "border-red-500")}
-                />
-                {validationErrors.subject && (
-                  <p className="text-red-500 text-xs mt-1">{validationErrors.subject}</p>
-                )}
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">Email Body *</Label>
-                <RichTextEditor
-                  value={formData.body}
-                  onChange={(value) => setFormData({ ...formData, body: value })}
-                  placeholder="Template content..."
-                  height="400px"
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">Description</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Optional description of when to use this template"
-                  rows={2}
-                  className="mt-1"
-                />
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <Checkbox
-                  id="isGlobal"
-                  checked={formData.isGlobal}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isGlobal: !!checked })}
-                  className="cursor-pointer"
-                />
-                <Label htmlFor="isGlobal" className="cursor-pointer font-medium">
-                  Make this template available to all users (Global)
-                </Label>
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSave}>
-                {editingTemplate ? 'Update Template' : 'Create Template'}
-              </Button>
-            </DialogFooter>
-          </GlassCard>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Create / edit */}
+      <Dialog open={formOpen} onOpenChange={(open) => !saving && setFormOpen(open)}>
+        <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+          <DialogHeader className="border-b border-border p-5 pr-12 text-left">
+            <DialogTitle className="text-lg">{editing ? 'Edit template' : 'New template'}</DialogTitle>
+            <DialogDescription>
+              {editing ? 'Changes apply to new mail started from this template.' : 'Save an email you send often and reuse it from Compose.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            id="template-form"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSave();
+            }}
+            className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5"
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="tpl-name">Name</Label>
+                <Input
+                  id="tpl-name"
+                  value={form.name}
+                  onChange={(e) => setField('name', e.target.value)}
+                  placeholder="e.g. Welcome email"
+                  aria-invalid={!!errors.name}
+                  aria-describedby={errors.name ? 'tpl-name-error' : undefined}
+                />
+                {errors.name && (
+                  <p id="tpl-name-error" className="text-xs text-destructive">
+                    {errors.name}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="tpl-subject">Subject</Label>
+                <Input
+                  id="tpl-subject"
+                  value={form.subject}
+                  onChange={(e) => setField('subject', e.target.value)}
+                  placeholder="What recipients see in their inbox"
+                  aria-invalid={!!errors.subject}
+                  aria-describedby={errors.subject ? 'tpl-subject-error' : undefined}
+                />
+                {errors.subject && (
+                  <p id="tpl-subject-error" className="text-xs text-destructive">
+                    {errors.subject}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Body</Label>
+              <div className={cn('rounded-md', errors.body && 'ring-2 ring-destructive/60')}>
+                <RichTextEditor value={form.body} onChange={(value) => setField('body', value)} placeholder="Write the email…" height="280px" />
+              </div>
+              {errors.body && <p className="text-xs text-destructive">{errors.body}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="tpl-description">
+                Description <span className="font-normal text-muted-foreground">(optional)</span>
+              </Label>
+              <Textarea
+                id="tpl-description"
+                value={form.description}
+                onChange={(e) => setField('description', e.target.value)}
+                placeholder="When should this template be used?"
+                rows={2}
+              />
+            </div>
+
+            <label
+              htmlFor="tpl-global"
+              className={cn(
+                'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors',
+                form.isGlobal ? 'border-success/40 bg-success/5' : 'border-border hover:bg-accent/50'
+              )}
+            >
+              <Checkbox
+                id="tpl-global"
+                checked={form.isGlobal}
+                onCheckedChange={(checked) => setField('isGlobal', !!checked)}
+                className="mt-0.5"
+              />
+              <span className="min-w-0">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                  <Globe className={cn('size-4', form.isGlobal ? 'text-success' : 'text-muted-foreground')} />
+                  Share with everyone
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  Global templates appear in Compose for all users. Leave this off to keep it to yourself.
+                </span>
+              </span>
+            </label>
+          </form>
+
+          <DialogFooter className="flex-row justify-end gap-2 border-t border-border p-4">
+            <Button type="button" variant="outline" onClick={() => setFormOpen(false)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button type="submit" form="template-form" disabled={saving}>
+              {saving && <Loader2 className="size-4 animate-spin" />}
+              {editing ? 'Save changes' : 'Create template'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <ConfirmDialog
-        open={deleteDialogOpen}
-        onCancel={() => {
-          setDeleteDialogOpen(false);
-          setDeletingId(null);
-        }}
+        open={!!deleting}
+        onCancel={() => setDeleting(null)}
         onConfirm={handleDelete}
-        title="Delete Template"
+        title="Delete template"
         variant="destructive"
         confirmLabel="Delete"
+        loading={deleteBusy}
       >
-        <p>Are you sure you want to delete this template? This action cannot be undone.</p>
+        <p>
+          Delete <span className="font-medium text-foreground">{deleting?.name}</span>? This can't be undone.
+        </p>
       </ConfirmDialog>
+
+      <ComposeMail
+        open={!!composeTemplate}
+        onClose={() => setComposeTemplate(null)}
+        onSent={() => setComposeTemplate(null)}
+        template={composeTemplate ?? undefined}
+      />
     </motion.div>
   );
 }

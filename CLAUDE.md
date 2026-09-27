@@ -81,6 +81,10 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   mounted so its page and scroll survive. The reader updates list rows through
   `MailListHandle` (`patch`, `remove`) instead of reloading the list.
   Shortcuts: j / k for older / newer, Esc to close.
+- Mail Templates is a card gallery (search plus All / Global / Personal
+  filter, done in the browser). Each card previews the email; "Use" opens
+  `ComposeMail` with its `template` prop. Turn HTML bodies into preview text
+  with `htmlToText` (`mail/components/mailFormat.ts`).
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
 
 ## Security notes

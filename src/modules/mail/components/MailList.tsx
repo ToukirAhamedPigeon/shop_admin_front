@@ -20,7 +20,7 @@ import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import Loader from '@/components/custom/Loader';
 import { capitalize } from '@/lib/helpers';
 import { useDebounce } from '@/hooks/useDebounce';
-import { initialsOf } from './mailFormat';
+import { htmlToText, initialsOf } from './mailFormat';
 
 interface MailListProps {
   mailbox: MailboxType;
@@ -65,16 +65,12 @@ const shortDate = (iso: string) => {
   return format(d, 'dd/MM/yy');
 };
 
-// Plain-text preview of an HTML body. DOMParser builds an inert document
-// (no scripts run, nothing is inserted into the page).
+// Plain-text preview of an HTML body, cached per message.
 const previewCache = new Map<number, string>();
 const previewOf = (mail: Mail) => {
   const cached = previewCache.get(mail.id);
   if (cached !== undefined) return cached;
-  const text = (new DOMParser().parseFromString(mail.body || '', 'text/html').body.textContent || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 160);
+  const text = htmlToText(mail.body).slice(0, 160);
   previewCache.set(mail.id, text);
   return text;
 };
