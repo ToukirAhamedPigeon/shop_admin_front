@@ -390,6 +390,119 @@
   }
 }
 
+/* ===== App chrome: sidebar and header ===== */
+
+/* The sidebar column (and the header's brand block above it) wears the brand
+   navy in both themes. It is scoped with `.dark`, so text tokens are light;
+   the sidebar tokens are tuned for navy here. */
+.app-sidebar {
+  --sidebar-foreground: oklch(0.8 0.02 265);
+  --sidebar-accent: oklch(1 0 0 / 0.07);
+  --sidebar-accent-foreground: oklch(0.97 0.005 265);
+  --sidebar-border: oklch(1 0 0 / 0.08);
+  --sidebar-primary: oklch(0.6 0.17 262);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-ring: oklch(0.7 0.14 262);
+  background:
+    radial-gradient(120% 45% at 0% 100%, oklch(0.4 0.14 290 / 0.28), transparent 70%),
+    radial-gradient(90% 30% at 100% 0%, oklch(0.42 0.12 240 / 0.18), transparent 70%),
+    linear-gradient(180deg, oklch(0.18 0.035 272), oklch(0.15 0.03 272));
+}
+/* The header block continues the sidebar's gradient seamlessly. */
+.app-sidebar--top {
+  background:
+    radial-gradient(90% 200% at 100% 0%, oklch(0.42 0.12 240 / 0.18), transparent 70%),
+    oklch(0.18 0.035 272);
+  border-bottom: 1px solid oklch(1 0 0 / 0.06);
+  margin-bottom: -1px;
+}
+/* Faint dots near the foot of the sidebar, echoing the login constellation. */
+aside.app-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 45%;
+  pointer-events: none;
+  background-image: radial-gradient(oklch(1 0 0 / 0.08) 1px, transparent 1.2px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(to top, #000, transparent);
+  -webkit-mask-image: linear-gradient(to top, #000, transparent);
+}
+
+/* Active nav row: a soft primary gradient with a glow, sliding between rows. */
+.nav-active {
+  background: linear-gradient(100deg, oklch(0.55 0.17 262), oklch(0.5 0.16 285));
+  box-shadow:
+    0 6px 16px -6px oklch(0.55 0.18 265 / 0.7),
+    inset 0 1px 0 oklch(1 0 0 / 0.14);
+}
+
+/* Label beside an icon in the collapsed rail. */
+.nav-tip {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  z-index: 60;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.5rem;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-4px, -50%);
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+}
+.group:hover > .nav-tip,
+.group:focus-visible > .nav-tip {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+/* Logo tile in the brand block. */
+.brand-mark {
+  background: linear-gradient(145deg, oklch(1 0 0 / 0.12), oklch(1 0 0 / 0.03));
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.1), 0 4px 12px -4px oklch(0.1 0.05 270 / 0.6);
+}
+
+@layer components {
+/* Square icon buttons in the header (menu, collapse, search, language, theme). */
+.header-icon-btn {
+  display: inline-flex;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.15s ease-out, color 0.15s ease-out, border-color 0.15s ease-out;
+}
+.header-icon-btn:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+.header-icon-btn:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+}
+}
+.theme-icon-swap {
+  animation: theme-icon-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes theme-icon-in {
+  from { opacity: 0; transform: rotate(-45deg) scale(0.8); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-icon-swap { animation: none; }
+  .nav-tip { transition: none; }
+}
+
 /* Rendered markdown (docs pages). Tailwind's reset strips element styles,
    so headings, lists, tables and code need their own. */
 .markdown-body {

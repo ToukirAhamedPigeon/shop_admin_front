@@ -49,6 +49,15 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   sample numbers back. Its hero reuses the login navy in
   both themes; charts are hand-rolled SVG in the `--primary` hue (no chart
   library).
+- App chrome (`src/components/module/admin/layout`): the sidebar column and
+  the header's brand block use the brand navy in both themes (`.app-sidebar`,
+  scoped with `.dark`). The menu lives in `menu.ts` and feeds the sidebar, the
+  collapsed icon rail (72px, flyouts for groups) and the Ctrl/⌘+K command
+  palette. Add new pages to `menu.ts`, not to `Nav.tsx`. The collapsed state
+  is kept in localStorage (`sidebar-collapsed`).
+- `useTranslations().t` is memoized. Keep it stable: effects list `t` as a
+  dependency, and a new function each render caused an infinite fetch loop
+  on the docs pages.
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
 
 ## Security notes

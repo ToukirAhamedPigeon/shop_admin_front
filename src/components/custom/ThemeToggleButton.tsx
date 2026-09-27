@@ -12,10 +12,14 @@ export function ThemeToggleButton() {
   return (
     <button
       onClick={() => dispatch(toggleTheme())}
-      className="cursor-pointer inline-flex size-9 items-center justify-center rounded-md transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
-      aria-label="Toggle Dark Mode"
+      className="header-icon-btn"
+      aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDarkMode ? "Light mode" : "Dark mode"}
     >
-      {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+      {/* Keyed so the icon swaps with a small turn. */}
+      <span key={theme} className="theme-icon-swap inline-flex">
+        {isDarkMode ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
+      </span>
     </button>
   )
 }

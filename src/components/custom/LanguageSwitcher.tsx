@@ -3,7 +3,6 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/redux/store";
 import { fetchTranslations, setLanguage } from "@/redux/slices/languageSlice";
-import { Button } from "@/components/ui/button";
 import { Globe } from "lucide-react";
 
 const LanguageSwitcher: React.FC = () => {
@@ -23,14 +22,16 @@ const LanguageSwitcher: React.FC = () => {
   };
 
   return (
-    <Button
-      variant="ghost"
+    <button
+      type="button"
       onClick={() => switchLanguage(nextLang)}
-      className="flex items-center gap-1.5 px-2.5 h-9 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+      className="header-icon-btn w-auto gap-1.5 px-2.5"
+      aria-label={nextLang === "bn" ? "Switch to Bangla" : "Switch to English"}
+      title={nextLang === "bn" ? "বাংলা" : "English"}
     >
-      <Globe className="w-3.5 h-3.5" />
-      <span className="text-xs font-medium">{label}</span>
-    </Button>
+      <Globe className="size-4" />
+      <span className="text-xs font-semibold tracking-wide">{label}</span>
+    </button>
   );
 };
 
