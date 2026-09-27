@@ -29,6 +29,11 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   instead of raw palette classes like `text-gray-500` or `bg-blue-500`.
 - Keep motion short and subtle (fades or small slides, about 150–300 ms,
   ease-out). No springs, bounces or hover scaling.
+- Exception: the login page (`src/modules/auth/pages/LoginPage.tsx`) is
+  intentionally richer, at the owner's request. It has a Three.js brand scene,
+  a GSAP headline reveal and Aceternity-style effects (`src/components/aceternity/`).
+  Three.js must stay lazy-loaded (desktop only, `NeuralScene` chunk), and every
+  effect must respect `prefers-reduced-motion`.
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
 
 ## Security notes
