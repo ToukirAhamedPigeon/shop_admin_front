@@ -7,7 +7,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
 
   return (
     <main
-      className={`relative flex-1 min-w-0 bg-background transition-[margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isCollapsed ? 'lg:ml-0' : 'lg:ml-64'}`}
+      className={`relative flex-1 min-w-0 bg-background transition-[margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64'}`}
       style={{ minHeight: 'calc(100vh - 4rem)' }}
     >
       {/* Content */}
