@@ -42,6 +42,12 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   The glass drops its backdrop blur on mobile, on low-power devices, and when
   the measured frame rate falls below 40 fps. Keep that fallback. (A detailed
   brain was tried and rejected by the owner in favour of the sphere.)
+- The dashboard (`src/modules/dashboard`) shows live data only: counts come
+  from the existing list endpoints (`totalCount` with `limit: 1`, see
+  `dashboard/api`), and each section hides when the user lacks its read
+  permission. Don't put sample numbers back. Its hero reuses the login navy in
+  both themes; charts are hand-rolled SVG in the `--primary` hue (no chart
+  library).
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
 
 ## Security notes
