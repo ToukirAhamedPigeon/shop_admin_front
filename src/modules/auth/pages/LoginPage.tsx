@@ -16,6 +16,7 @@ import { GlowField } from "@/components/aceternity/glow-field";
 import { dispatchLoginUser, dispatchShowLoader, dispatchHideLoader, dispatchShowToast } from "@/lib/dispatch";
 import AuthHeader from "@/modules/auth/components/AuthHeader";
 import BrandPanel from "@/modules/auth/components/login/BrandPanel";
+import LoginBackdrop from "@/modules/auth/components/login/LoginBackdrop";
 import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
@@ -91,8 +92,7 @@ export default function LoginPage() {
       {isDesktop && <BrandPanel />}
 
       <main className="relative flex items-center justify-center overflow-hidden px-4 py-20">
-        {/* Soft aurora behind the card; lighter on desktop where the brand panel carries the colour. */}
-        <div aria-hidden className={cn("login-aurora", isDesktop && "opacity-60")} />
+        <LoginBackdrop withSeam={isDesktop} />
         <AuthHeader />
 
         <motion.div
