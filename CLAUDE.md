@@ -73,8 +73,14 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   not `max-w-*`, or the mobile margin is lost. Rows of header buttons must be
   allowed to wrap (`flex-wrap`), and side-by-side panels stack below `md`.
   Check new pages at 360px wide.
-- The Mailbox is one card: a folder rail (chips on phones) and a message
-  list (`MailList` rows with sender, subject, preview and date).
+- The Mailbox is one card: a folder rail (chips on phones), a message list
+  (`MailList` rows with sender, subject, preview and date) and `MailReader`.
+  From 1280px wide the reader sits beside the list (split view, the folder
+  rail shrinks to icons below 2xl; the "Split view" toggle is saved as
+  `mail-split`). Narrower, the open message replaces the list, which stays
+  mounted so its page and scroll survive. The reader updates list rows through
+  `MailListHandle` (`patch`, `remove`) instead of reloading the list.
+  Shortcuts: j / k for older / newer, Esc to close.
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
 
 ## Security notes

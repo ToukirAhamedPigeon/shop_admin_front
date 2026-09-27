@@ -9,6 +9,7 @@ interface GlassCardProps {
   variant?: 'default' | 'primary' | 'secondary' | 'accent';
   hoverEffect?: boolean;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  ref?: React.Ref<HTMLDivElement>;
 }
 
 const paddingStyles = {
@@ -23,9 +24,11 @@ export default function GlassCard({
   className,
   hoverEffect = true,
   padding = 'md',
+  ref,
 }: GlassCardProps) {
   return (
     <div
+      ref={ref}
       className={cn(
         'relative rounded-xl bg-card border border-border shadow-xs transition-[box-shadow,border-color] duration-200',
         hoverEffect && 'hover:shadow-sm',

@@ -8,8 +8,8 @@ interface MailSidebarProps {
   onSelectMailbox: (mailbox: MailboxType) => void;
   statistics: MailStatistics | null;
   onCompose: () => void;
-  /** `rail`: vertical list (md+). `tabs`: horizontal folder chips (phones). */
-  layout?: 'rail' | 'tabs';
+  /** `rail`: vertical list (md+). `icons`: narrow icon rail (split view). `tabs`: folder chips (phones). */
+  layout?: 'rail' | 'icons' | 'tabs';
 }
 
 const mailboxes: { id: MailboxType; label: string; icon: LucideIcon; countKey: keyof MailStatistics }[] = [
@@ -28,6 +28,49 @@ export default function MailSidebar({
   onCompose,
   layout = 'rail',
 }: MailSidebarProps) {
+  if (layout === 'icons') {
+    return (
+      <div className="flex h-full flex-col items-center gap-3 py-3">
+        <button
+          type="button"
+          onClick={onCompose}
+          title="Compose"
+          aria-label="Compose"
+          className="flex size-11 cursor-pointer items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/25 outline-none transition-shadow hover:shadow-xl hover:shadow-primary/30 focus-visible:ring-[3px] focus-visible:ring-ring"
+        >
+          <PenSquare className="size-[18px]" />
+        </button>
+        <nav aria-label="Mail folders" className="flex flex-col items-center gap-1">
+          {mailboxes.map(({ id, label, icon: Icon, countKey }) => {
+            const active = selectedMailbox === id;
+            const n = statistics?.[countKey];
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onSelectMailbox(id)}
+                aria-current={active ? 'page' : undefined}
+                title={n === undefined ? label : `${label} (${n.toLocaleString()})`}
+                aria-label={label}
+                className={cn(
+                  'relative flex size-10 cursor-pointer items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+                  active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                )}
+              >
+                <Icon className="size-[18px]" />
+                {id === 'inbox' && !!statistics?.unreadCount && (
+                  <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-semibold leading-4 text-primary-foreground tabular-nums">
+                    {statistics.unreadCount > 99 ? '99+' : statistics.unreadCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    );
+  }
+
   if (layout === 'tabs') {
     return (
       <nav aria-label="Mail folders" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
