@@ -22,6 +22,7 @@ import {
   RowActions,
   IndexCell,
   EmptyState,
+  ErrorState,
   TableWithLoader
 } from '@/components/custom/Table'
 import Modal from '@/components/custom/Modal'
@@ -631,7 +632,13 @@ export default function Translations() {
       {/* TABLE with sticky header fix */}
       <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
         <TableWithLoader loading={loading} id="printable-translation-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
-          {showEmptyState ? (
+          {showErrorState ? (
+            <ErrorState
+              message="Couldn't load translations"
+              suggestion="The server didn't respond as expected. Check your connection and try again."
+              onRetry={() => fetchData()}
+            />
+          ) : showEmptyState ? (
             <EmptyState
               message="No translations found"
               suggestion="Try adjusting your search or filter criteria to see more results."
