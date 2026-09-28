@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { format } from 'date-fns';
-import { Plus, Pencil, Trash2, FileText, Globe, Lock, Search, Send, Eye, X, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, FileText, Globe, Lock, Search, Send, Eye, X } from 'lucide-react';
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,15 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ErrorState } from '@/components/custom/Table';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
-import RichTextEditor from '@/components/custom/RichTextEditor';
 import ComposeMail from '../components/ComposeMail';
-import { getTemplates, createTemplate, updateTemplate, deleteTemplate } from '../api';
+import TemplateFormDialog from '../components/TemplateFormDialog';
+import { getTemplates, deleteTemplate } from '../api';
 import { htmlToText, initialsOf } from '../components/mailFormat';
 import type { MailTemplate } from '../types';
 import { can } from '@/lib/authCheck';
@@ -31,10 +27,6 @@ import { cn } from '@/lib/utils';
 
 type Scope = 'all' | 'global' | 'personal';
 
-type FormState = { name: string; subject: string; body: string; description: string; isGlobal: boolean };
-type FormErrors = Partial<Record<'name' | 'subject' | 'body', string>>;
-
-const EMPTY_FORM: FormState = { name: '', subject: '', body: '', description: '', isGlobal: false };
 
 const shortDate = (iso: string) => {
   const d = new Date(iso);
@@ -198,9 +190,6 @@ export default function TemplatesPage() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<MailTemplate | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [saving, setSaving] = useState(false);
 
   const [previewing, setPreviewing] = useState<MailTemplate | null>(null);
   const [deleting, setDeleting] = useState<MailTemplate | null>(null);
@@ -246,53 +235,9 @@ export default function TemplatesPage() {
   }, [templates, query, scope]);
 
   const openForm = (template?: MailTemplate) => {
-    setErrors({});
     setEditing(template ?? null);
-    setForm(
-      template
-        ? {
-            name: template.name,
-            subject: template.subject,
-            body: template.body,
-            description: template.description || '',
-            isGlobal: template.isGlobal,
-          }
-        : EMPTY_FORM
-    );
     setPreviewing(null);
     setFormOpen(true);
-  };
-
-  const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((f) => ({ ...f, [key]: value }));
-    if (key in errors) setErrors((e) => ({ ...e, [key]: undefined }));
-  };
-
-  const handleSave = async () => {
-    const next: FormErrors = {};
-    if (!form.name.trim()) next.name = 'Give the template a name';
-    if (!form.subject.trim()) next.subject = 'Add a subject line';
-    if (!htmlToText(form.body)) next.body = 'Write the email body';
-    setErrors(next);
-    if (Object.keys(next).length > 0) return;
-
-    setSaving(true);
-    try {
-      if (editing) {
-        await updateTemplate(editing.id, form);
-        dispatchShowToast({ type: 'success', message: 'Template updated' });
-      } else {
-        await createTemplate(form);
-        dispatchShowToast({ type: 'success', message: 'Template created' });
-      }
-      setFormOpen(false);
-      loadTemplates();
-    } catch (error) {
-      const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
-      dispatchShowToast({ type: 'danger', message: message || 'Failed to save template' });
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleDelete = async () => {
@@ -506,116 +451,7 @@ export default function TemplatesPage() {
       </Dialog>
 
       {/* Create / edit */}
-      <Dialog open={formOpen} onOpenChange={(open) => !saving && setFormOpen(open)}>
-        <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
-          <DialogHeader className="border-b border-border p-5 pr-12 text-left">
-            <DialogTitle className="text-lg">{editing ? 'Edit template' : 'New template'}</DialogTitle>
-            <DialogDescription>
-              {editing ? 'Changes apply to new mail started from this template.' : 'Save an email you send often and reuse it from Compose.'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <form
-            id="template-form"
-            noValidate
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSave();
-            }}
-            className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5"
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="tpl-name">Name</Label>
-                <Input
-                  id="tpl-name"
-                  value={form.name}
-                  onChange={(e) => setField('name', e.target.value)}
-                  placeholder="e.g. Welcome email"
-                  aria-invalid={!!errors.name}
-                  aria-describedby={errors.name ? 'tpl-name-error' : undefined}
-                />
-                {errors.name && (
-                  <p id="tpl-name-error" className="text-xs text-destructive">
-                    {errors.name}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="tpl-subject">Subject</Label>
-                <Input
-                  id="tpl-subject"
-                  value={form.subject}
-                  onChange={(e) => setField('subject', e.target.value)}
-                  placeholder="What recipients see in their inbox"
-                  aria-invalid={!!errors.subject}
-                  aria-describedby={errors.subject ? 'tpl-subject-error' : undefined}
-                />
-                {errors.subject && (
-                  <p id="tpl-subject-error" className="text-xs text-destructive">
-                    {errors.subject}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Body</Label>
-              <div className={cn('rounded-md', errors.body && 'ring-2 ring-destructive/60')}>
-                <RichTextEditor value={form.body} onChange={(value) => setField('body', value)} placeholder="Write the email…" height="280px" />
-              </div>
-              {errors.body && <p className="text-xs text-destructive">{errors.body}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="tpl-description">
-                Description <span className="font-normal text-muted-foreground">(optional)</span>
-              </Label>
-              <Textarea
-                id="tpl-description"
-                value={form.description}
-                onChange={(e) => setField('description', e.target.value)}
-                placeholder="When should this template be used?"
-                rows={2}
-              />
-            </div>
-
-            <label
-              htmlFor="tpl-global"
-              className={cn(
-                'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors',
-                form.isGlobal ? 'border-success/40 bg-success/5' : 'border-border hover:bg-accent/50'
-              )}
-            >
-              <Checkbox
-                id="tpl-global"
-                checked={form.isGlobal}
-                onCheckedChange={(checked) => setField('isGlobal', !!checked)}
-                className="mt-0.5"
-              />
-              <span className="min-w-0">
-                <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                  <Globe className={cn('size-4', form.isGlobal ? 'text-success' : 'text-muted-foreground')} />
-                  Share with everyone
-                </span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  Global templates appear in Compose for all users. Leave this off to keep it to yourself.
-                </span>
-              </span>
-            </label>
-          </form>
-
-          <DialogFooter className="flex-row justify-end gap-2 border-t border-border p-4">
-            <Button type="button" variant="outline" onClick={() => setFormOpen(false)} disabled={saving}>
-              Cancel
-            </Button>
-            <Button type="submit" form="template-form" disabled={saving}>
-              {saving && <Loader2 className="size-4 animate-spin" />}
-              {editing ? 'Save changes' : 'Create template'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TemplateFormDialog open={formOpen} template={editing} onClose={() => setFormOpen(false)} onSaved={loadTemplates} />
 
       <ConfirmDialog
         open={!!deleting}
