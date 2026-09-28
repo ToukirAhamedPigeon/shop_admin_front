@@ -1,5 +1,6 @@
 // src/components/custom/Modal.tsx
-import React from "react";
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import ModalCore from "./ModalCore";
 
@@ -30,7 +31,19 @@ export default function Modal({
   showPrintButton,
   widthPercent,
 }: ModalProps) {
-  return (
+  // Esc closes, like the other dialogs.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
+  // Portal to <body>: inside <main> the modal shared main's stacking context,
+  // so the sidebar and header were drawn over its edges.
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -40,9 +53,17 @@ export default function Modal({
           exit="exit"
           transition={{ duration: 0.18 }}
           className="fixed inset-0 w-full h-full flex items-center justify-center z-50 bg-black/40"
-          onClick={onClose}
         >
-          <div className="w-full h-full flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
+          {/* Clicking the dimmed area around the modal closes it. */}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            className="w-full h-full flex items-center justify-center px-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) onClose();
+            }}
+          >
             <ModalCore
               title={title}
               onClose={onClose}
@@ -56,6 +77,7 @@ export default function Modal({
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

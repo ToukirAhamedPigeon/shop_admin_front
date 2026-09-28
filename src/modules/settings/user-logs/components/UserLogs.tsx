@@ -1,4 +1,4 @@
-// app/(dashboard)/admin/logs/LogListTable.tsx
+// src/modules/settings/user-logs/components/UserLogs.tsx
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import {
   flexRender,
@@ -10,7 +10,7 @@ import {
   type OnChangeFn,
   type SortingState,
 } from '@tanstack/react-table'
-import { motion } from 'framer-motion'
+import { List, Rows3 } from 'lucide-react'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
 import { useTable } from '@/hooks/useTable'
 import { useDetailModal } from '@/hooks/useDetailModal'
@@ -28,6 +28,8 @@ import {
 import { getCustomDateTime } from '@/lib/formatDate'
 import api from '@/lib/axios'
 import LogDetail from './LogDetail'
+import LogTimeline, { TimelineSkeleton } from './LogTimeline'
+import { QUICK_FILTERS, actionOf, toneSoft } from './logMeta'
 import type { IUserLog } from '@/types'
 import { ColumnVisibilityManager } from '@/components/custom/ColumnVisibilityManager'
 import { refreshColumnSettings } from '@/lib/refreshColumnSettings'
@@ -97,16 +99,13 @@ const getAllColumns = ({
     id: 'actionType', 
     accessorKey: 'actionType',
     cell: ({ getValue }) => {
-      const value = getValue() as string;
-      const getActionColor = () => {
-        switch(value?.toLowerCase()) {
-          case 'create': return 'text-emerald-600 dark:text-emerald-400';
-          case 'update': return 'text-primary';
-          case 'delete': return 'text-destructive';
-          default: return 'text-muted-foreground';
-        }
-      };
-      return <span className={`font-medium ${getActionColor()}`}>{value}</span>
+      const value = getValue() as string
+      const action = actionOf(value)
+      return (
+        <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', toneSoft[action.tone])}>
+          {value}
+        </span>
+      )
     },
     meta: { customClassName: 'text-center', tdClassName: 'text-center' } 
   },
@@ -174,7 +173,7 @@ const getAllColumns = ({
       const raw = getValue();
 
       if (!raw) {
-        return <span className="text-gray-400">-</span>;
+        return <span className="text-muted-foreground">-</span>;
       }
 
       const parsed = JSON.stringify(
@@ -207,8 +206,21 @@ const initialFilters: LogFilters = {
   createdAtTo: new Date(),
 }
 
+type LogView = 'timeline' | 'table'
+const VIEW_KEY = 'user-logs-view'
+const readView = (): LogView => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'table' ? 'table' : 'timeline'
+  } catch {
+    return 'timeline'
+  }
+}
+
+const sameTypes = (a: string[] = [], b: string[] = []) => a.length === b.length && a.every(t => b.includes(t))
+
 export default function LogListTable() {
   const [filters, setFilters] = useState<LogFilters>(initialFilters)
+  const [view, setView] = useState<LogView>(readView)
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [showColumnModal, setShowColumnModal] = useState(false)
   const [visible, setVisible] = useState<ColumnDef<IUserLog>[]>([])
@@ -283,7 +295,7 @@ export default function LogListTable() {
     fetcher: stableFetcher,
     initialColumns: [],
     defaultSort: 'createdAt',
-    minLoadingTime: 1000,
+    minLoadingTime: 300,
   })
 
   // Stabilize allColumns with useRef to prevent unnecessary recalculations
@@ -403,6 +415,17 @@ export default function LogListTable() {
     getPaginationRowModel: getPaginationRowModel(),
   })
 
+  const changeView = (next: LogView) => {
+    setView(next)
+    try {
+      localStorage.setItem(VIEW_KEY, next)
+    } catch {
+      /* private mode: kept for this visit only */
+    }
+  }
+
+  const activeQuick = QUICK_FILTERS.find(q => sameTypes(q.types, filters.actionType ?? []))?.id
+
   const handleApplyFilters = useCallback((newFilters: LogFilters) => {
     // Reset to first page when applying new filters
     setPageIndex(0)
@@ -411,8 +434,8 @@ export default function LogListTable() {
   }, [setPageIndex])
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-      <div className="table-container relative space-y-2">
+    <div>
+      <div className="table-container relative space-y-3">
         <TableHeaderActions
           searchValue={globalFilter}
           onSearchChange={setGlobalFilter}
@@ -431,8 +454,76 @@ export default function LogListTable() {
           isFilterActive={isFilterActive}
         />
 
-        {/* TABLE */}
-        <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
+        {/* Quick action filters and the view switch */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div role="radiogroup" aria-label="Show actions" className="flex flex-wrap gap-1.5">
+            {QUICK_FILTERS.map(q => {
+              const active = activeQuick === q.id
+              return (
+                <button
+                  key={q.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => handleApplyFilters({ ...filters, actionType: q.types })}
+                  className={cn(
+                    'cursor-pointer rounded-full border px-3 py-1 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+                    active
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground'
+                  )}
+                >
+                  {q.label}
+                </button>
+              )
+            })}
+          </div>
+          <div role="radiogroup" aria-label="View" className="flex rounded-lg border border-border bg-muted/50 p-0.5">
+            {([
+              ['timeline', Rows3, 'Timeline'],
+              ['table', List, 'Table'],
+            ] as const).map(([mode, Icon, label]) => (
+              <button
+                key={mode}
+                type="button"
+                role="radio"
+                aria-checked={view === mode}
+                onClick={() => changeView(mode)}
+                className={cn(
+                  'flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+                  view === mode ? 'bg-card font-medium text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Icon className="size-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* TIMELINE */}
+        {view === 'timeline' && (
+          <div className="rounded-xl border border-border bg-card p-3 shadow-xs sm:p-4">
+            {showErrorState ? (
+              <ErrorState
+                message="Couldn't load logs"
+                suggestion="The server didn't respond as expected. Check your connection and try again."
+                onRetry={() => fetchData()}
+              />
+            ) : showEmptyState ? (
+              <EmptyState message="No activity found" suggestion="Try another filter or date range" />
+            ) : data.length === 0 ? (
+              <TimelineSkeleton />
+            ) : (
+              <div className={cn('max-h-[680px] overflow-y-auto transition-opacity duration-200', loading && 'opacity-60')} aria-busy={loading}>
+                <LogTimeline logs={data} onOpen={log => fetchDetail(log)} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TABLE: stays in the page in timeline view, hidden, so Print still has it. */}
+        <div className={cn('relative rounded-xl overflow-hidden border border-border bg-card shadow-xs', view !== 'table' && 'hidden')}>
           <TableWithLoader 
             loading={loading}
             id="printable-user-table"
@@ -470,13 +561,7 @@ export default function LogListTable() {
                 ))}
               </thead>
               
-              <motion.tbody
-                key={pageIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              >
+              <tbody>
                 {/* Error State Row - only show when not loading */}
                 {showErrorState && (
                   <tr>
@@ -509,10 +594,9 @@ export default function LogListTable() {
                       <tr 
                         key={row.id} 
                         className={cn(
-                          "transition-all duration-200",
-                          "border-b border-gray-200/40 dark:border-gray-700/30",
-                          index !== table.getRowModel().rows.length - 1 && "border-b",
-                          "hover:bg-white/20 dark:hover:bg-white/5"
+                          'transition-colors',
+                          index !== table.getRowModel().rows.length - 1 && 'border-b border-border',
+                          'hover:bg-accent/50'
                         )}
                       >
                         {row.getVisibleCells().map(cell => (
@@ -534,7 +618,7 @@ export default function LogListTable() {
                     <td colSpan={table.getVisibleFlatColumns().length} className="h-32" />
                   </tr>
                 )}
-              </motion.tbody>
+              </tbody>
             </table>
           </TableWithLoader>
         </div>
@@ -552,26 +636,11 @@ export default function LogListTable() {
       </div>
 
       {showDetail && (
-        <Modal isOpen={isModalOpen} onClose={closeModal} title="Log Details" widthPercent={80}>
+        <Modal isOpen={isModalOpen} onClose={closeModal} title="Log details" widthPercent={70}>
           {detailLoading || !selectedItem ? (
             <TableLoader loading />
           ) : (
-            <LogDetail
-              log={{
-                detail: selectedItem.detail ?? '',
-                collectionName: selectedItem.modelName ?? '',
-                actionType: selectedItem.actionType ?? '',
-                objectId: selectedItem.modelId ?? '',
-                createdByName: selectedItem.createdByName ?? '',
-                createdAt: selectedItem.createdAt ?? '',
-                ipAddress: selectedItem.ipAddress ?? '',
-                browser: selectedItem.browser ?? '',
-                device: selectedItem.device ?? '',
-                operatingSystem: selectedItem.operatingSystem ?? '',
-                userAgent: selectedItem.userAgent ?? '',
-                changes: parseChanges(selectedItem.changes ?? ''), 
-              }}
-            />
+            <LogDetail log={selectedItem} />
           )}
         </Modal>
       )}
@@ -602,6 +671,6 @@ export default function LogListTable() {
           />
         )}
       />
-    </motion.div>
+    </div>
   )
 }

@@ -96,6 +96,8 @@ const ModalCore: React.FC<ModalCoreProps> = ({
           {showPrintButton && (
             <button
               onClick={handlePrint}
+              aria-label={t("common.print", "Print")}
+              title={t("common.print", "Print")}
               className="p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors hover:bg-accent"
             >
               <Printer size={18} />
@@ -104,6 +106,7 @@ const ModalCore: React.FC<ModalCoreProps> = ({
 
           <button
             onClick={onClose}
+            aria-label={t("common.close", "Close")}
             className="p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors hover:bg-accent"
           >
             <X size={18} />
