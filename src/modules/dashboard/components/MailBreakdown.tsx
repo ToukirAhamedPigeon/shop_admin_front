@@ -32,32 +32,52 @@ export default function MailBreakdown({ section }: { section: Section<MailStatis
       {section.status === "ready" ? (
         (() => {
           const max = Math.max(1, ...rows.map((r) => section.data[r.key] ?? 0));
+          const received = section.data.totalReceived ?? 0;
           return (
-            <ul className="space-y-4">
-              {rows.map(({ key, label, icon: Icon }, i) => {
-                const value = section.data[key] ?? 0;
-                return (
-                  <li key={key}>
-                    <div className="mb-1.5 flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-2 text-muted-foreground">
-                        <Icon className="size-4" />
-                        {label}
-                      </span>
-                      <span className="font-medium tabular-nums text-foreground">{value.toLocaleString()}</span>
-                    </div>
-                    {/* One hue: these are magnitudes of the same thing. */}
-                    <div className="h-2 overflow-hidden rounded-full bg-primary/10">
-                      <motion.div
-                        className="h-full rounded-full bg-primary"
-                        initial={{ width: reduceMotion ? `${(value / max) * 100}%` : 0 }}
-                        animate={{ width: `${(value / max) * 100}%` }}
-                        transition={{ duration: 0.7, delay: 0.15 + i * 0.05, ease: EASE }}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              <ul className="space-y-4">
+                {rows.map(({ key, label, icon: Icon }, i) => {
+                  const value = section.data[key] ?? 0;
+                  return (
+                    <li key={key}>
+                      <div className="mb-1.5 flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                          <Icon className="size-4" />
+                          {label}
+                        </span>
+                        <span className="font-medium tabular-nums text-foreground">{value.toLocaleString()}</span>
+                      </div>
+                      {/* One hue: these are magnitudes of the same thing. */}
+                      <div className="h-2 overflow-hidden rounded-full bg-primary/10">
+                        <motion.div
+                          className="h-full rounded-full bg-primary"
+                          initial={{ width: reduceMotion ? `${(value / max) * 100}%` : 0 }}
+                          animate={{ width: `${(value / max) * 100}%` }}
+                          transition={{ duration: 0.7, delay: 0.15 + i * 0.05, ease: EASE }}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4">
+                {[
+                  {
+                    label: t("dashboard.mail.readRate", "Read rate"),
+                    value: received ? `${Math.round(((received - section.data.unreadCount) / received) * 100)}%` : "—",
+                  },
+                  {
+                    label: t("dashboard.mail.replyRatio", "Sent per received"),
+                    value: received ? (section.data.totalSent / received).toFixed(2) : "—",
+                  },
+                ].map(({ label, value }) => (
+                  <div key={label} className="min-w-0">
+                    <dt className="truncate text-xs text-muted-foreground">{label}</dt>
+                    <dd className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </>
           );
         })()
       ) : section.status === "error" ? (

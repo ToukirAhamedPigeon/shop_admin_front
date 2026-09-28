@@ -1,5 +1,8 @@
 // src/modules/dashboard/components/AccountCard.tsx
-import { AtSign, KeyRound, Mail, Phone, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ChevronRight, KeyRound, Lock, Mail, Phone, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { assetUrl } from "@/lib/assetUrl";
 import { useTranslations } from "@/hooks/useTranslations";
 import type { User } from "@/modules/auth/types";
 import Panel from "./Panel";
@@ -7,11 +10,18 @@ import Panel from "./Panel";
 export default function AccountCard({ user, className }: { user: User | null; className?: string }) {
   const { t } = useTranslations();
   const roles: string[] = user?.roles ?? [];
-  const permissionCount = (user?.permissions as string[] | undefined)?.length ?? 0;
+  const permissions = (user?.permissions as string[] | undefined) ?? [];
+  const permissionCount = permissions.length;
+  const canChangePassword = permissions.includes("change-admin-password");
+  const initials = (user?.name ?? "A")
+    .split(" ")
+    .map((p: string) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   const rows: { icon: LucideIcon; label: string; value?: string }[] = [
     { icon: Mail, label: t("common.email", "Email"), value: user?.email },
-    { icon: AtSign, label: t("common.username", "Username"), value: user?.username },
     { icon: Phone, label: t("common.mobileNo", "Mobile"), value: user?.mobileNo },
   ];
 
@@ -22,6 +32,17 @@ export default function AccountCard({ user, className }: { user: User | null; cl
       to="/settings/profile"
       linkLabel={t("dashboard.edit", "Edit")}
     >
+      <div className="mb-5 flex items-center gap-3">
+        <Avatar className="size-12">
+          <AvatarImage src={assetUrl(user?.profileImage) ?? undefined} alt="" />
+          <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">{initials}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="truncate font-semibold text-foreground">{user?.name || "—"}</p>
+          {user?.username && <p className="truncate text-sm text-muted-foreground">@{user.username}</p>}
+        </div>
+      </div>
+
       <dl className="space-y-3.5">
         {rows.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-start gap-3">
@@ -61,6 +82,17 @@ export default function AccountCard({ user, className }: { user: User | null; cl
             : `${permissionCount} ${t("dashboard.account.permissions", "permissions granted")}`}
         </p>
       </div>
+
+      {canChangePassword && (
+        <Link
+          to="/settings/change-password"
+          className="group mt-4 flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-sm transition-colors duration-150 hover:bg-muted/50 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <Lock className="size-4 text-muted-foreground" />
+          <span className="flex-1 font-medium text-foreground">{t("Change password")}</span>
+          <ChevronRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
+        </Link>
+      )}
     </Panel>
   );
 }

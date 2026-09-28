@@ -95,15 +95,22 @@ export default function ActivityChart({ section, ownLogsOnly }: { section: Secti
   );
 }
 
-function Chart({ days }: { days: ActivityDay[] }) {
+const RANGES = [7, 14] as const;
+
+function Chart({ days: allDays }: { days: ActivityDay[] }) {
   const { t } = useTranslations();
+  const [range, setRange] = useState<(typeof RANGES)[number]>(14);
+  const days = useMemo(() => allDays.slice(-range), [allDays, range]);
   const reduceMotion = useReducedMotion();
   const gradientId = useId();
   const [wrapRef, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
 
-  const thisWeek = days.slice(-7).reduce((s, d) => s + d.count, 0);
-  const lastWeek = days.slice(0, 7).reduce((s, d) => s + d.count, 0);
+  const thisWeek = allDays.slice(-7).reduce((s, d) => s + d.count, 0);
+  const lastWeek = allDays.slice(-14, -7).reduce((s, d) => s + d.count, 0);
+  const total = days.reduce((s, d) => s + d.count, 0);
+  const busiest = days.reduce((best, d) => (d.count > best.count ? d : best), days[0]);
+  const quietDays = days.filter((d) => d.count === 0).length;
   const change = lastWeek === 0 ? null : Math.round(((thisWeek - lastWeek) / lastWeek) * 100);
 
   const geo = useMemo(() => {
@@ -137,26 +144,47 @@ function Chart({ days }: { days: ActivityDay[] }) {
 
   const last = days.length - 1;
   // Roughly 56px per date label, so narrow charts skip more days.
-  const labelEvery = width && width / days.length < 56 ? 3 : 2;
+  const labelEvery = days.length <= 7 && width / days.length >= 48 ? 1 : width && width / days.length < 56 ? 3 : 2;
   const shown = active;
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <p className="text-3xl font-semibold tracking-tight text-foreground">{thisWeek.toLocaleString()}</p>
-        <p className="text-sm text-muted-foreground">{t("dashboard.activity.thisWeek", "actions in the last 7 days")}</p>
-        {change !== null && (
-          <span
-            className={cn(
-              "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium",
-              change > 0 ? "bg-success/10 text-success" : change < 0 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
-            )}
-          >
-            {change > 0 ? <ArrowUpRight className="size-3.5" /> : change < 0 ? <ArrowDownRight className="size-3.5" /> : <Minus className="size-3.5" />}
-            {change > 0 ? "+" : ""}
-            {change}% {t("dashboard.activity.vsPrev", "vs previous 7 days")}
-          </span>
-        )}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <p className="text-3xl font-semibold tracking-tight text-foreground">{thisWeek.toLocaleString()}</p>
+          <p className="text-sm text-muted-foreground">{t("dashboard.activity.thisWeek", "actions in the last 7 days")}</p>
+          {change !== null && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium",
+                change > 0 ? "bg-success/10 text-success" : change < 0 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
+              )}
+            >
+              {change > 0 ? <ArrowUpRight className="size-3.5" /> : change < 0 ? <ArrowDownRight className="size-3.5" /> : <Minus className="size-3.5" />}
+              {change > 0 ? "+" : ""}
+              {change}% {t("dashboard.activity.vsPrev", "vs previous 7 days")}
+            </span>
+          )}
+        </div>
+        <div role="group" aria-label={t("dashboard.activity.range", "Range")} className="inline-flex rounded-lg border border-border bg-muted/50 p-0.5">
+          {RANGES.map((r) => (
+            <button
+              key={r}
+              type="button"
+              aria-pressed={range === r}
+              onClick={() => {
+                setActive(null);
+                setRange(r);
+              }}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-150 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                range === r ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {r} {t("dashboard.activity.days", "days")}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div ref={wrapRef} className="relative" style={{ height: HEIGHT }}>
@@ -259,6 +287,31 @@ function Chart({ days }: { days: ActivityDay[] }) {
           </div>
         )}
       </div>
+
+      <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-border pt-4">
+        {[
+          { label: t("dashboard.activity.total", "Total"), value: total.toLocaleString() },
+          { label: t("dashboard.activity.average", "Daily average"), value: (total / days.length).toFixed(1) },
+          {
+            label: t("dashboard.activity.busiest", "Busiest day"),
+            value: busiest && busiest.count > 0 ? format(busiest.date, "d MMM") : "—",
+            hint: busiest && busiest.count > 0 ? `${busiest.count.toLocaleString()} ${t("dashboard.activity.actions", "actions")}` : undefined,
+          },
+        ].map(({ label, value, hint }) => (
+          <div key={label} className="min-w-0">
+            <dt className="truncate text-xs text-muted-foreground">{label}</dt>
+            <dd className="mt-0.5 truncate text-sm font-semibold tabular-nums text-foreground">
+              {value}
+              {hint && <span className="block text-xs font-normal text-muted-foreground sm:ml-1.5 sm:inline sm:text-sm">{hint}</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {quietDays > 0 && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          {quietDays} {quietDays === 1 ? t("dashboard.activity.quietDay", "day with no activity") : t("dashboard.activity.quietDays", "days with no activity")}
+        </p>
+      )}
 
       {/* The same numbers as a table, for screen readers. */}
       <table className="sr-only">

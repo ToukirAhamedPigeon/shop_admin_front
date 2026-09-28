@@ -1,23 +1,43 @@
 // src/modules/dashboard/components/RecentActivity.tsx
-import { formatDistanceToNow } from "date-fns";
-import { History, Pencil, Plus, Trash2, Zap, type LucideIcon } from "lucide-react";
+import { format, formatDistanceToNowStrict, isToday, isYesterday } from "date-fns";
+import { History } from "lucide-react";
+import { actionOf, isSessionAction, toneSoft } from "@/modules/settings/user-logs/components/logMeta";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/hooks/useTranslations";
 import type { IUserLog } from "@/types";
 import type { Section } from "../hooks/useDashboardData";
 import Panel from "./Panel";
 
-const actionStyle: Record<string, { icon: LucideIcon; tone: string }> = {
-  create: { icon: Plus, tone: "bg-success/10 text-success ring-success/20" },
-  update: { icon: Pencil, tone: "bg-primary/10 text-primary ring-primary/20" },
-  delete: { icon: Trash2, tone: "bg-destructive/10 text-destructive ring-destructive/20" },
+const parse = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d;
 };
-const fallbackStyle = { icon: Zap, tone: "bg-muted text-muted-foreground ring-border" };
+const safeTime = (iso: string) => {
+  const d = parse(iso);
+  if (!d) return "";
+  return Date.now() - d.getTime() < 60 * 60_000 ? formatDistanceToNowStrict(d, { addSuffix: true }) : format(d, "h:mm a");
+};
+const safeDate = (iso: string) => {
+  const d = parse(iso);
+  return d ? format(d, "PPpp") : "";
+};
 
-const safeDistance = (iso: string) => {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? "" : formatDistanceToNow(date, { addSuffix: true });
-};
+/** Newest first, split into Today / Yesterday / a date. */
+function groupByDay(logs: IUserLog[]) {
+  const groups: { key: string; label: string; items: IUserLog[] }[] = [];
+  for (const log of logs) {
+    const d = parse(log.createdAt);
+    const key = d ? format(d, "yyyy-MM-dd") : "unknown";
+    let group = groups.find((g) => g.key === key);
+    if (!group) {
+      const label = !d ? "Unknown date" : isToday(d) ? "Today" : isYesterday(d) ? "Yesterday" : format(d, "EEEE, d MMM");
+      group = { key, label, items: [] };
+      groups.push(group);
+    }
+    group.items.push(log);
+  }
+  return groups;
+}
 
 export default function RecentActivity({ section }: { section: Section<IUserLog[]> }) {
   const { t } = useTranslations();
@@ -32,35 +52,50 @@ export default function RecentActivity({ section }: { section: Section<IUserLog[
       linkLabel={t("dashboard.viewAll", "View all")}
     >
       {section.status === "ready" && section.data.length > 0 && (
-        <ol className="relative space-y-1">
-          {/* Timeline rail behind the icons. */}
-          <span aria-hidden className="absolute bottom-5 left-[17px] top-5 w-px bg-border" />
-          {section.data.map((log) => {
-            const { icon: Icon, tone } = actionStyle[log.actionType?.toLowerCase()] ?? fallbackStyle;
-            return (
-              <li key={log.id} className="relative flex items-start gap-3 rounded-lg p-1.5 transition-colors duration-150 hover:bg-muted/50">
-                <span className={cn("relative mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-card ring-1", tone)}>
-                  <Icon className="size-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-foreground">
-                    {log.detail || `${log.actionType} ${log.modelName}`}
-                  </p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    <span className="capitalize">{log.actionType}</span>
-                    {" · "}
-                    {log.modelName}
-                    {log.createdByName && <> · {log.createdByName}</>}
-                    <span className="sm:hidden"> · {safeDistance(log.createdAt)}</span>
-                  </p>
-                </div>
-                <time dateTime={log.createdAt} className="hidden shrink-0 pt-0.5 text-xs text-muted-foreground sm:block">
-                  {safeDistance(log.createdAt)}
-                </time>
-              </li>
-            );
-          })}
-        </ol>
+        <div className="space-y-4">
+          {groupByDay(section.data).map((group) => (
+            <section key={group.key} aria-label={group.label}>
+              <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{t(group.label)}</h3>
+              <ol className="relative space-y-0.5">
+                {/* Timeline rail behind the icons. */}
+                {group.items.length > 1 && <span aria-hidden className="absolute bottom-5 left-[19px] top-5 w-px bg-border" />}
+                {group.items.map((log) => {
+                  const action = actionOf(log.actionType);
+                  const Icon = action.icon;
+                  return (
+                    <li key={log.id} className="relative flex items-start gap-3 rounded-lg p-1.5 transition-colors duration-150 hover:bg-muted/50">
+                      {/* Opaque base under the soft tint so the rail doesn't show through. */}
+                      <span className="relative mt-0.5 size-7 shrink-0 rounded-full bg-card">
+                        <span className={cn("flex size-full items-center justify-center rounded-full", toneSoft[action.tone])}>
+                          <Icon className="size-3.5" />
+                        </span>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm text-muted-foreground">
+                          <span className="font-medium text-foreground">{log.createdByName || t("Someone")}</span> {t(action.verb)}
+                          {!isSessionAction(log.actionType) && log.modelName && (
+                            <>
+                              {" "}
+                              <span className="font-medium text-foreground">{log.modelName}</span>
+                            </>
+                          )}
+                        </p>
+                        {log.detail && <p className="mt-0.5 truncate text-xs text-muted-foreground">{log.detail}</p>}
+                      </div>
+                      <time
+                        dateTime={log.createdAt}
+                        title={safeDate(log.createdAt)}
+                        className="shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground"
+                      >
+                        {safeTime(log.createdAt)}
+                      </time>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          ))}
+        </div>
       )}
       {section.status === "ready" && section.data.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">

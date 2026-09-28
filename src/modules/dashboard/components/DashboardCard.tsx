@@ -22,10 +22,12 @@ interface DashboardCardProps {
   caption?: ReactNode;
   tone?: keyof typeof tones;
   to?: string;
+  /** A small chart beside the number (sparkline, ring). Coloured by the tile's tone. */
+  aside?: ReactNode;
 }
 
 /** Stat tile: label, icon, animated value and a caption. The whole tile links when `to` is set. */
-export default function DashboardCard({ title, section, icon: Icon, caption, tone = "primary", to }: DashboardCardProps) {
+export default function DashboardCard({ title, section, icon: Icon, caption, tone = "primary", to, aside }: DashboardCardProps) {
   const body = (
     <>
       {/* Soft corner glow in the tile's tone, brighter on hover. */}
@@ -42,16 +44,19 @@ export default function DashboardCard({ title, section, icon: Icon, caption, ton
           <Icon className="size-[18px]" />
         </span>
       </div>
-      <div className="relative mt-3 text-[28px] font-semibold leading-none tracking-tight text-foreground">
-        {section.status === "ready" ? (
-          <CountUp value={section.data} />
-        ) : section.status === "error" ? (
-          <span className="text-muted-foreground" title="Couldn't load">
-            —
-          </span>
-        ) : (
-          <span className="block h-7 w-20 animate-pulse rounded-md bg-muted" aria-label="Loading" />
-        )}
+      <div className="relative mt-3 flex min-h-11 items-end justify-between gap-3">
+        <div className="text-[28px] font-semibold leading-none tracking-tight text-foreground">
+          {section.status === "ready" ? (
+            <CountUp value={section.data} />
+          ) : section.status === "error" ? (
+            <span className="text-muted-foreground" title="Couldn't load">
+              —
+            </span>
+          ) : (
+            <span className="block h-7 w-20 animate-pulse rounded-md bg-muted" aria-label="Loading" />
+          )}
+        </div>
+        {section.status === "ready" && aside && <div className={tones[tone].split(" ")[1]}>{aside}</div>}
       </div>
       <div className="relative mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
         <span className="truncate">{caption}</span>
