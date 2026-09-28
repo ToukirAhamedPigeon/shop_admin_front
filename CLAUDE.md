@@ -104,6 +104,13 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   table is a toggle (`translations-view`) and stays mounted for Print.
   `useTable` exposes `setData` so an inline edit patches its row without
   reloading.
+- Roles defaults to cards (`RoleCards`): status, permission count and
+  permissions grouped by module (`permissionMeta.ts` reads names as
+  `<action>-<scope>-<module>`). The table is a toggle (`roles-view`) and
+  stays mounted for Print. `useTable` already loads the first page on mount,
+  so pages must not call `fetchData()` again from their own mount effect (the
+  duplicate request re-armed the loader). Give the table all columns until the
+  saved column choice arrives, so the header never renders empty.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.
