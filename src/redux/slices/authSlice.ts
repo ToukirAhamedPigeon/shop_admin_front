@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
+import { clearUserTheme } from "@/lib/userTheme";
 import api from "@/lib/axios";
 import type { User, LoginResponse, RefreshResponse } from "@/modules/auth/types";
 import {
@@ -180,6 +181,7 @@ const authSlice = createSlice({
       state.isLoggedOut = true;
       delete api.defaults.headers.common["X-CSRF-TOKEN"];
       localStorage.removeItem("refreshTokenExpiry");
+      clearUserTheme();
     },
     setAccessToken(state, action: PayloadAction<string>) {
       state.accessToken = action.payload;

@@ -103,7 +103,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ settings, onUpdate
 
   return (
     <div className="space-y-5">
-      <SettingsSection title={t('Colours')} description={t('Pick the colours used across the app. The preview updates as you choose.')}>
+      <SettingsSection title={t('Colours')} description={t('Used across the app once saved. The preview updates as you choose.')}>
         <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,17rem)]">
           <div className="space-y-5">
             <div>
@@ -131,7 +131,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ settings, onUpdate
       </SettingsSection>
 
       <SettingsSection title={t('Appearance')}>
-        <SettingRow label={t('Dark mode')} hint={t('Use the dark theme by default.')}>
+        <SettingRow label={t('Dark mode')} hint={t('Your default theme. The sun/moon button in the header can still switch it.')}>
           <div className="flex sm:justify-end">
             <Toggle checked={!!localSettings.dark_mode} onChange={(v) => change('dark_mode', v)} label={t('Dark mode')} />
           </div>

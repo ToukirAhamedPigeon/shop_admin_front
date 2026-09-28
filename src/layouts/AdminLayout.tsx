@@ -5,6 +5,7 @@ import Sidebar from '@/components/module/admin/layout/Sidebar'
 import Footer from '@/components/custom/Footer'
 import Header from '@/components/module/admin/layout/Header'
 import Main from '@/components/module/admin/layout/Main'
+import UserThemeSync from '@/components/UserThemeSync'
 import { Outlet, useLocation } from "react-router-dom";
 
 export default function AdminLayout() {
@@ -12,6 +13,7 @@ export default function AdminLayout() {
   return (
     <>
       <div className="flex flex-col min-h-screen">
+        <UserThemeSync />
         <Header />
 
         <div className="flex pt-16">

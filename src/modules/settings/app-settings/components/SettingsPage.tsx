@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsContent } from './SettingsContent';
 import { fetchSettings } from '@/redux/slices/settingsSlice';
+import { setTheme } from '@/redux/slices/themeSlice';
 import { useSettings } from '@/hooks/useSettings';
 import type { AppDispatch } from '@/redux/store';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
@@ -46,6 +47,8 @@ export const SettingsPage: React.FC = () => {
   const handleUpdateTheme = async (settings: any) => {
     // settings will contain SidebarBgFile and LoginBgFile as File objects
     await updateThemeSettings(settings);
+    // Saving dark mode here is an explicit choice: apply it now, like the header toggle.
+    if (typeof settings?.dark_mode === 'boolean') dispatch(setTheme(settings.dark_mode ? 'dark' : 'light'));
   };
 
   const handleUpdateGeneral = async (settings: any) => {

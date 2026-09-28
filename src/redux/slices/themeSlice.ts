@@ -15,8 +15,17 @@ function applyTheme(theme: Theme) {
   root.style.colorScheme = theme
 }
 
-// 🔹 Determine initial theme
-const savedTheme = (localStorage.getItem("theme") as Theme) || "light"
+// 🔹 Determine initial theme: the header choice, else the default saved in
+// App Settings (cached as "theme-default"), else light.
+const readStored = (key: string): Theme | null => {
+  try {
+    const v = localStorage.getItem(key)
+    return v === "light" || v === "dark" ? v : null
+  } catch {
+    return null
+  }
+}
+const savedTheme: Theme = readStored("theme") ?? readStored("theme-default") ?? "light"
 
 // 🔹 Apply it immediately to <html> so Tailwind dark: classes work on page load
 applyTheme(savedTheme)
@@ -35,6 +44,12 @@ const themeSlice = createSlice({
 
       applyTheme(action.payload)
     },
+    /** The App Settings default: applied but not stored as the person's own choice. */
+    applyDefaultTheme: (state, action: PayloadAction<Theme>) => {
+      if (state.current === action.payload) return
+      state.current = action.payload
+      applyTheme(action.payload)
+    },
     toggleTheme: (state) => {
       const newTheme: Theme = state.current === "light" ? "dark" : "light"
       state.current = newTheme
@@ -45,5 +60,5 @@ const themeSlice = createSlice({
   },
 })
 
-export const { setTheme, toggleTheme } = themeSlice.actions
+export const { setTheme, applyDefaultTheme, toggleTheme } = themeSlice.actions
 export default themeSlice.reducer
