@@ -48,7 +48,13 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   null for sections the user can't read, and the page hides them. Don't put
   sample numbers back. Its hero reuses the login navy in
   both themes; charts are hand-rolled SVG in the `--primary` hue (no chart
-  library).
+  library). The hero shows at-a-glance chips (unread, actions today) and a
+  Refresh button with "Updated …"; a refresh keeps the current numbers on
+  screen, and only the newest reply is used. Stat tiles take an `aside`
+  (`Ring` / `Sparkline` from `MiniCharts.tsx`, coloured by the tile tone).
+  The activity chart has a 7/14-day toggle and total / average / busiest
+  day. Recent activity is grouped by day and reads its icons, colours and
+  verbs from User Logs' `logMeta.ts`.
 - App chrome (`src/components/module/admin/layout`): the sidebar column and
   the header's brand block use the brand navy in both themes (`.app-sidebar`,
   scoped with `.dark`). The menu lives in `menu.ts` and feeds the sidebar, the
