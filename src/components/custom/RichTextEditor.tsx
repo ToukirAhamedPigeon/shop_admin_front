@@ -27,6 +27,8 @@ interface RichTextEditorProps {
   placeholder?: string;
   className?: string;
   height?: string;
+  /** Drop the outer border (the host draws its own frame). */
+  bare?: boolean;
 }
 
 export default function RichTextEditor({ 
@@ -34,7 +36,8 @@ export default function RichTextEditor({
   onChange, 
   placeholder = "Write your message here...",
   className,
-  height = "300px"
+  height = "300px",
+  bare = false,
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -46,7 +49,7 @@ export default function RichTextEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-blue-500 underline cursor-pointer',
+          class: 'text-primary underline cursor-pointer',
         },
       }),
       Image.configure({
@@ -76,7 +79,7 @@ export default function RichTextEditor({
   if (!editor) {
     return (
       <div className="border rounded-md p-4 bg-muted/50 animate-pulse">
-        <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div className="h-48 bg-muted rounded"></div>
       </div>
     );
   }
@@ -87,11 +90,13 @@ export default function RichTextEditor({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "p-2 rounded-md hover:bg-accent transition-colors",
-        isActive && "bg-gray-200 dark:bg-gray-600 text-primary",
+        "p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors",
+        isActive && "bg-accent text-primary",
         disabled && "opacity-50 cursor-not-allowed"
       )}
       title={title}
+      aria-label={title}
+      aria-pressed={isActive || undefined}
     >
       {children}
     </button>
@@ -112,9 +117,9 @@ export default function RichTextEditor({
   };
 
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className={cn(!bare && "border rounded-md overflow-hidden")}>
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/50 sticky top-0 z-10">
+      <div className={cn("flex flex-wrap gap-1 p-2 border-b bg-muted/50 sticky top-0 z-10", bare && "gap-0.5 px-3 py-1.5")}>
         {/* Text Formatting */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -148,7 +153,7 @@ export default function RichTextEditor({
           <Code className="w-4 h-4" />
         </ToolbarButton>
         
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+        <div className="w-px h-6 bg-border mx-1" />
         
         {/* Headings */}
         <ToolbarButton
@@ -167,7 +172,7 @@ export default function RichTextEditor({
           <Heading2 className="w-4 h-4" />
         </ToolbarButton>
         
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+        <div className="w-px h-6 bg-border mx-1" />
         
         {/* Lists */}
         <ToolbarButton
@@ -186,7 +191,7 @@ export default function RichTextEditor({
           <ListOrdered className="w-4 h-4" />
         </ToolbarButton>
         
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+        <div className="w-px h-6 bg-border mx-1" />
         
         {/* Blockquotes */}
         <ToolbarButton
@@ -197,7 +202,7 @@ export default function RichTextEditor({
           <Quote className="w-4 h-4" />
         </ToolbarButton>
         
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+        <div className="w-px h-6 bg-border mx-1" />
         
         {/* Links & Images */}
         <ToolbarButton
@@ -216,7 +221,7 @@ export default function RichTextEditor({
           <ImageIcon className="w-4 h-4" />
         </ToolbarButton>
         
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+        <div className="w-px h-6 bg-border mx-1" />
         
         {/* Undo/Redo */}
         <ToolbarButton
@@ -237,7 +242,7 @@ export default function RichTextEditor({
           <Redo className="w-4 h-4" />
         </ToolbarButton>
         
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+        <div className="w-px h-6 bg-border mx-1" />
         
         {/* Clear formatting */}
         <ToolbarButton
@@ -253,7 +258,7 @@ export default function RichTextEditor({
       <EditorContent editor={editor} />
       
       {/* Character count (optional) */}
-      <div className="px-4 py-2 text-xs text-gray-500 border-t bg-muted/50">
+      <div className={cn("px-4 py-2 text-xs text-muted-foreground border-t bg-muted/50", bare && "hidden")}>
         {editor.storage.characterCount?.characters() || editor.getText().length} characters
       </div>
     </div>
