@@ -66,6 +66,15 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
 
   const handleSettingUpdate = (key: string, value: any) => {
     setPendingChanges((prev) => ({ ...prev, [key]: value }));
+    // Removing an image drops a file chosen earlier but not yet saved.
+    if (value === '') {
+      setPendingFiles((prev) => {
+        if (!(key in prev)) return prev;
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
   };
 
   const handleImageUpload = (key: string, file: File) => {
@@ -88,6 +97,9 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
         // Field names the API expects for the files.
         if (pendingFiles.sidebar_bg_image) submitData.SidebarBgFile = pendingFiles.sidebar_bg_image;
         if (pendingFiles.login_bg_image) submitData.LoginBgFile = pendingFiles.login_bg_image;
+        // "Remove" sets the field to ''; the API needs an explicit flag.
+        if (pendingChanges.sidebar_bg_image === '' && !pendingFiles.sidebar_bg_image) submitData.remove_sidebar_bg = true;
+        if (pendingChanges.login_bg_image === '' && !pendingFiles.login_bg_image) submitData.remove_login_bg = true;
         await onUpdateTheme(submitData);
       } else if (category === 'Branding') {
         if (pendingFiles.logo) submitData.LogoFile = pendingFiles.logo;
