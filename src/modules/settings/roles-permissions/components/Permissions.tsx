@@ -1039,6 +1039,7 @@ export default function Permissions() {
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
           title="Add New Permission"
+          description="Create permissions and pick the roles that include them."
           icon={KeyRound}
           titleDivClassName="success-gradient"
         >
@@ -1148,6 +1149,7 @@ export default function Permissions() {
           open={isEditSheetOpen}
           onOpenChange={closeEditSheet}
           title="Edit Permission"
+          description="Rename it or change which roles include it."
           icon={KeyRound}
           titleDivClassName="warning-gradient"
         >

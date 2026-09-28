@@ -95,7 +95,11 @@ export default function FormHolderSheet({
         {/* The padding sits on an inner box: Chrome insets sticky elements by
             the scroller's own padding, so a sticky footer would float above it. */}
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="px-6 pt-6 pb-8">{children}</div>
+          {/* A form ending in a SheetFooter fills the height, so the footer
+              sits at the bottom even when the form is short. */}
+          <div className="flex min-h-full flex-col px-6 pt-6 pb-8 [&>form:has(>.sheet-footer)]:flex [&>form:has(>.sheet-footer)]:flex-1 [&>form:has(>.sheet-footer)]:flex-col">
+            {children}
+          </div>
         </div>
       </SheetContent>
     </Sheet>

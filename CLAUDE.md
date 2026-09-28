@@ -197,6 +197,16 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   Access (roles, extra permissions, Active switch), Personal details. Edit
   sends only the fields the update endpoint takes (no gender, date of birth
   or bio) and its Save stays disabled until something changes.
+- Roles and Permissions add/edit are one component, `AccessForm` (`kind`
+  "role" | "permission", `id` to edit; the four Add/Edit files wrap it), with
+  the same payloads as before. `NamesField` previews "A=B=C" as the names
+  that will be created. A role's permissions use `PermissionPicker` (all
+  permissions grouped by module, a tri-state checkbox per module, a chip per
+  action, a filter); a permission's roles use `ChipSelect`. The Users form
+  uses the same two for roles and extra permissions. Both read names through
+  `useOptionNames` (cached per Options URL; `invalidateOptionNames` after a
+  create or update). A form whose last child is a `SheetFooter` fills the
+  sheet, so the footer sits at the bottom even when the form is short.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.
