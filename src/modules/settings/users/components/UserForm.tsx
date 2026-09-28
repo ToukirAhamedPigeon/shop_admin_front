@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import DateTimeInput, { BasicInput, BasicTextarea, CustomSelect, PasswordInput, UniqueInput } from "@/components/custom/FormInputs"
 import { AvatarPicker, FieldGrid, FormSection, FormSkeleton, SheetFooter, SwitchField } from "@/components/custom/FormKit"
 import PasswordStrength from "@/components/custom/PasswordStrength"
+import ChipSelect from "@/components/custom/ChipSelect"
+import PermissionPicker from "@/modules/settings/roles-permissions/components/PermissionPicker"
 import { GENDER_OPTIONS } from "@/constants"
 import { useProfilePicture } from "@/hooks/useProfilePicture"
 import { useTranslations } from "@/hooks/useTranslations"
@@ -340,38 +342,21 @@ export default function UserForm(props: Props) {
       {/* Access */}
       <FormSection icon={ShieldCheck} title={t("Access")} description={t("Roles grant permissions; add extra permissions only when a role doesn't cover it.")}>
         <div className="space-y-4">
-          <CustomSelect<UserFormValues>
+          <ChipSelect
             id="roles"
             label="Roles"
-            name="roles"
-            setValue={setField as never}
-            model={MODEL}
-            apiUrl="/Options/roles"
-            collection="Role"
-            labelFields={["name"]}
-            valueFields={["name"]}
-            sortOrder="asc"
+            url="/Options/roles"
             isRequired
-            placeholder="Select Roles"
-            multiple
-            value={values.roles}
-            error={errors.roles && ("message" in errors.roles ? errors.roles : undefined)}
+            value={values.roles ?? []}
+            onChange={(v) => setField("roles", v)}
+            error={errors.roles?.message}
           />
-          <CustomSelect<UserFormValues>
+          <PermissionPicker
             id="permissions"
             label="Extra permissions"
-            name="permissions"
-            setValue={setField as never}
-            model={MODEL}
-            apiUrl="/Options/permissions"
-            collection="Permission"
-            labelFields={["name"]}
-            valueFields={["name"]}
-            sortOrder="asc"
-            placeholder="Select Permissions"
-            multiple
-            value={values.permissions}
-            error={errors.permissions?.[0]}
+            value={values.permissions ?? []}
+            onChange={(v) => setField("permissions", v)}
+            hint="Only for what the roles above don't already give."
           />
           <SwitchField
             label={t("Active")}

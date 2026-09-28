@@ -223,7 +223,7 @@ export function UnsavedBar({
  */
 export function SheetFooter({ status, children }: { status?: ReactNode; children: ReactNode }) {
   return (
-    <div className="sticky bottom-0 z-10 -mx-6 -mb-8 mt-6 flex flex-wrap items-center gap-2 border-t border-border bg-card/95 px-6 py-3 backdrop-blur-sm [&>button]:flex-1 sm:[&>button]:flex-none">
+    <div className="sheet-footer sticky bottom-0 z-10 -mx-6 -mb-8 mt-auto flex flex-wrap items-center gap-2 border-t border-border bg-card/95 px-6 py-3 backdrop-blur-sm [&>button]:flex-1 sm:[&>button]:flex-none">
       <div className="w-full min-w-0 text-xs text-muted-foreground sm:mr-auto sm:w-auto">{status}</div>
       {children}
     </div>

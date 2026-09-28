@@ -27,3 +27,6 @@ export function groupPermissions(names: string[] = []): { module: string; action
 
 /** "mail-templates" → "Mail templates". */
 export const moduleLabel = (module: string) => module.replace(/[-_]+/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
+
+/** "Admin = Editor=Viewer" → ["Admin", "Editor", "Viewer"]: the API creates one per name. */
+export const splitNames = (raw: string) => [...new Set(raw.split('=').map((s) => s.trim()).filter(Boolean))]

@@ -1057,6 +1057,7 @@ export default function Roles() {
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
           title="Add New Role"
+          description="Name it, then choose what it can do."
           icon={Shield}
           titleDivClassName="success-gradient"
         >
@@ -1185,6 +1186,7 @@ export default function Roles() {
           open={isEditSheetOpen}
           onOpenChange={closeEditSheet}
           title="Edit Role"
+          description="Changes apply to everyone with this role."
           icon={Shield}
           titleDivClassName="warning-gradient"
         >
