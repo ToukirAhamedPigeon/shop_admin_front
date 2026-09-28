@@ -91,6 +91,15 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   filter, done in the browser). Each card previews the email; "Use" opens
   `ComposeMail` with its `template` prop. Turn HTML bodies into preview text
   with `htmlToText` (`mail/components/mailFormat.ts`).
+- Compose (`mail/components/ComposeMail.tsx`) is a dialog: title bar with the
+  template picker, Gmail-style envelope rows (To with Cc/Bcc toggles,
+  Subject), the editor (`RichTextEditor` with `bare`), attachment chips and a
+  footer with Send, attach and discard. Files can be dropped anywhere on the
+  dialog; Ctrl/⌘+Enter sends. Closing with typed text or attachments asks
+  first. Template and reply content reaches the editor through a keyed
+  `seed`, since the editor only reads `value` when it mounts. There is no
+  typography plugin, so editor content is styled by the `.tiptap` rules in
+  `index.css`.
 - Backup (`src/modules/settings/backup`): a status panel (success ring,
   last/next backup, counts, storage used per location), then the backup list
   with schedules beside it from `xl`. Storage and status colours come from
