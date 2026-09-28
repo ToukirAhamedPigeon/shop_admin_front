@@ -91,6 +91,15 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   `backupMeta.ts` (tokens only). Filters apply as soon as they change; the
   grid/list choice is saved as `backup-view`. Give grids `grid-cols-1` below
   their breakpoint, or long names stretch the implicit column past the card.
+- User Logs (`src/modules/settings/user-logs`) defaults to a day-grouped
+  timeline (`LogTimeline`); the table is a toggle (`user-logs-view`) and stays
+  in the DOM, hidden, so Print still finds `#printable-user-table`. Action
+  icons, colours and verbs, quick filters and the before→after diff come from
+  `logMeta.ts`, matching the action types shop_back writes. Changes are stored
+  as `{"before": {...}, "after": {...changed fields}}`.
+- `components/custom/Modal` renders through a portal into `<body>`. Inside
+  `<main>` it shared main's stacking context and the sidebar covered it. It
+  closes on Esc and on a backdrop click.
 - Theme before first paint: `index.html` applies the saved theme class,
   `color-scheme` and page background in an inline script, so reloading in
   dark mode doesn't flash white. `themeSlice` (`applyTheme`) keeps them in
