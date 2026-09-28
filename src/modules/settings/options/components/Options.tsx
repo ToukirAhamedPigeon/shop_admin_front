@@ -44,7 +44,7 @@ import EditOption from './EditOption';
 import { useEditSheet } from '@/hooks/useEditSheet';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import { deleteOption, restoreOption, getOptions, bulkDeleteOptions, bulkRestoreOptions, getOptionDeleteInfo } from '../api';
-import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Database, XCircle, List, AlertCircle } from 'lucide-react';
+import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Database, XCircle, List, AlertCircle, ListChecks } from 'lucide-react';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { cn } from '@/lib/utils';
 import OptionCards from './OptionCards'
@@ -1136,6 +1136,7 @@ export default function Options() {
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
           title="Add New Option"
+          icon={ListChecks}
           titleDivClassName="success-gradient"
         >
           <AddOption fetchData={fetchData} onClose={() => setIsSheetOpen(false)} />
@@ -1312,6 +1313,7 @@ export default function Options() {
           open={isEditSheetOpen}
           onOpenChange={closeEditSheet}
           title="Edit Option"
+          icon={ListChecks}
           titleDivClassName="warning-gradient"
         >
           {optionToEdit && (

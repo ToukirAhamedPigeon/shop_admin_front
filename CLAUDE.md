@@ -181,6 +181,22 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   and a guidance column. The change only happens through the emailed link;
   `VerifyPasswordChange` sends each token once (a ref guard, since a second
   call would report a used link as invalid) and counts down to sign in.
+- Shared form pieces: `components/custom/FormKit.tsx` (`FormSection`,
+  `FieldGrid`, `AvatarPicker` for useProfilePicture, `Toggle` /
+  `SwitchField`, `UnsavedBar`, `SheetFooter`, `FormSkeleton`) frame the inputs
+  from `FormInputs.tsx`. Profile, App Settings and the Users form use them;
+  build new forms from them rather than restyling. Password rules live once
+  in `lib/passwordRules.ts` (`passwordSchema`, `PASSWORD_RULES`) and
+  `PasswordStrength` shows them live (Change Password, new users).
+  `lib/initials.ts` makes avatar initials. `FormHolderSheet` takes `icon` and
+  `description`; it is at least 760px wide on desktop, and its padding sits on
+  an inner box so a `SheetFooter` can stick to the very bottom.
+- Users Add/Edit is one component, `users/components/UserForm.tsx` (`mode`
+  "add" | "edit"; `Add.tsx` / `Edit.tsx` wrap it). Sections: Profile (photo,
+  name, username, email), Password (add only, with the strength checklist),
+  Access (roles, extra permissions, Active switch), Personal details. Edit
+  sends only the fields the update endpoint takes (no gender, date of birth
+  or bio) and its Save stays disabled until something changes.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.

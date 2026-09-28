@@ -46,7 +46,7 @@ import EditRole from './EditRole'
 import { useEditSheet } from '@/hooks/useEditSheet'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
 import { deleteRole, restoreRole, getRoleDeleteInfo, getRoles, bulkDeleteRoles, bulkRestoreRoles } from '../api'
-import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle, LayoutGrid, List } from 'lucide-react'
+import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle, LayoutGrid, List, Shield } from 'lucide-react'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { cn } from '@/lib/utils'
 
@@ -1057,6 +1057,7 @@ export default function Roles() {
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
           title="Add New Role"
+          icon={Shield}
           titleDivClassName="success-gradient"
         >
           <AddRole fetchData={fetchData} onClose={() => setIsSheetOpen(false)} />
@@ -1184,6 +1185,7 @@ export default function Roles() {
           open={isEditSheetOpen}
           onOpenChange={closeEditSheet}
           title="Edit Role"
+          icon={Shield}
           titleDivClassName="warning-gradient"
         >
           {roleToEdit && (

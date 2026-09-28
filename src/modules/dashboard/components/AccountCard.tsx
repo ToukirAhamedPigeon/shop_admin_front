@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight, KeyRound, Lock, Mail, Phone, ShieldCheck, type LucideIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { assetUrl } from "@/lib/assetUrl";
+import { initialsOf } from "@/lib/initials";
 import { useTranslations } from "@/hooks/useTranslations";
 import type { User } from "@/modules/auth/types";
 import Panel from "./Panel";
@@ -13,12 +14,7 @@ export default function AccountCard({ user, className }: { user: User | null; cl
   const permissions = (user?.permissions as string[] | undefined) ?? [];
   const permissionCount = permissions.length;
   const canChangePassword = permissions.includes("change-admin-password");
-  const initials = (user?.name ?? "A")
-    .split(" ")
-    .map((p: string) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = initialsOf(user?.name ?? "A");
 
   const rows: { icon: LucideIcon; label: string; value?: string }[] = [
     { icon: Mail, label: t("common.email", "Email"), value: user?.email },

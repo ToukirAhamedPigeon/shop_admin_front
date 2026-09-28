@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { Activity, CalendarDays, Mail, MailOpen, RefreshCw, UserCog, Users, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { initialsOf } from "@/lib/initials";
 import { assetUrl } from "@/lib/assetUrl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslations } from "@/hooks/useTranslations";
@@ -71,12 +72,7 @@ export default function DashboardHero({ user, unread, actionsToday, ownLogsOnly,
   const [gKey, gFallback] = greetingKey(now.getHours());
   const firstName = user?.name?.split(" ")[0] || "Admin";
   const permissions: string[] = user?.permissions ?? [];
-  const initials = (user?.name ?? "A")
-    .split(" ")
-    .map((p: string) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = initialsOf(user?.name ?? "A");
 
   const actions: QuickAction[] = [
     { to: "/mail", label: t("dashboard.action.mail", "Open mailbox"), icon: Mail, permission: "read-admin-mails" },

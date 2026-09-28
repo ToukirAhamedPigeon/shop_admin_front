@@ -50,7 +50,7 @@ import { capitalize } from '@/lib/helpers'
 import { useAppSelector } from '@/hooks/useRedux'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
 import { deleteUser, restoreUser, getDeleteInfo, bulkDeleteUsers, bulkRestoreUsers } from './../api'
-import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle } from 'lucide-react'
+import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database, XCircle, UserPlus, UserPen } from 'lucide-react'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { isValidGuid } from '@/lib/validations'
 import { cn } from '@/lib/utils'
@@ -1310,6 +1310,8 @@ export default function Users() {
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
           title="Add New User"
+          description="Create an account and choose what it can access."
+          icon={UserPlus}
           titleDivClassName="success-gradient"
         >
           <Add fetchData={fetchData} />
@@ -1498,6 +1500,8 @@ export default function Users() {
           open={isEditSheetOpen}
           onOpenChange={closeEditSheet}
           title="Edit User"
+          description={userToEdit?.name ? `${userToEdit.name}${userToEdit.username ? ` · @${userToEdit.username}` : ''}` : undefined}
+          icon={UserPen}
           titleDivClassName="warning-gradient"
         >
           {userToEdit && (

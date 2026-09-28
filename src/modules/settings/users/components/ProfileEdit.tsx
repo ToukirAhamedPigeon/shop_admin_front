@@ -4,18 +4,18 @@ import { Link } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { AnimatePresence, motion } from "framer-motion"
 import { useAppSelector } from "@/hooks/useRedux"
 import { getUserProfile, regenerateQr, updateProfile } from "../api"
 import { dispatchShowToast } from "@/lib/dispatch"
 import { Button } from "@/components/ui/button"
+import { AvatarPicker, FormSection, UnsavedBar } from "@/components/custom/FormKit"
 import DateTimeInput, { BasicInput, BasicTextarea, CustomSelect, UniqueInput } from "@/components/custom/FormInputs"
 import { GENDER_OPTIONS } from "@/constants"
 import { useProfilePicture } from "@/hooks/useProfilePicture"
 import { useTranslations } from "@/hooks/useTranslations"
 import Fancybox from "@/components/custom/FancyBox"
 import { generateQRImage } from "@/lib/generateQRImage"
-import { Loader2, QrCode, Save, Camera, Trash2, Mail, AtSign, ShieldCheck, KeyRound, ChevronRight, UserRound, NotebookPen, Info } from "lucide-react"
+import { Loader2, QrCode, Mail, AtSign, ShieldCheck, KeyRound, ChevronRight, UserRound, NotebookPen, Info } from "lucide-react"
 import { capitalize } from "@/lib/helpers"
 import { can } from "@/lib/authCheck"
 import { cn } from "@/lib/utils"
@@ -72,26 +72,6 @@ const EMPTY: ProfileEditFormValues = {
 // Fields that count towards "profile complete".
 const COMPLETENESS: (keyof ProfileEditFormValues)[] = ["name", "email", "mobile_no", "profile_image", "gender", "date_of_birth", "address", "bio"]
 
-const initials = (name: string) =>
-  name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?"
-
-function Section({ icon: Icon, title, description, children }: { icon: typeof UserRound; title: string; description?: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-xl border border-border bg-card shadow-xs">
-      <header className="flex items-start gap-3 border-b border-border px-4 py-3.5 sm:px-5">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="size-4" />
-        </span>
-        <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold text-foreground">{title}</h3>
-          {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
-        </div>
-      </header>
-      <div className="p-4 sm:p-5">{children}</div>
-    </section>
-  )
-}
-
 function ProfileSkeleton() {
   return (
     <div className="grid animate-pulse gap-5 lg:grid-cols-[320px_minmax(0,1fr)]" aria-hidden>
@@ -122,7 +102,6 @@ export default function ProfileEdit() {
   const hasLoadedRef = useRef(false)
   // The values as last loaded or saved: what "Discard" goes back to.
   const savedRef = useRef<ProfileEditFormValues>(EMPTY)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
@@ -318,46 +297,13 @@ export default function ProfileEdit() {
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
           <div className="dash-hero relative h-24" aria-hidden />
           <div className="-mt-12 flex flex-col items-center px-5 pb-5 text-center">
-            <div className="relative">
-              {preview ? (
-                <img src={preview} alt="" className="size-24 rounded-full object-cover ring-4 ring-card" />
-              ) : (
-                <span className="flex size-24 items-center justify-center rounded-full bg-primary text-2xl font-semibold text-primary-foreground ring-4 ring-card">
-                  {initials(values.name || userData?.username || "")}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                aria-label={t("Change photo")}
-                title={t("Change photo")}
-                className="absolute bottom-0 right-0 flex size-8 cursor-pointer items-center justify-center rounded-full border-2 border-card bg-primary text-primary-foreground shadow-sm outline-none transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Camera className="size-4" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) onDrop([file], [])
-                  e.target.value = ""
-                }}
-              />
-            </div>
-            {preview && (
-              <button
-                type="button"
-                onClick={clearImage}
-                className="mt-2 inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground outline-none transition-colors hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Trash2 className="size-3" />
-                {t("Remove photo")}
-              </button>
-            )}
-            {errors.profile_image?.message && <p className="mt-1 text-xs text-destructive">{errors.profile_image.message}</p>}
+            <AvatarPicker
+              preview={preview}
+              name={values.name || userData?.username || ""}
+              onDrop={onDrop}
+              onRemove={clearImage}
+              error={errors.profile_image?.message}
+            />
 
             <p className="mt-3 max-w-full truncate text-lg font-semibold text-foreground">{values.name || t("Your name")}</p>
             {userData && (
@@ -468,7 +414,7 @@ export default function ProfileEdit() {
 
       {/* Right: the form */}
       <div className="min-w-0 space-y-5">
-        <Section icon={UserRound} title={t("Personal details")} description={t("How people see and reach you.")}>
+        <FormSection icon={UserRound} title={t("Personal details")} description={t("How people see and reach you.")}>
           <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <BasicInput id="name" label={t("Full Name")} isRequired placeholder={t("Your full name")} register={register("name")} error={errors.name} model={model} />
@@ -541,44 +487,18 @@ export default function ProfileEdit() {
               />
             </div>
           </div>
-        </Section>
+        </FormSection>
 
-        <Section icon={NotebookPen} title={t("About you")} description={t("Optional details shown on your profile.")}>
+        <FormSection icon={NotebookPen} title={t("About you")} description={t("Optional details shown on your profile.")}>
           <div className="grid gap-4">
             <BasicTextarea id="bio" label={t("Bio")} placeholder={t("Tell us something about yourself")} register={register("bio")} error={errors.bio} />
             <BasicTextarea id="address" label={t("Address")} placeholder={t("Your complete address")} register={register("address")} error={errors.address} />
           </div>
-        </Section>
+        </FormSection>
       </div>
 
-      {/* Unsaved changes */}
-      <AnimatePresence>
-        {hasChanges && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            // Sticky within the page, so it never covers the sidebar.
-            className="sticky bottom-3 z-30 lg:col-start-2"
-          >
-            <div
-              role="status"
-              className="mx-auto flex max-w-3xl flex-wrap items-center gap-3 rounded-xl border border-border bg-card/95 px-4 py-3 shadow-lg backdrop-blur-sm"
-            >
-              <span className="size-2 shrink-0 rounded-full bg-warning" />
-              <p className="mr-auto text-sm font-medium text-foreground">{t("You have unsaved changes")}</p>
-              <Button type="button" variant="ghost" size="sm" onClick={discard} disabled={submitLoading}>
-                {t("Discard")}
-              </Button>
-              <Button type="submit" size="sm" disabled={submitLoading}>
-                {submitLoading ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-                {submitLoading ? t("Saving...") : t("Save changes")}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Unsaved changes: sticky within the page, so it never covers the sidebar. */}
+      <UnsavedBar show={hasChanges} saving={submitLoading} onDiscard={discard} className="sticky bottom-3 lg:col-start-2" />
     </form>
   )
 }
