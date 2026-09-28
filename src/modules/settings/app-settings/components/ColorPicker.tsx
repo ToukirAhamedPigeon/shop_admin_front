@@ -40,8 +40,15 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         setIsOpen(false);
       }
     };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, []);
 
   const handleColorSelect = (color: string) => {
@@ -72,8 +79,11 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         </label>
       )}
       
-      <div
-        className="flex items-center gap-3 cursor-pointer"
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-label={`${label ?? 'Colour'}: ${value}`}
+        className="flex cursor-pointer items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div
@@ -85,7 +95,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         </span>
         <svg
           className={cn(
-            "w-4 h-4 text-gray-400 transition-transform duration-200",
+            "w-4 h-4 text-muted-foreground transition-transform duration-200",
             isOpen && "transform rotate-180"
           )}
           fill="none"
@@ -94,7 +104,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
-      </div>
+      </button>
 
       {isOpen && (
         <div
@@ -106,11 +116,14 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
             {PRESET_COLORS.map((color) => (
               <button
                 key={color}
+                type="button"
+                title={color}
+                aria-label={color}
                 className={cn(
                   "w-8 h-8 rounded-lg border-2 transition-[box-shadow,border-color] duration-150 hover:ring-2 hover:ring-ring",
                   value === color
                     ? "border-primary ring-2 ring-primary/30"
-                    : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"
+                    : "border-transparent hover:border-border"
                 )}
                 style={{ backgroundColor: color }}
                 onClick={() => handleColorSelect(color)}
@@ -134,6 +147,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               placeholder="#3B82F6"
             />
             <button
+              type="button"
               className="px-3 py-1.5 text-sm rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors duration-200"
               onClick={() => handleColorSelect(customColor)}
             >

@@ -1,18 +1,27 @@
-// D:\shop\shop_admin_front\src\modules\settings\app-settings\components\SettingsPage.tsx
-import React, { useState, useEffect } from 'react';
+// src/modules/settings/app-settings/components/SettingsPage.tsx
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
-import { motion } from 'framer-motion';
 import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsContent } from './SettingsContent';
 import { fetchSettings } from '@/redux/slices/settingsSlice';
 import { useSettings } from '@/hooks/useSettings';
 import type { AppDispatch } from '@/redux/store';
-import Loader from '@/components/custom/Loader';
+import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import { useAppSelector } from '@/hooks/useRedux';
 
 export const SettingsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [activeCategory, setActiveCategory] = useState('Theme');
+  const [dirty, setDirty] = useState(false);
+  const [pendingCategory, setPendingCategory] = useState<string | null>(null);
+
+  // Switching category drops unsaved edits, so ask first.
+  const selectCategory = (key: string) => {
+    if (key === activeCategory) return;
+    if (dirty) setPendingCategory(key);
+    else setActiveCategory(key);
+  };
+  const handleDirtyChange = useCallback((value: boolean) => setDirty(value), []);
   const { data, loading } = useAppSelector((state) => state.settings);
 
   const user = useAppSelector((state) => state.auth.user);
@@ -62,31 +71,47 @@ export const SettingsPage: React.FC = () => {
     }
   }, [activeCategory, isDeveloper]);
 
+  const shell = 'flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xs md:h-[calc(100vh-12rem)] md:min-h-[560px] md:flex-row';
+
   if (loading && !data) {
     return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <Loader type="circular" size={48} />
+      <div className={shell} aria-busy>
+        <div className="hidden w-64 shrink-0 space-y-2 border-r border-border p-3 md:block">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex animate-pulse items-start gap-2.5 rounded-lg px-3 py-2.5">
+              <div className="size-7 rounded-md bg-muted" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 w-2/3 rounded bg-muted" />
+                <div className="h-3 w-full rounded bg-muted" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex-1 animate-pulse space-y-5 bg-background p-6">
+          <div className="h-6 w-48 rounded bg-muted" />
+          <div className="h-4 w-72 rounded bg-muted" />
+          <div className="h-48 rounded-xl bg-muted/70" />
+          <div className="h-24 rounded-xl bg-muted/70" />
+        </div>
       </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="flex flex-col md:flex-row md:h-[calc(100vh-100px)] md:overflow-hidden"
-    >
-      <div className="flex-shrink-0 rounded-t-2xl border border-border bg-card md:rounded-t-none md:rounded-l-2xl">
+    <div className={shell}>
+      <div className="shrink-0 md:h-full">
         <SettingsSidebar
           activeCategory={activeCategory}
-          onSelect={setActiveCategory}
+          onSelect={selectCategory}
           isDeveloper={isDeveloper}
+          dirtyCategory={dirty ? activeCategory : null}
         />
       </div>
 
-      <div className="min-w-0 flex-1 overflow-hidden rounded-b-2xl border border-t-0 border-border bg-background md:rounded-b-none md:rounded-r-2xl md:border-t md:border-l-0">
+      <div className="min-w-0 flex-1 overflow-hidden bg-background">
         <SettingsContent
+          key={activeCategory}
+          onDirtyChange={handleDirtyChange}
           category={activeCategory}
           data={data}
           loading={loading}
@@ -98,6 +123,21 @@ export const SettingsPage: React.FC = () => {
           onResetGeneral={handleResetGeneral}
         />
       </div>
-    </motion.div>
+
+      <ConfirmDialog
+        open={pendingCategory !== null}
+        onCancel={() => setPendingCategory(null)}
+        onConfirm={() => {
+          if (pendingCategory) setActiveCategory(pendingCategory);
+          setPendingCategory(null);
+          setDirty(false);
+        }}
+        title="Discard unsaved changes?"
+        variant="warning"
+        confirmLabel="Discard and switch"
+      >
+        <p>Your edits on this page haven't been saved. Switching will throw them away.</p>
+      </ConfirmDialog>
+    </div>
   );
 };
