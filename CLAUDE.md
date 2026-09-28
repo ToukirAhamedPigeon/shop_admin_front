@@ -118,6 +118,15 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   `useStoredView` (`users-view`, `permissions-view`, `options-view`). Users
   with the developer role can't be deleted or selected, in cards as in the
   table.
+- App Settings (`src/modules/settings/app-settings`): a category list
+  (chips on phones) and panels built from `SettingsLayout.tsx`
+  (`SettingsSection`, `SettingRow`, `Toggle`) and `ImageDrop`. Theme shows a
+  live mini preview, General previews the date/time/currency formats, and
+  Branding previews the header, tab and footer. Edits collect in a sticky
+  "unsaved changes" bar (Save / Discard). `SettingsContent` is keyed by
+  category and the page asks before switching with unsaved edits, so one
+  category's edits are never sent to another's endpoint. `useSettings`
+  already shows the save/reset toasts; don't add a second one.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.
