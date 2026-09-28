@@ -97,6 +97,13 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   icons, colours and verbs, quick filters and the before→after diff come from
   `logMeta.ts`, matching the action types shop_back writes. Changes are stored
   as `{"before": {...}, "after": {...changed fields}}`.
+- Translations defaults to an editor view (`TranslationEditorList`): key and
+  module, then English and Bangla side by side, each edited in place (Enter
+  saves via `PUT /translations/{id}`, Esc cancels, a failed save keeps the
+  text). Empty values show "Missing". Module chips set `filters.modules`. The
+  table is a toggle (`translations-view`) and stays mounted for Print.
+  `useTable` exposes `setData` so an inline edit patches its row without
+  reloading.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.
@@ -112,6 +119,9 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   push the text down. Loaders read `t` and the theme through refs, so a
   translation update doesn't refetch.
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
+  Bangla falls back to Noto Sans Bengali (`@fontsource-variable/noto-sans-bengali`,
+  second in `--font-sans`). It is split by unicode-range, so browsers download
+  it only when Bengali characters are on the page.
 
 ## Security notes
 
