@@ -85,6 +85,12 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   filter, done in the browser). Each card previews the email; "Use" opens
   `ComposeMail` with its `template` prop. Turn HTML bodies into preview text
   with `htmlToText` (`mail/components/mailFormat.ts`).
+- Backup (`src/modules/settings/backup`): a status panel (success ring,
+  last/next backup, counts, storage used per location), then the backup list
+  with schedules beside it from `xl`. Storage and status colours come from
+  `backupMeta.ts` (tokens only). Filters apply as soon as they change; the
+  grid/list choice is saved as `backup-view`. Give grids `grid-cols-1` below
+  their breakpoint, or long names stretch the implicit column past the card.
 - Theme before first paint: `index.html` applies the saved theme class,
   `color-scheme` and page background in an inline script, so reloading in
   dark mode doesn't flash white. `themeSlice` (`applyTheme`) keeps them in
