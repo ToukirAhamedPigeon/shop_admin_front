@@ -8,7 +8,6 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table'
-import { motion } from 'framer-motion'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
 
 import { useTable } from '@/hooks/useTable'
@@ -48,6 +47,9 @@ import { deletePermission, restorePermission, getPermissionDeleteInfo, getPermis
 import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle } from 'lucide-react'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { cn } from '@/lib/utils'
+import PermissionCards from './PermissionCards'
+import { CardGridSkeleton, CardsState, ListBar } from '@/components/custom/CardView'
+import { LIST_VIEWS, useStoredView } from '@/hooks/useStoredView'
 
 interface DeleteInfoResponse {
   canBePermanent: boolean
@@ -219,7 +221,7 @@ const getDataColumns = ({
       const roles = getValue() as string[] | undefined;
       return roles?.length ? (
         <ExpandableText text={roles.join(', ')} wordLimit={5} className="max-w-[300px] whitespace-pre-wrap break-all" />
-      ) : <span className="text-gray-400">-</span>
+      ) : <span className="text-muted-foreground">-</span>
     },
     meta: { customClassName: 'text-left min-w-[300px]' },
     enableSorting: false,
@@ -227,13 +229,13 @@ const getDataColumns = ({
   {
     header: 'Active',
     accessorKey: 'isActive',
-    cell: ({ getValue }) => getValue() ? <span className="text-green-600">Yes</span> : <span className="text-red-500">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-success">Yes</span> : <span className="text-destructive">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
     header: 'Deleted',
     accessorKey: 'isDeleted',
-    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-muted-foreground">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-destructive font-semibold">Yes</span> : <span className="text-muted-foreground">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
@@ -265,7 +267,6 @@ export default function Permissions() {
   const fetchDetailRef = useRef(fetchDetail)
   fetchDetailRef.current = fetchDetail
 
-  const hasFetchedRef = useRef(false)
   const prevFiltersRef = useRef<Record<string, any>>({})
 
   const [visible, setVisible] = useState<ColumnDef<IPermission>[]>([])
@@ -399,7 +400,7 @@ export default function Permissions() {
     fetcher: stableFetcher,
     defaultSort: 'createdAt',
     enableTrashView: true,
-    minLoadingTime: 1000
+    minLoadingTime: 300
   })
 
   /* ---------------- Delete Eligibility Check ---------------- */
@@ -680,17 +681,9 @@ export default function Permissions() {
     }
   }, [userId])
 
-  /* ---------------- Initial Fetch ---------------- */
-  useEffect(() => {
-    if (!hasFetchedRef.current) {
-      fetchData()
-      hasFetchedRef.current = true
-    }
-  }, [fetchData])
-
   /* ---------------- Filters Fetch ---------------- */
+  // useTable loads the first page itself; this only reacts to filter changes.
   useEffect(() => {
-    if (!hasFetchedRef.current) return
     
     if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
       return
@@ -718,7 +711,8 @@ export default function Permissions() {
   /* ---------------- Table Instance ---------------- */
   const table = useReactTable<IPermission>({
     data,
-    columns: visible,
+    // Until the saved column choice arrives, show every column instead of an empty header.
+    columns: visible.length ? visible : allColumns,
     getRowId: (row) => row.id,
     enableSorting: true,
     state: {
@@ -769,20 +763,29 @@ export default function Permissions() {
     setSorting([])
   }, [setSorting])
 
+  const [view, setView] = useStoredView('permissions-view', LIST_VIEWS)
+
+  const toggleRow = useCallback((id: string) => {
+    setSelectedRowIds(prev => {
+      const next = { ...prev }
+      if (next[id]) delete next[id]
+      else if (isValidId(id)) next[id] = true
+      return next
+    })
+  }, [])
+
   /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0
   const showErrorState = !loading && error
 
   /* ---------------- UI ---------------- */
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="flex justify-start mb-2">
-        {viewIndicator && <TrashViewIndicator type={viewIndicator.type} />}
-      </div>
+    <div className="space-y-3">
+      {viewIndicator && (
+        <div className="flex justify-start">
+          <TrashViewIndicator type={viewIndicator.type} />
+        </div>
+      )}
       <TableHeaderActions
         searchValue={globalFilter}
         onSearchChange={setGlobalFilter}
@@ -824,8 +827,45 @@ export default function Permissions() {
         isFilterActive={isFilterActive}
       />
       
-      {/* TABLE */}
-      <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
+      <ListBar count={totalCount} noun="permission" trash={showTrash} view={view} onView={setView} />
+
+      {/* CARDS */}
+      {view === 'cards' && (
+        <CardsState
+          error={!!showErrorState}
+          empty={showEmptyState}
+          firstLoad={data.length === 0}
+          loading={loading}
+          errorNode={
+            <ErrorState
+              message="Couldn't load permissions"
+              suggestion="The server didn't respond as expected. Check your connection and try again."
+              onRetry={() => fetchData()}
+            />
+          }
+          emptyNode={
+            <EmptyState
+              message={showTrash ? 'No deleted permissions found' : 'No permissions found'}
+              suggestion={showTrash ? 'Deleted permissions will appear here once you move them to trash.' : 'Try adjusting your search or filter criteria to see more results.'}
+            />
+          }
+          skeleton={<CardGridSkeleton />}
+        >
+          <PermissionCards
+            permissions={data}
+            selected={selectedRowIds}
+            onToggle={toggleRow}
+            onDetail={fetchDetail}
+            onEdit={showEdit ? handleEditClick : undefined}
+            onDelete={showSoftDelete ? confirmSoftDelete : undefined}
+            onRestore={showRestore ? confirmRestore : undefined}
+            onPermanentDelete={showPermanentDelete ? confirmPermanentDelete : undefined}
+          />
+        </CardsState>
+      )}
+
+      {/* TABLE: stays in the page in cards view, hidden, so Print still has it. */}
+      <div className={cn('relative rounded-xl overflow-hidden border border-border bg-card shadow-xs', view !== 'table' && 'hidden')}>
         <TableWithLoader loading={loading} id="printable-permission-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showErrorState ? (
             <ErrorState
@@ -1016,7 +1056,7 @@ export default function Permissions() {
         loading={deleteLoading}
       >
         <div className="space-y-3">
-          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+          <p className="text-foreground font-medium">
             This permission will be moved to trash. You can restore it later.
           </p>
           {deleteInfo?.message && deleteInfo.canBePermanent === false && (
@@ -1038,9 +1078,9 @@ export default function Permissions() {
         loading={deleteLoading}
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+            <AlertTriangle className="w-5 h-5 text-destructive" />
+            <p className="text-destructive font-semibold text-sm">
               Warning: This action cannot be undone!
             </p>
           </div>
@@ -1067,7 +1107,7 @@ export default function Permissions() {
           loading={restoreLoading}
         >
           <div className="space-y-3">
-            <p className="text-green-600 dark:text-green-400 font-medium">
+            <p className="text-success font-medium">
               Are you sure you want to restore this permission?
             </p>
             <p className="text-sm text-muted-foreground">
@@ -1088,9 +1128,9 @@ export default function Permissions() {
         showCancelButton={false}
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <Database className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-red-700 dark:text-red-300 text-sm">
+          <div className="flex items-start gap-3 p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+            <Database className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-destructive text-sm">
               {errorDetails?.message || "This permission has existing related records"}
             </p>
           </div>
@@ -1130,7 +1170,7 @@ export default function Permissions() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+          <p className="text-foreground font-medium">
             Are you sure you want to move {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected permission(s) to trash?
           </p>
           <p className="text-sm text-muted-foreground">
@@ -1150,7 +1190,7 @@ export default function Permissions() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <p className="text-green-600 dark:text-green-400 font-medium">
+          <p className="text-success font-medium">
             Are you sure you want to restore {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected permission(s)?
           </p>
           <p className="text-sm text-muted-foreground">
@@ -1170,9 +1210,9 @@ export default function Permissions() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+            <AlertTriangle className="w-5 h-5 text-destructive" />
+            <p className="text-destructive font-semibold text-sm">
               Warning: This action cannot be undone!
             </p>
           </div>
@@ -1184,6 +1224,6 @@ export default function Permissions() {
           </p>
         </div>
       </ConfirmDialog>
-    </motion.div>
+    </div>
   )
 }

@@ -8,7 +8,6 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table'
-import { motion } from 'framer-motion'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
 
 import api from '@/lib/axios'
@@ -55,6 +54,9 @@ import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Trash2, Database,
 import { dispatchShowToast } from '@/lib/dispatch'
 import { isValidGuid } from '@/lib/validations'
 import { cn } from '@/lib/utils'
+import UserCards from './UserCards'
+import { CardGridSkeleton, CardsState, ListBar } from '@/components/custom/CardView'
+import { LIST_VIEWS, useStoredView } from '@/hooks/useStoredView'
 
 interface DeleteInfoResponse {
   canBePermanent: boolean
@@ -175,7 +177,7 @@ const getAllColumns = ({
         if (qr) generateQRImage(qr).then(setQrImg)
       }, [qr])
 
-      if (!qr || !qrImg) return <span className="text-gray-400">-</span>
+      if (!qr || !qrImg) return <span className="text-muted-foreground">-</span>
 
       return (
         <div className="flex flex-col items-center gap-1">
@@ -246,18 +248,18 @@ const getAllColumns = ({
   { 
     header: 'Email Verification', 
     accessorKey: 'emailVerifiedAt', 
-    cell: ({ getValue }) => getValue() ? <span className="text-green-600 font-semibold">Verified <small className="text-xs text-muted-foreground">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-red-500 font-semibold">Not Verified</span> 
+    cell: ({ getValue }) => getValue() ? <span className="text-success font-semibold">Verified <small className="text-xs text-muted-foreground">at {getCustomDateTime(getValue() as string, 'YYYY-MM-DD HH:mm:ss')}</small></span> : <span className="text-destructive font-semibold">Not Verified</span> 
   },
   { 
     header: 'Active', 
     accessorKey: 'isActive', 
-    cell: ({ getValue }) => getValue() ? <span className="text-green-600">Yes</span> : <span className="text-red-500">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-success">Yes</span> : <span className="text-destructive">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   { 
     header: 'Deleted', 
     accessorKey: 'isDeleted', 
-    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-muted-foreground">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-destructive font-semibold">Yes</span> : <span className="text-muted-foreground">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   { 
@@ -269,7 +271,7 @@ const getAllColumns = ({
   { 
     header: 'Deleted By', 
     accessorKey: 'deletedByName', 
-    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span>,
+    cell: ({ getValue }) => getValue() || <span className="text-muted-foreground">-</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
@@ -285,7 +287,7 @@ const getAllColumns = ({
             </span>
           ))}
         </div>
-      ) : <span className="text-gray-400">-</span>
+      ) : <span className="text-muted-foreground">-</span>
     }
   },
   { 
@@ -295,20 +297,20 @@ const getAllColumns = ({
       const perms = getValue() as string[] | undefined; 
       return perms?.length ? (
         <ExpandableText text={perms.join(', ')} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" />
-      ) : <span className="text-gray-400">-</span>
+      ) : <span className="text-muted-foreground">-</span>
     }, 
     meta: { customClassName: 'text-left min-w-[300px]' } 
   },
   { 
     header: 'Address', 
     accessorKey: 'address', 
-    cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, 
+    cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-muted-foreground">-</span>, 
     meta: { customClassName: 'text-left min-w-[300px]' } 
   },
   { 
     header: 'Bio', 
     accessorKey: 'bio', 
-    cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-gray-400">-</span>, 
+    cell: ({ getValue }) => getValue() ? <ExpandableText text={getValue() as string} wordLimit={10} className="max-w-[300px] whitespace-pre-wrap break-all" /> : <span className="text-muted-foreground">-</span>, 
     meta: { customClassName: 'text-left min-w-[300px]' } 
   },
   { 
@@ -324,12 +326,12 @@ const getAllColumns = ({
   { 
     header: 'Created By', 
     accessorKey: 'createdByName', 
-    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> 
+    cell: ({ getValue }) => getValue() || <span className="text-muted-foreground">-</span> 
   },
   { 
     header: 'Updated By', 
     accessorKey: 'updatedByName', 
-    cell: ({ getValue }) => getValue() || <span className="text-gray-400">-</span> 
+    cell: ({ getValue }) => getValue() || <span className="text-muted-foreground">-</span> 
   },
 ]
 
@@ -351,7 +353,6 @@ export default function Users() {
   const fetchDetailRef = useRef(fetchDetail)
   fetchDetailRef.current = fetchDetail
 
-  const hasFetchedRef = useRef(false)
   const prevFiltersRef = useRef<Record<string, any>>({})
 
   const [visible, setVisible] = useState<ColumnDef<IUser>[]>([])
@@ -481,7 +482,7 @@ export default function Users() {
     fetcher: stableFetcher,
     defaultSort: 'createdAt',
     enableTrashView: true,
-    minLoadingTime: 1000
+    minLoadingTime: 300
   })
 
   /* ---------------- Delete Handler with Relation Check ---------------- */
@@ -946,17 +947,9 @@ export default function Users() {
     }
   }, [getSelectedIds, fetchData, data])
 
-  /* ---------------- Initial Fetch ---------------- */
-  useEffect(() => {
-    if (!hasFetchedRef.current) {
-      fetchData()
-      hasFetchedRef.current = true
-    }
-  }, [fetchData])
-
   /* ---------------- Filters Fetch ---------------- */
+  // useTable loads the first page itself; this only reacts to filter changes.
   useEffect(() => {
-    if (!hasFetchedRef.current) return
     
     if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
       return
@@ -984,7 +977,8 @@ export default function Users() {
   /* ---------------- Table Instance ---------------- */
   const table = useReactTable<IUser>({
     data,
-    columns: visible,
+    // Until the saved column choice arrives, show every column instead of an empty header.
+    columns: visible.length ? visible : allColumns,
     getRowId: (row) => row.id,
     enableSorting: true,
     state: {
@@ -1040,20 +1034,29 @@ export default function Users() {
     setSorting([])
   }, [setSorting])
 
+  const [view, setView] = useStoredView('users-view', LIST_VIEWS)
+
+  const toggleRow = useCallback((id: string) => {
+    setSelectedRowIds(prev => {
+      const next = { ...prev }
+      if (next[id]) delete next[id]
+      else if (isValidGuid(id)) next[id] = true
+      return next
+    })
+  }, [])
+
   /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0
   const showErrorState = !loading && error
 
   /* ---------------- UI ---------------- */
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="flex justify-start mb-2">
-        {viewIndicator && <TrashViewIndicator type={viewIndicator.type} />}
-      </div>
+    <div className="space-y-3">
+      {viewIndicator && (
+        <div className="flex justify-start">
+          <TrashViewIndicator type={viewIndicator.type} />
+        </div>
+      )}
       <TableHeaderActions
         searchValue={globalFilter}
         onSearchChange={setGlobalFilter}
@@ -1095,8 +1098,45 @@ export default function Users() {
         isFilterActive={isFilterActive}
       />
       
-      {/* TABLE */}
-      <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
+      <ListBar count={totalCount} noun="user" trash={showTrash} view={view} onView={setView} />
+
+      {/* CARDS */}
+      {view === 'cards' && (
+        <CardsState
+          error={!!showErrorState}
+          empty={showEmptyState}
+          firstLoad={data.length === 0}
+          loading={loading}
+          errorNode={
+            <ErrorState
+              message="Couldn't load users"
+              suggestion="The server sent an unexpected response. Check your connection and try again."
+              onRetry={() => fetchData()}
+            />
+          }
+          emptyNode={
+            <EmptyState
+              message={showTrash ? 'No deleted users found' : 'No users found'}
+              suggestion={showTrash ? 'Deleted users will appear here once you move them to trash.' : 'Try adjusting your search or filter criteria to see more results.'}
+            />
+          }
+          skeleton={<CardGridSkeleton avatar />}
+        >
+          <UserCards
+            users={data}
+            selected={selectedRowIds}
+            onToggle={toggleRow}
+            onDetail={fetchDetail}
+            onEdit={showEdit ? handleEditClick : undefined}
+            onDelete={showDelete ? confirmDelete : undefined}
+            onRestore={showRestore ? confirmRestore : undefined}
+            onPermanentDelete={showPermanentDelete ? confirmPermanentDelete : undefined}
+          />
+        </CardsState>
+      )}
+
+      {/* TABLE: stays in the page in cards view, hidden, so Print still has it. */}
+      <div className={cn('relative rounded-xl overflow-hidden border border-border bg-card shadow-xs', view !== 'table' && 'hidden')}>
         <TableWithLoader loading={loading} id="printable-user-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showErrorState ? (
             <ErrorState
@@ -1288,7 +1328,7 @@ export default function Users() {
         loading={deleteLoading}
       >
         <div className="space-y-3">
-          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+          <p className="text-foreground font-medium">
             This user will be moved to trash.
           </p>
           <p className="text-sm text-muted-foreground">
@@ -1316,9 +1356,9 @@ export default function Users() {
         loading={deleteLoading}
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+            <AlertTriangle className="w-5 h-5 text-destructive" />
+            <p className="text-destructive font-semibold text-sm">
               Warning: This action cannot be undone!
             </p>
           </div>
@@ -1350,7 +1390,7 @@ export default function Users() {
           loading={restoreLoading}
         >
           <div className="space-y-3">
-            <p className="text-green-600 dark:text-green-400 font-medium">
+            <p className="text-success font-medium">
               Are you sure you want to restore this user?
             </p>
             <p className="text-sm text-muted-foreground">
@@ -1381,23 +1421,23 @@ export default function Users() {
           </p>
           
           {deleteInfo?.message && (
-            <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-700 dark:text-green-300">
+            <div className="p-3 bg-success/10 rounded-lg border border-success/30">
+              <p className="text-sm text-success">
                 ✓ {deleteInfo.message}
               </p>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-3 mt-2">
-            <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-              <Trash2 className="w-4 h-4 text-red-600 mb-2" />
-              <p className="text-sm font-medium text-red-700 dark:text-red-300">Permanent Delete</p>
-              <p className="text-xs text-red-600/70 mt-1">Complete removal (cannot undo)</p>
+            <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+              <Trash2 className="w-4 h-4 text-destructive mb-2" />
+              <p className="text-sm font-medium text-destructive">Permanent Delete</p>
+              <p className="text-xs text-destructive/80 mt-1">Complete removal (cannot undo)</p>
             </div>
-            <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              <Archive className="w-4 h-4 text-yellow-600 mb-2" />
-              <p className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Move to Trash</p>
-              <p className="text-xs text-yellow-600/70 mt-1">Soft delete (can restore later)</p>
+            <div className="p-3 bg-warning/10 rounded-lg border border-warning/30">
+              <Archive className="w-4 h-4 text-warning mb-2" />
+              <p className="text-sm font-medium text-warning">Move to Trash</p>
+              <p className="text-xs text-warning/80 mt-1">Soft delete (can restore later)</p>
             </div>
           </div>
         </div>
@@ -1415,9 +1455,9 @@ export default function Users() {
         showCancelButton={false}
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <Database className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-red-700 dark:text-red-300 text-sm">
+          <div className="flex items-start gap-3 p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+            <Database className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-destructive text-sm">
               {errorDetails?.message || "This user has existing related records in other modules"}
             </p>
           </div>
@@ -1425,7 +1465,7 @@ export default function Users() {
           {errorDetails?.blockingTables && errorDetails.blockingTables.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-foreground/80 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                <AlertTriangle className="w-4 h-4 text-warning" />
                 Related data found in:
               </p>
               <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -1434,7 +1474,7 @@ export default function Users() {
                     key={index} 
                     className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg border border-border"
                   >
-                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                    <div className="w-2 h-2 rounded-full bg-destructive" />
                     <span className="text-sm font-medium text-foreground/80">
                       {tableName}
                     </span>
@@ -1482,7 +1522,7 @@ export default function Users() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+          <p className="text-foreground font-medium">
             Are you sure you want to move {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected user(s) to trash?
           </p>
           <p className="text-sm text-muted-foreground">
@@ -1503,7 +1543,7 @@ export default function Users() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <p className="text-green-600 dark:text-green-400 font-medium">
+          <p className="text-success font-medium">
             Are you sure you want to restore {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected user(s)?
           </p>
           <p className="text-sm text-muted-foreground">
@@ -1524,9 +1564,9 @@ export default function Users() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+            <AlertTriangle className="w-5 h-5 text-destructive" />
+            <p className="text-destructive font-semibold text-sm">
               Warning: This action cannot be undone!
             </p>
           </div>
@@ -1538,6 +1578,6 @@ export default function Users() {
           </p>
         </div>
       </ConfirmDialog>
-    </motion.div>
+    </div>
   )
 }

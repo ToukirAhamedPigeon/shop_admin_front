@@ -111,6 +111,13 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   so pages must not call `fetchData()` again from their own mount effect (the
   duplicate request re-armed the loader). Give the table all columns until the
   saved column choice arrives, so the header never renders empty.
+- Users, Permissions and Options follow the same pattern: cards by default
+  (`UserCards`, `PermissionCards`, `OptionCards`), built from the shared
+  pieces in `components/custom/CardView.tsx` (`EntityCard`, `ListBar`,
+  `CardsState`, `CardGridSkeleton`), with the choice stored per page by
+  `useStoredView` (`users-view`, `permissions-view`, `options-view`). Users
+  with the developer role can't be deleted or selected, in cards as in the
+  table.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.
