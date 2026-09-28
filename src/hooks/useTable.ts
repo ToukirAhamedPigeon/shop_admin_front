@@ -251,6 +251,8 @@ export function useTable<T>({
 
   return {
     data,
+    /** Patch rows in place (e.g. after an inline edit) without reloading. */
+    setData,
     loading,
     error,
     totalCount,

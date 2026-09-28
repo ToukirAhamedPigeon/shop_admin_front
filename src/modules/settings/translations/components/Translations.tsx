@@ -1,5 +1,4 @@
 // src/modules/settings/translations/components/Translations.tsx
-// Fixed sticky thead with improved header styling - Better light mode differentiation
 
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import {
@@ -10,7 +9,6 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table'
-import { motion } from 'framer-motion'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
 
 import { useTable } from '@/hooks/useTable'
@@ -45,11 +43,40 @@ import AddTranslation from './AddTranslation'
 import EditTranslation from './EditTranslation'
 import { useEditSheet } from '@/hooks/useEditSheet'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
-import { deleteTranslation, bulkDeleteTranslations, getTranslations } from '../api'
+import { deleteTranslation, bulkDeleteTranslations, getTranslations, getTranslationModules, updateTranslation } from '../api'
+import TranslationEditorList from './TranslationEditorList'
 import { useRefreshTranslations } from '@/hooks/useRefreshTranslations'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { cn } from '@/lib/utils'
-import { AlertTriangle, Trash2, Globe } from 'lucide-react'
+import { AlertTriangle, Trash2, Globe, Languages, List } from 'lucide-react'
+
+type TranslationView = 'editor' | 'table'
+const VIEW_KEY = 'translations-view'
+const readView = (): TranslationView => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'table' ? 'table' : 'editor'
+  } catch {
+    return 'editor'
+  }
+}
+
+function EditorSkeleton() {
+  return (
+    <div className="animate-pulse divide-y divide-border" aria-hidden>
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} className="grid gap-3 px-3 py-3.5 lg:grid-cols-[28px_minmax(0,15rem)_minmax(0,1fr)_minmax(0,1fr)_104px]">
+          <div className="hidden size-4 rounded bg-muted lg:block" />
+          <div className="space-y-2">
+            <div className="h-3.5 w-3/4 rounded bg-muted" />
+            <div className="h-4 w-16 rounded-full bg-muted" />
+          </div>
+          <div className="h-3.5 w-4/5 rounded bg-muted" />
+          <div className="h-3.5 w-2/3 rounded bg-muted" />
+        </div>
+      ))}
+    </div>
+  )
+}
 
 // Helper function to validate ID
 const isValidId = (id: string): boolean => {
@@ -277,6 +304,8 @@ export default function Translations() {
   const [filters, setFilters] = useState<Record<string, any>>({})
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showAddButton, setShowAddButton] = useState(false)
+  const [view, setView] = useState<TranslationView>(readView)
+  const [modules, setModules] = useState<string[]>([])
 
   // Selection state
   const [selectedRowIds, setSelectedRowIds] = useState<Record<string, boolean>>({})
@@ -354,6 +383,7 @@ export default function Translations() {
   /* ---------------- Table Hook ---------------- */
   const {
     data,
+    setData,
     totalCount,
     grandTotalCount,
     loading,
@@ -371,7 +401,7 @@ export default function Translations() {
     fetcher: stableFetcher,
     defaultSort: 'createdAt',
     enableTrashView: false,
-    minLoadingTime: 500
+    minLoadingTime: 300
   })
 
   /* ---------------- Delete Handler ---------------- */
@@ -455,6 +485,72 @@ export default function Translations() {
   const allColumns = useMemo(() => [selectColumn, ...dataColumns], [selectColumn, dataColumns])
   const allColumnsRef = useRef(allColumns)
   allColumnsRef.current = allColumns
+
+  /* ---------------- Inline edit (editor view) ---------------- */
+  const handleInlineSave = useCallback(
+    async (row: ITranslation, field: 'englishValue' | 'banglaValue', value: string) => {
+      try {
+        await updateTranslation(Number(row.id), {
+          key: row.key,
+          module: row.module,
+          englishValue: field === 'englishValue' ? value : row.englishValue,
+          banglaValue: field === 'banglaValue' ? value : row.banglaValue,
+        })
+        setData(prev => prev.map(r => (r.id === row.id ? { ...r, [field]: value, updatedAt: new Date().toISOString() } : r)))
+        // Pick up the new text in the app itself.
+        refreshTranslations()
+      } catch (error) {
+        const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+        dispatchShowToast({ type: 'danger', message: message || 'Failed to save translation' })
+        throw error
+      }
+    },
+    [setData, refreshTranslations]
+  )
+
+  const changeView = (next: TranslationView) => {
+    setView(next)
+    try {
+      localStorage.setItem(VIEW_KEY, next)
+    } catch {
+      /* private mode: kept for this visit only */
+    }
+  }
+
+  const toggleRow = useCallback((id: string) => {
+    setSelectedRowIds(prev => {
+      const next = { ...prev }
+      if (next[id]) delete next[id]
+      else if (isValidId(id)) next[id] = true
+      return next
+    })
+  }, [])
+
+  /* ---------------- Modules for the quick filter ---------------- */
+  useEffect(() => {
+    let mounted = true
+    getTranslationModules()
+      .then(list => {
+        if (!mounted || !Array.isArray(list)) return
+        const names = list
+          .map((m: unknown) => (typeof m === 'string' ? m : (m as { value?: string })?.value))
+          .filter((m): m is string => !!m)
+        setModules(Array.from(new Set(names)).sort())
+      })
+      .catch(() => {})
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const activeModule: string | null =
+    Array.isArray(filters.modules) && filters.modules.length === 1 ? filters.modules[0] : null
+  const moduleFilterIsQuick = !filters.modules?.length || activeModule !== null
+
+  const pickModule = (module: string | null) => {
+    setPageIndex(0)
+    setFilters(prev => ({ ...prev, modules: module ? [module] : [] }))
+  }
 
   /* ---------------- Add Button Permission ---------------- */
   useEffect(() => {
@@ -592,11 +688,7 @@ export default function Translations() {
 
   /* ---------------- UI ---------------- */
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="space-y-3">
       <TableHeaderActions
         searchValue={globalFilter}
         onSearchChange={setGlobalFilter}
@@ -628,9 +720,87 @@ export default function Translations() {
         onFilter={() => setFilterModalOpen(true)}
         isFilterActive={isFilterActive}
       />
-      
-      {/* TABLE with sticky header fix */}
-      <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
+
+      {/* Module chips and the view switch */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div role="radiogroup" aria-label="Module" className="flex min-w-0 flex-wrap gap-1.5">
+          {[null, ...modules].map(m => {
+            const active = moduleFilterIsQuick && activeModule === m
+            return (
+              <button
+                key={m ?? '__all'}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => pickModule(m)}
+                className={cn(
+                  'cursor-pointer rounded-full border px-3 py-1 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+                  active
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground'
+                )}
+              >
+                {m ?? 'All modules'}
+              </button>
+            )
+          })}
+        </div>
+        <div role="radiogroup" aria-label="View" className="flex rounded-lg border border-border bg-muted/50 p-0.5">
+          {([
+            ['editor', Languages, 'Editor'],
+            ['table', List, 'Table'],
+          ] as const).map(([mode, Icon, label]) => (
+            <button
+              key={mode}
+              type="button"
+              role="radio"
+              aria-checked={view === mode}
+              onClick={() => changeView(mode)}
+              className={cn(
+                'flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+                view === mode ? 'bg-card font-medium text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className="size-3.5" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* EDITOR */}
+      {view === 'editor' && (
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+          {showErrorState ? (
+            <ErrorState
+              message="Couldn't load translations"
+              suggestion="The server didn't respond as expected. Check your connection and try again."
+              onRetry={() => fetchData()}
+            />
+          ) : showEmptyState ? (
+            <EmptyState message="No translations found" suggestion="Try another module, search or filter." />
+          ) : data.length === 0 ? (
+            <EditorSkeleton />
+          ) : (
+            <div className={cn('max-h-[680px] overflow-y-auto transition-opacity duration-200', loading && 'opacity-60')} aria-busy={loading}>
+              <TranslationEditorList
+                rows={data}
+                canEdit={showEdit}
+                canDelete={showDelete}
+                selected={selectedRowIds}
+                onToggle={toggleRow}
+                onSave={handleInlineSave}
+                onDetail={fetchDetail}
+                onEdit={handleEditClick}
+                onDelete={confirmSoftDelete}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TABLE: stays in the page in editor view, hidden, so Print still has it. */}
+      <div className={cn('relative rounded-xl overflow-hidden border border-border bg-card shadow-xs', view !== 'table' && 'hidden')}>
         <TableWithLoader loading={loading} id="printable-translation-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showErrorState ? (
             <ErrorState
@@ -838,7 +1008,7 @@ export default function Translations() {
           loading={deleteLoading}
         >
           <div className="space-y-3">
-            <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+            <p className="font-medium text-foreground">
               Are you sure you want to delete this translation?
             </p>
             <p className="text-sm text-muted-foreground">
@@ -860,9 +1030,9 @@ export default function Translations() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+            <AlertTriangle className="size-5 text-destructive" />
+            <p className="text-sm font-semibold text-destructive">
               Warning: This action cannot be undone!
             </p>
           </div>
@@ -892,6 +1062,6 @@ export default function Translations() {
           )}
         </FormHolderSheet>
       )}
-    </motion.div>
+    </div>
   )
 }

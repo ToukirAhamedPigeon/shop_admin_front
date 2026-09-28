@@ -9,6 +9,8 @@ import { store } from "./redux/store";
 
 // Global CSS
 import "@fontsource-variable/inter";
+// Bangla text (BN language, translation values). Loaded only when Bengali characters appear.
+import "@fontsource-variable/noto-sans-bengali";
 import "./index.css";
 
 // Auth
