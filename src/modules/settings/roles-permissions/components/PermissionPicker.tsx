@@ -3,7 +3,7 @@
 // with a checkbox per module and a chip per action. Used by the Role form and
 // by a user's extra permissions.
 import { useMemo, useState } from 'react';
-import { Check, Minus, RotateCw, Search, X } from 'lucide-react';
+import { Check, Layers, Minus, RotateCw, Search, X } from 'lucide-react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { useOptionNames } from '@/hooks/useOptionNames';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,14 @@ interface Props {
   onChange: (value: string[]) => void;
   error?: string;
   hint?: string;
+  /**
+   * Permissions already given some other way (by permission groups), keyed by
+   * name → where they come from. Shown as covered and can't be toggled here.
+   */
+  inherited?: Record<string, string[]>;
 }
+
+const NO_INHERITED: Record<string, string[]> = {};
 
 type Group = { module: string; items: { name: string; action: string }[] };
 
@@ -52,14 +59,16 @@ function ModuleCheck({ state, onClick, label }: { state: 'all' | 'some' | 'none'
   );
 }
 
-export default function PermissionPicker({ id, label = 'Permissions', value, onChange, error, hint }: Props) {
+export default function PermissionPicker({ id, label = 'Permissions', value, onChange, error, hint, inherited = NO_INHERITED }: Props) {
   const { t } = useTranslations();
   const { names, status, reload } = useOptionNames('/Options/permissions');
   const [query, setQuery] = useState('');
 
   const selected = useMemo(() => new Set(value), [value]);
   // Selected names the list doesn't know still show, so they can be removed.
-  const groups = useMemo(() => groupNames([...new Set([...names, ...value])]), [names, value]);
+  const groups = useMemo(() => groupNames([...new Set([...names, ...value, ...Object.keys(inherited)])]), [names, value, inherited]);
+  const isInherited = (name: string) => !!inherited[name]?.length;
+  const inheritedCount = Object.keys(inherited).length;
   const q = query.trim().toLowerCase();
   const visible = useMemo(
     () =>
@@ -80,8 +89,9 @@ export default function PermissionPicker({ id, label = 'Permissions', value, onC
   };
   const toggleGroup = (g: Group) => {
     const next = new Set(selected);
-    const all = g.items.every((i) => next.has(i.name));
-    g.items.forEach((i) => (all ? next.delete(i.name) : next.add(i.name)));
+    const own = g.items.filter((i) => !isInherited(i.name));
+    const all = own.every((i) => next.has(i.name));
+    own.forEach((i) => (all ? next.delete(i.name) : next.add(i.name)));
     set(next);
   };
 
@@ -93,6 +103,12 @@ export default function PermissionPicker({ id, label = 'Permissions', value, onC
           <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
             {value.length}/{groups.reduce((n, g) => n + g.items.length, 0)}
           </span>
+          {inheritedCount > 0 && (
+            <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+              <Layers className="size-3" />
+              {inheritedCount} {t('from groups')}
+            </span>
+          )}
         </p>
         {value.length > 0 && (
           <button type="button" onClick={() => onChange([])} className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
@@ -139,7 +155,7 @@ export default function PermissionPicker({ id, label = 'Permissions', value, onC
           )}
 
           {visible.map((g) => {
-            const count = g.items.filter((i) => selected.has(i.name)).length;
+            const count = g.items.filter((i) => selected.has(i.name) || isInherited(i.name)).length;
             const state = count === 0 ? 'none' : count === g.items.length ? 'all' : 'some';
             return (
               <div key={g.module} className={cn('flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center', count > 0 && 'bg-primary/[0.03]')}>
@@ -154,6 +170,22 @@ export default function PermissionPicker({ id, label = 'Permissions', value, onC
                 </div>
                 <div className="flex flex-wrap gap-1.5 pl-6 sm:pl-0">
                   {g.items.map((item) => {
+                    const via = inherited[item.name];
+                    if (via?.length) {
+                      return (
+                        <span
+                          key={item.name}
+                          title={`${item.name} · ${t('from')} ${via.join(', ')}`}
+                          className="inline-flex h-7 cursor-default items-center gap-1 rounded-full border border-dashed border-success/50 bg-success/10 px-2.5 text-xs font-medium text-success"
+                        >
+                          <Layers className="size-3" />
+                          {item.action}
+                          <span className="sr-only">
+                            ({t('from')} {via.join(', ')})
+                          </span>
+                        </span>
+                      );
+                    }
                     const on = selected.has(item.name);
                     return (
                       <button

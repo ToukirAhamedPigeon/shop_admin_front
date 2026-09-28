@@ -1,6 +1,6 @@
 // src/modules/settings/roles-permissions/components/RoleCards.tsx
 import { motion } from 'framer-motion'
-import { Check, ShieldCheck } from 'lucide-react'
+import { Check, ShieldCheck, Layers } from 'lucide-react'
 import { RowActions } from '@/components/custom/Table'
 import { cn } from '@/lib/utils'
 import type { IRole } from '@/types/role-permission'
@@ -98,8 +98,18 @@ export default function RoleCards({ roles, selected, onToggle, onDetail, onEdit,
 
             {/* What this role can touch, by module */}
             <div className="mt-3 min-h-[52px] flex-1">
+              {!!role.groups?.length && (
+                <ul className="mb-2 flex flex-wrap gap-1.5" aria-label="Permission groups">
+                  {role.groups.map((name) => (
+                    <li key={name} className="inline-flex items-center gap-1 rounded-md bg-success/10 px-1.5 py-0.5 text-[11px] font-medium text-success">
+                      <Layers className="size-3" />
+                      {name}
+                    </li>
+                  ))}
+                </ul>
+              )}
               {groups.length === 0 ? (
-                <p className="text-xs italic text-muted-foreground">No permissions assigned yet.</p>
+                role.groups?.length ? null : <p className="text-xs italic text-muted-foreground">No permissions assigned yet.</p>
               ) : (
                 <ul className="flex flex-wrap gap-1.5" aria-label="Permissions by module">
                   {groups.slice(0, MAX_GROUPS).map((g) => (

@@ -20,6 +20,7 @@ import ProfileEditPage from "@/modules/settings/users/pages/ProfileEditPage";
 import VerifyPasswordChangePage from "@/modules/settings/users/pages/VerifyPasswordChangePage";
 import RolesPage from "@/modules/settings/roles-permissions/pages/RolesPage";
 import PermissionsPage from "@/modules/settings/roles-permissions/pages/PermissionsPage";
+import PermissionGroupsPage from "@/modules/settings/roles-permissions/pages/PermissionGroupsPage";
 import TranslationsPage from "@/modules/settings/translations/pages/TranslationsPage";
 import OptionsPage from "@/modules/settings/options/pages/OptionsPage";
 import MailboxPage from "@/modules/mail/pages/MailboxPage";
@@ -127,6 +128,14 @@ export default function AppRoutes() {
           element={
             <PermissionRoute anyOf={["read-admin-permissions"]}>
               <PermissionsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="settings/permission-groups"
+          element={
+            <PermissionRoute anyOf={["read-admin-permissions"]}>
+              <PermissionGroupsPage />
             </PermissionRoute>
           }
         />

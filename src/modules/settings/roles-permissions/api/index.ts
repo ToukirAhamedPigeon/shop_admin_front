@@ -7,7 +7,9 @@ import type {
   CreateRoleRequest,
   UpdateRoleRequest,
   CreatePermissionRequest,
-  UpdatePermissionRequest
+  UpdatePermissionRequest,
+  IPermissionGroup,
+  SavePermissionGroupRequest
 } from '@/types/role-permission';
 
 // ==================== Role APIs ====================
@@ -115,5 +117,25 @@ export const bulkDeletePermissions = async (ids: string[], permanent: boolean = 
 // Bulk restore permissions
 export const bulkRestorePermissions = async (ids: string[]) => {
   const response = await api.post('/permissions/bulk-restore', { ids });
+  return response.data;
+};
+// Permission groups
+export const getPermissionGroups = async (params: { search?: string; activeOnly?: boolean } = {}) => {
+  const response = await api.get('/permission-groups', { params });
+  return (response.data?.groups ?? []) as IPermissionGroup[];
+};
+
+export const createPermissionGroup = async (data: SavePermissionGroupRequest) => {
+  const response = await api.post('/permission-groups/create', data);
+  return response.data;
+};
+
+export const updatePermissionGroup = async (id: string, data: SavePermissionGroupRequest) => {
+  const response = await api.put(`/permission-groups/${id}`, data);
+  return response.data;
+};
+
+export const deletePermissionGroup = async (id: string) => {
+  const response = await api.delete(`/permission-groups/${id}`);
   return response.data;
 };

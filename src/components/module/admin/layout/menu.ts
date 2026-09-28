@@ -21,6 +21,7 @@ import {
   SlidersHorizontal,
   User,
   Users,
+  Layers,
   type LucideIcon,
 } from "lucide-react";
 import { API_BASE_URL } from "@/constants/index";
@@ -90,6 +91,7 @@ export const menuItems: MenuItem[] = [
       { label: "common.change_password.title", defaultLabel: "Change Password", icon: Lock, basePath: "/settings/change-password", permissions: ["change-admin-password"] },
       { label: "common.roles.title", defaultLabel: "Roles", icon: Shield, basePath: "/settings/roles", permissions: ["read-admin-roles"] },
       { label: "common.permissions.title", defaultLabel: "Permissions", icon: Key, basePath: "/settings/permissions", permissions: ["read-admin-permissions"] },
+      { label: "common.permission_groups.title", defaultLabel: "Permission Groups", icon: Layers, basePath: "/settings/permission-groups", permissions: ["read-admin-permissions"] },
       { label: "common.options.title", defaultLabel: "Options", icon: ListChecks, basePath: "/settings/options", permissions: ["read-admin-options"] },
       { label: "common.translations.title", defaultLabel: "Translations", icon: Languages, basePath: "/settings/translations", permissions: ["read-admin-translations"] },
       { label: "common.user_logs.title", defaultLabel: "User Logs", icon: History, basePath: "/settings/user-logs", permissions: ["read-admin-user-logs"] },

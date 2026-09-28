@@ -2,7 +2,7 @@
 // Add and edit for both roles and permissions. The two have the same shape
 // (names, guard, active) and each links to the other: a role holds
 // permissions, a permission belongs to roles.
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -20,13 +20,15 @@ import type { IPermission, IRole } from '@/types/role-permission'
 import { createPermission, createRole, getPermissionForEdit, getRoleForEdit, updatePermission, updateRole } from '../api'
 import NamesField from './NamesField'
 import PermissionPicker from './PermissionPicker'
-import { moduleLabel, parsePermission, splitNames } from './permissionMeta'
+import { inheritedFromGroups, moduleLabel, parsePermission, splitNames } from './permissionMeta'
+import GroupSelect from './GroupSelect'
+import { usePermissionGroups, invalidatePermissionGroups } from '@/hooks/usePermissionGroups'
 
 type Kind = 'role' | 'permission'
 
-type Values = { names: string; guardName: string; links: string[]; isActive: string }
+type Values = { names: string; guardName: string; links: string[]; isActive: string; groups: string[] }
 
-const EMPTY: Values = { names: '', guardName: 'admin', links: [], isActive: 'true' }
+const EMPTY: Values = { names: '', guardName: 'admin', links: [], isActive: 'true', groups: [] }
 
 const schemaFor = (kind: Kind, isEdit: boolean) =>
   z.object({
@@ -36,6 +38,7 @@ const schemaFor = (kind: Kind, isEdit: boolean) =>
     guardName: z.string().min(1, 'Guard name is required'),
     links: z.array(z.string()),
     isActive: z.string(),
+    groups: z.array(z.string()),
   })
 
 type Props = {
@@ -63,6 +66,9 @@ export default function AccessForm({ kind, id, fetchData, onClose }: Props) {
   const { errors, isDirty } = formState
   const values = useWatch({ control }) as Values
 
+  const { groups: allGroups } = usePermissionGroups(isRole)
+  const inherited = useMemo(() => inheritedFromGroups(allGroups, values.groups ?? []), [allGroups, values.groups])
+
   const loadedFor = useRef<string | null>(null)
   useEffect(() => {
     if (!id || loadedFor.current === id) return
@@ -76,6 +82,7 @@ export default function AccessForm({ kind, id, fetchData, onClose }: Props) {
           guardName: item.guardName,
           links: (isRole ? (item as IRole).permissions : (item as IPermission).roles) || [],
           isActive: item.isActive ? 'true' : 'false',
+          groups: isRole ? (item as IRole).groups ?? [] : [],
         }
         loadedRef.current = loaded
         reset(loaded)
@@ -94,13 +101,15 @@ export default function AccessForm({ kind, id, fetchData, onClose }: Props) {
     setSaving(true)
     try {
       if (isRole) {
-        if (isEdit) await updateRole(id!, { name: data.names, guardName: data.guardName, permissions: data.links, isActive: data.isActive })
-        else await createRole({ names: data.names, guardName: data.guardName, permissions: data.links, isActive: data.isActive })
+        if (isEdit) await updateRole(id!, { name: data.names, guardName: data.guardName, permissions: data.links, isActive: data.isActive, groups: data.groups })
+        else await createRole({ names: data.names, guardName: data.guardName, permissions: data.links, isActive: data.isActive, groups: data.groups })
       } else {
         if (isEdit) await updatePermission(id!, { name: data.names, guardName: data.guardName, roles: data.links, isActive: data.isActive })
         else await createPermission({ names: data.names, guardName: data.guardName, roles: data.links, isActive: data.isActive })
       }
       invalidateOptionNames(isRole ? '/Options/roles' : '/Options/permissions')
+      // Group cards list the roles that use them.
+      if (isRole) invalidatePermissionGroups()
 
       // Editing something the signed-in user has changes what they can do.
       if (isEdit) {
@@ -222,17 +231,31 @@ export default function AccessForm({ kind, id, fetchData, onClose }: Props) {
 
       <FormSection
         icon={isRole ? KeyRound : Users}
-        title={isRole ? t('Permissions') : t('Roles')}
+        title={isRole ? t('Access') : t('Roles')}
         description={
           isRole
             ? isEdit
-              ? t('Changes apply to everyone who has this role.')
-              : t('Everyone given this role gets these.')
+              ? t('Groups and permissions. Changes apply to everyone who has this role.')
+              : t('Groups and permissions everyone given this role gets.')
             : t('Roles that include this permission.')
         }
       >
         {isRole ? (
-          <PermissionPicker id="permissions" label="Assigned permissions" value={values.links ?? []} onChange={(v) => setField('links', v)} />
+          <div className="space-y-5">
+            <GroupSelect
+              id="groups"
+              value={values.groups ?? []}
+              onChange={(v) => setField('groups', v)}
+              hint="The role gets everything in these groups, and follows later changes to them."
+            />
+            <PermissionPicker
+              id="permissions"
+              label={values.groups?.length ? 'Additional permissions' : 'Assigned permissions'}
+              value={values.links ?? []}
+              onChange={(v) => setField('links', v)}
+              inherited={inherited}
+            />
+          </div>
         ) : (
           <ChipSelect id="roles" label="Roles" url="/Options/roles" value={values.links ?? []} onChange={(v) => setField('links', v)} />
         )}

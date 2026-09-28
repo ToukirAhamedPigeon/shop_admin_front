@@ -30,3 +30,16 @@ export const moduleLabel = (module: string) => module.replace(/[-_]+/g, ' ').rep
 
 /** "Admin = Editor=Viewer" → ["Admin", "Editor", "Viewer"]: the API creates one per name. */
 export const splitNames = (raw: string) => [...new Set(raw.split('=').map((s) => s.trim()).filter(Boolean))]
+
+/** Which of the chosen groups give each permission: { "read-admin-mails": ["Mail manager"] }. Inactive groups give nothing. */
+export function inheritedFromGroups(
+  groups: { name: string; isActive: boolean; permissions: string[] }[],
+  chosen: string[]
+): Record<string, string[]> {
+  const out: Record<string, string[]> = {}
+  for (const g of groups) {
+    if (!g.isActive || !chosen.includes(g.name)) continue
+    for (const p of g.permissions) (out[p] ??= []).push(g.name)
+  }
+  return out
+}
