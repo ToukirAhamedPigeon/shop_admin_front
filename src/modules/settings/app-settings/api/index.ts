@@ -37,6 +37,9 @@ export const updateThemeSettings = async (data: UpdateThemeSettings): Promise<Us
   // Append files
   if (data.SidebarBgFile) formData.append('SidebarBgFile', data.SidebarBgFile);
   if (data.LoginBgFile) formData.append('LoginBgFile', data.LoginBgFile);
+  // Removing a saved image (shop_back deletes the file)
+  if (data.remove_sidebar_bg) formData.append('remove_sidebar_bg', 'true');
+  if (data.remove_login_bg) formData.append('remove_login_bg', 'true');
   
   const response = await api.put('/settings/theme', formData, {
     headers: {

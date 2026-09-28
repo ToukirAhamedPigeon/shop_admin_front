@@ -7,6 +7,7 @@ import type { ThemeSettings as ThemeSettingsType } from '@/types/settings';
 import { SettingsSection, SettingRow, Toggle } from './SettingsLayout';
 import { ImageDrop } from './ImageDrop';
 import { cn } from '@/lib/utils';
+import { assetUrl } from '@/lib/assetUrl';
 
 interface ThemeSettingsProps {
   settings: ThemeSettingsType;
@@ -72,13 +73,13 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ settings, onUpdate
 
   // Local state for immediate UI updates
   const [localSettings, setLocalSettings] = useState<ThemeSettingsType>(settings);
-  const [sidebarPreview, setSidebarPreview] = useState<string | null>(settings.sidebar_bg_image || null);
-  const [loginPreview, setLoginPreview] = useState<string | null>(settings.login_bg_image || null);
+  const [sidebarPreview, setSidebarPreview] = useState<string | null>(assetUrl(settings.sidebar_bg_image));
+  const [loginPreview, setLoginPreview] = useState<string | null>(assetUrl(settings.login_bg_image));
 
   useEffect(() => {
     setLocalSettings(settings);
-    setSidebarPreview(settings.sidebar_bg_image || null);
-    setLoginPreview(settings.login_bg_image || null);
+    setSidebarPreview(assetUrl(settings.sidebar_bg_image));
+    setLoginPreview(assetUrl(settings.login_bg_image));
   }, [settings]);
 
   const change = <K extends keyof ThemeSettingsType>(key: K, value: ThemeSettingsType[K]) => {
@@ -138,7 +139,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ settings, onUpdate
         </SettingRow>
       </SettingsSection>
 
-      <SettingsSection title={t('Background images')} description={t('Optional pictures behind the sidebar and the sign-in page.')}>
+      <SettingsSection title={t('Background images')} description={t('Optional pictures behind the sidebar and the sign-in page (the sign-in page shows the last person who signed in on that browser).')}>
         <div className="grid gap-5 p-4 sm:p-5 md:grid-cols-2">
           <ImageDrop
             label="Sidebar background"
@@ -157,7 +158,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ settings, onUpdate
         </div>
       </SettingsSection>
 
-      <SettingsSection title={t('Custom CSS')} description={t('Advanced: extra styles applied on top of the theme.')}>
+      <SettingsSection title={t('Custom CSS')} description={t('Advanced: extra styles for your own screens, applied after saving. @import and images from other sites are ignored.')}>
         <div className="p-4 sm:p-5">
           <Textarea
             value={localSettings.custom_css}

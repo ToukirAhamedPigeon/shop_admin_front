@@ -12,6 +12,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import AuthHeader from "@/modules/auth/components/AuthHeader";
 import BrandPanel from "@/modules/auth/components/login/BrandPanel";
 import { cn } from "@/lib/utils";
+import { readLoginBackground } from "@/lib/userTheme";
 
 // Full-screen neural-network sphere; its own chunk so three.js stays out of the main bundle.
 const NeuralScene = lazy(() => import("@/modules/auth/components/login/NeuralScene"));
@@ -38,6 +39,7 @@ const GLASS_BANDS = [
 ];
 
 export default function AuthShell() {
+  const [loginBg] = useState(readLoginBackground);
   const location = useLocation();
   const outlet = useOutlet();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -72,6 +74,17 @@ export default function AuthShell() {
 
   return (
     <div className="relative min-h-dvh overflow-hidden login-stage">
+      {/* The sign-in background chosen in App Settings (last person on this
+          browser), dimmed so the scene and the form stay readable. */}
+      {loginBg && (
+        <div
+          aria-hidden
+          className="fixed inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `linear-gradient(oklch(0.13 0.03 272 / 0.78), oklch(0.13 0.03 272 / 0.88)), url(${JSON.stringify(loginBg)})`,
+          }}
+        />
+      )}
       {/* One scene spans the whole page, so the brand side and the content side
           are the same picture; the content side just sees it through glass. */}
       {isDesktop && sceneReady && (

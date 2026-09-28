@@ -47,6 +47,8 @@ export interface UpdateThemeSettings {
   // File upload fields
   SidebarBgFile?: File;
   LoginBgFile?: File;
+  remove_sidebar_bg?: boolean;
+  remove_login_bg?: boolean;
 }
 
 export interface UpdateGeneralSettings {

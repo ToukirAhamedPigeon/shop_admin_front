@@ -139,6 +139,15 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   `index.html` to paint before the app loads; logout clears them. A header
   sun/moon choice (`theme`) wins over the saved default; saving dark mode in
   App Settings sets that choice.
+- The same sync applies the sidebar background image and the person's custom
+  CSS (`lib/userCss.ts`, cached with the colours for first paint). Custom CSS
+  is sanitized: no `@import`, and `url()` only for data images, this site or
+  the API asset host. Theme images are paths from shop_back (`/uploads/...`
+  locally, absolute URLs on remote storage); resolve them with
+  `lib/assetUrl.ts`. The sign-in background is cached as `theme-login-bg`,
+  which logout deliberately keeps, since the sign-in page is only seen
+  signed out; AuthShell draws it under the scene with a navy overlay.
+  Removing an image sends `remove_sidebar_bg` / `remove_login_bg`.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.

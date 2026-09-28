@@ -3,11 +3,13 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { fetchSettings } from '@/redux/slices/settingsSlice';
 import { applyDefaultTheme } from '@/redux/slices/themeSlice';
-import { buildThemeCss } from '@/lib/themeColors';
-import { applyUserThemeCss, hasExplicitTheme, saveThemeDefault } from '@/lib/userTheme';
+import { buildUserCss } from '@/lib/userCss';
+import { assetUrl } from '@/lib/assetUrl';
+import { applyUserThemeCss, hasExplicitTheme, saveLoginBackground, saveThemeDefault } from '@/lib/userTheme';
 
 /**
- * Applies the colours and dark-mode default saved in App Settings.
+ * Applies the Theme settings saved in App Settings: colours, dark-mode
+ * default, sidebar background, custom CSS and the sign-in background.
  * Mounted once in the admin layout; renders nothing.
  */
 export default function UserThemeSync() {
@@ -22,7 +24,9 @@ export default function UserThemeSync() {
 
   useEffect(() => {
     if (!theme) return;
-    applyUserThemeCss(buildThemeCss(theme.primary_color, theme.secondary_color));
+    applyUserThemeCss(buildUserCss(theme));
+    // Shown on the sign-in page, which is only seen signed out.
+    saveLoginBackground(assetUrl(theme.login_bg_image));
 
     const preferred = theme.dark_mode ? 'dark' : 'light';
     saveThemeDefault(preferred);
