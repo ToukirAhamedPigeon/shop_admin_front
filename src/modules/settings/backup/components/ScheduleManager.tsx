@@ -1,116 +1,119 @@
-// src/modules/backup/components/ScheduleManager.tsx
-import { useState, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
-import { Plus, Trash2, RefreshCw, Clock, AlertCircle } from 'lucide-react';
+// src/modules/settings/backup/components/ScheduleManager.tsx
+import { useState, useEffect, useCallback } from 'react';
+import { format, formatDistanceToNowStrict, parseISO } from 'date-fns';
+import { Plus, Trash2, RefreshCw, CalendarClock, AlertCircle, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getSchedules, createSchedule, deleteSchedule, getStorageDestinations } from '../api';
 import type { BackupSchedule, StorageDestination } from '../types';
 import { dispatchShowToast } from '@/lib/dispatch';
+import { cn } from '@/lib/utils';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
 import GlassCard from '@/components/custom/GlassCard';
+import { storageOf, toneSoft } from './backupMeta';
 
 interface ScheduleManagerProps {
   onScheduleChange?: () => void;
 }
 
+const UNITS = ['minutes', 'hours', 'days', 'weeks', 'months', 'years'];
+
+// "Every 1 days" → "Every day", "Every 6 hours".
+const every = (n: number, unit: string) => {
+  const one = unit.replace(/s$/, '');
+  return n === 1 ? `Every ${one}` : `Every ${n} ${unit}`;
+};
+
+const nextRun = (iso?: string) => {
+  if (!iso) return null;
+  const d = parseISO(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return { relative: d.getTime() > Date.now() ? `in ${formatDistanceToNowStrict(d)}` : 'due now', exact: format(d, 'MMM d, HH:mm') };
+};
+
+const emptyForm = (destinations: StorageDestination[]) => ({
+  name: '',
+  intervalValue: 1,
+  intervalUnit: 'days',
+  retentionDays: 7,
+  storageDestinations: destinations.map((d) => d.type) as string[],
+  isActive: true,
+});
+
 export default function ScheduleManager({ onScheduleChange }: ScheduleManagerProps) {
   const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [destinations, setDestinations] = useState<StorageDestination[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [newSchedule, setNewSchedule] = useState({
-    name: '',
-    intervalValue: 1,
-    intervalUnit: 'days',
-    retentionDays: 7,
-    storageDestinations: [] as string[],
-    isActive: true,
-  });
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState(() => emptyForm([]));
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BackupSchedule | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const loadSchedules = async () => {
+  const loadSchedules = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await getSchedules();
-      setSchedules(res.data.schedules || []);
+      setSchedules(Array.isArray(res.data?.schedules) ? res.data.schedules : []);
     } catch (error) {
       console.error('Failed to load schedules:', error);
       dispatchShowToast({ type: 'danger', message: 'Failed to load schedules' });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadDestinations = async () => {
+  const loadDestinations = useCallback(async () => {
     try {
       const res = await getStorageDestinations();
-      const dests = res.data.destinations || [];
+      const dests = res.data?.destinations || [];
       setDestinations(dests);
-      if (dests.length > 0) {
-        setNewSchedule(prev => ({
-          ...prev,
-          storageDestinations: dests.map(d => d.type),
-        }));
-      } else {
-        setNewSchedule(prev => ({ ...prev, storageDestinations: [] }));
-      }
+      setForm((f) => ({ ...f, storageDestinations: dests.map((d) => d.type) }));
     } catch (error) {
       console.error('Failed to load destinations:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadSchedules();
     loadDestinations();
-  }, []);
+  }, [loadSchedules, loadDestinations]);
+
+  const openForm = () => {
+    setForm(emptyForm(destinations));
+    setNameError(null);
+    setFormOpen(true);
+  };
 
   const handleCreate = async () => {
-    if (!newSchedule.name.trim()) {
-      dispatchShowToast({ type: 'warning', message: 'Name is required' });
+    if (!form.name.trim()) {
+      setNameError('Give the schedule a name');
       return;
     }
-    if (newSchedule.intervalValue < 1) {
-      dispatchShowToast({ type: 'warning', message: 'Interval must be at least 1' });
-      return;
-    }
-    if (newSchedule.storageDestinations.length === 0) {
+    if (form.storageDestinations.length === 0) {
       dispatchShowToast({ type: 'warning', message: 'Select at least one storage destination' });
       return;
     }
     setSubmitting(true);
     try {
       await createSchedule({
-        name: newSchedule.name,
-        intervalValue: newSchedule.intervalValue,
-        intervalUnit: newSchedule.intervalUnit,
-        retentionDays: newSchedule.retentionDays,
-        storageDestinations: newSchedule.storageDestinations,
-        isActive: newSchedule.isActive,
+        name: form.name.trim(),
+        intervalValue: Math.max(1, form.intervalValue),
+        intervalUnit: form.intervalUnit,
+        retentionDays: Math.max(1, form.retentionDays),
+        storageDestinations: form.storageDestinations,
+        isActive: form.isActive,
       });
       dispatchShowToast({ type: 'success', message: 'Schedule created' });
-      setShowForm(false);
-      setNewSchedule({
-        name: '',
-        intervalValue: 1,
-        intervalUnit: 'days',
-        retentionDays: 7,
-        storageDestinations: destinations.map(d => d.type),
-        isActive: true,
-      });
+      setFormOpen(false);
       await loadSchedules();
-      
-      // 🔥 Notify parent to refresh statistics
-      if (onScheduleChange) {
-        onScheduleChange();
-      }
-    } catch (error) {
+      onScheduleChange?.();
+    } catch {
       dispatchShowToast({ type: 'danger', message: 'Failed to create schedule' });
     } finally {
       setSubmitting(false);
@@ -118,193 +121,276 @@ export default function ScheduleManager({ onScheduleChange }: ScheduleManagerPro
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await deleteSchedule(deleteId);
+      await deleteSchedule(deleteTarget.id);
       dispatchShowToast({ type: 'success', message: 'Schedule deleted' });
-      setDeleteDialogOpen(false);
-      setDeleteId(null);
+      setDeleteTarget(null);
       await loadSchedules();
-      
-      // 🔥 Notify parent to refresh statistics
-      if (onScheduleChange) {
-        onScheduleChange();
-      }
-    } catch (error) {
+      onScheduleChange?.();
+    } catch {
       dispatchShowToast({ type: 'danger', message: 'Failed to delete schedule' });
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const toggleDestination = (type: string) => {
-    setNewSchedule(prev => {
-      const set = new Set(prev.storageDestinations);
+  const toggleDestination = (type: string) =>
+    setForm((f) => {
+      const set = new Set(f.storageDestinations);
       if (set.has(type)) set.delete(type);
       else set.add(type);
-      return { ...prev, storageDestinations: Array.from(set) };
+      return { ...f, storageDestinations: Array.from(set) };
     });
-  };
 
   return (
-    <GlassCard variant="primary" padding="md" className="mt-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Clock className="w-5 h-5" />
-          Backup Schedules
-        </h3>
+    <GlassCard variant="default" padding="none" hoverEffect={false} className="flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between gap-2 border-b border-border p-3 sm:p-4">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={loadSchedules}>
-            <RefreshCw className="w-4 h-4" />
+          <h3 className="text-base font-semibold text-foreground">Schedules</h3>
+          {!loading && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">{schedules.length}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={loadSchedules} aria-label="Reload schedules" title="Reload schedules">
+            <RefreshCw className={cn('size-4', loading && 'animate-spin')} />
           </Button>
-          <Button size="sm" onClick={() => setShowForm(!showForm)}>
-            <Plus className="w-4 h-4 mr-1" /> Add Schedule
+          <Button size="sm" onClick={openForm}>
+            <Plus className="size-4" />
+            Add
           </Button>
         </div>
       </div>
 
-      {showForm && (
-        <Card className="mb-4 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-4 space-y-3">
-            <div>
-              <Label>Schedule Name</Label>
+      <div className="p-3 sm:p-4">
+        {loading && schedules.length === 0 ? (
+          <div className="space-y-2" aria-hidden>
+            {[0, 1].map((i) => (
+              <div key={i} className="h-[76px] animate-pulse rounded-xl bg-muted/60" />
+            ))}
+          </div>
+        ) : schedules.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-4 py-8 text-center">
+            <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <CalendarClock className="size-5" />
+            </span>
+            <p className="text-sm font-medium text-foreground">No schedules yet</p>
+            <p className="text-xs text-muted-foreground">Back up automatically, for example every day at the same time.</p>
+            <Button variant="outline" size="sm" onClick={openForm} className="mt-1">
+              <Plus className="size-4" />
+              Add a schedule
+            </Button>
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {schedules.map((s) => {
+              const next = s.isActive ? nextRun(s.nextRunAt) : null;
+              return (
+                <li key={s.id} className="group rounded-xl border border-border p-3 transition-colors hover:border-primary/30">
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={cn(
+                        'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                        s.isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      <CalendarClock className="size-[18px]" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-foreground" title={s.name}>
+                          {s.name}
+                        </p>
+                        <span
+                          className={cn(
+                            'inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium',
+                            s.isActive ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
+                          )}
+                        >
+                          <span className={cn('size-1.5 rounded-full', s.isActive ? 'bg-success' : 'bg-muted-foreground')} />
+                          {s.isActive ? 'Active' : 'Paused'}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {every(s.intervalValue, s.intervalUnit)} · keep {s.retentionDays} day{s.retentionDays === 1 ? '' : 's'}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        {(s.storageDestinations ?? []).map((d) => {
+                          const st = storageOf(d);
+                          const Icon = st.icon;
+                          return (
+                            <span key={d} className={cn('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium', toneSoft[st.tone])}>
+                              <Icon className="size-3" />
+                              {st.short}
+                            </span>
+                          );
+                        })}
+                        {next && (
+                          <span className="ml-auto text-[11px] text-muted-foreground" title={next.exact}>
+                            Next {next.relative}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(s)}
+                      aria-label={`Delete ${s.name}`}
+                      title="Delete schedule"
+                      className="-mr-1 -mt-1 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* New schedule */}
+      <Dialog open={formOpen} onOpenChange={(open) => !submitting && setFormOpen(open)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-left">
+            <DialogTitle>New backup schedule</DialogTitle>
+            <DialogDescription>Backups run automatically at this interval and older ones are removed after the retention period.</DialogDescription>
+          </DialogHeader>
+
+          <form
+            id="schedule-form"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleCreate();
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="schedule-name">Name</Label>
               <Input
-                value={newSchedule.name}
-                onChange={e => setNewSchedule({ ...newSchedule, name: e.target.value })}
-                placeholder="e.g., Daily Backup"
+                id="schedule-name"
+                value={form.name}
+                onChange={(e) => {
+                  setForm({ ...form, name: e.target.value });
+                  setNameError(null);
+                }}
+                placeholder="e.g. Nightly backup"
+                aria-invalid={!!nameError}
               />
+              {nameError && <p className="text-xs text-destructive">{nameError}</p>}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <Label>Every</Label>
+            <div className="grid grid-cols-[1fr_1.4fr] gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="schedule-every">Every</Label>
                 <Input
+                  id="schedule-every"
                   type="number"
-                  min="1"
-                  value={newSchedule.intervalValue}
-                  onChange={e => setNewSchedule({ ...newSchedule, intervalValue: parseInt(e.target.value) || 1 })}
+                  min={1}
+                  value={form.intervalValue}
+                  onChange={(e) => setForm({ ...form, intervalValue: parseInt(e.target.value) || 1 })}
                 />
               </div>
-              <div>
+              <div className="space-y-1.5">
                 <Label>Unit</Label>
-                <Select
-                  value={newSchedule.intervalUnit}
-                  onValueChange={val => setNewSchedule({ ...newSchedule, intervalUnit: val })}
-                >
-                  <SelectTrigger>
+                <Select value={form.intervalUnit} onValueChange={(val) => setForm({ ...form, intervalUnit: val })}>
+                  <SelectTrigger className="w-full" aria-label="Interval unit">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="minutes">Minutes</SelectItem>
-                    <SelectItem value="hours">Hours</SelectItem>
-                    <SelectItem value="days">Days</SelectItem>
-                    <SelectItem value="weeks">Weeks</SelectItem>
-                    <SelectItem value="months">Months</SelectItem>
-                    <SelectItem value="years">Years</SelectItem>
+                    {UNITS.map((u) => (
+                      <SelectItem key={u} value={u}>
+                        {u[0].toUpperCase() + u.slice(1)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Retention (days)</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={newSchedule.retentionDays}
-                  onChange={e => setNewSchedule({ ...newSchedule, retentionDays: parseInt(e.target.value) || 7 })}
-                />
-              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="schedule-active"
-                checked={newSchedule.isActive}
-                onCheckedChange={c => setNewSchedule({ ...newSchedule, isActive: !!c })}
+            <div className="space-y-1.5">
+              <Label htmlFor="schedule-retention">Keep backups for (days)</Label>
+              <Input
+                id="schedule-retention"
+                type="number"
+                min={1}
+                value={form.retentionDays}
+                onChange={(e) => setForm({ ...form, retentionDays: parseInt(e.target.value) || 7 })}
               />
-              <Label htmlFor="schedule-active" className="cursor-pointer">Active</Label>
             </div>
 
-            <div>
-              <Label>Storage Destinations</Label>
+            <fieldset className="space-y-1.5">
+              <legend className="text-sm font-medium leading-none">Save to</legend>
               {destinations.length === 0 ? (
-                <div className="flex items-center gap-2 mt-1 p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded border border-yellow-200 dark:border-yellow-800">
-                  <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                  <span className="text-sm text-yellow-700 dark:text-yellow-300">
-                    No storage destinations configured. Please create one first.
-                  </span>
+                <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 p-2.5 text-sm text-warning">
+                  <AlertCircle className="size-4 shrink-0" />
+                  No storage destinations are configured yet.
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {destinations.map(d => (
-                    <div key={d.id} className="flex items-center gap-1">
-                      <Checkbox
-                        id={`dest-${d.id}`}
-                        checked={newSchedule.storageDestinations.includes(d.type)}
-                        onCheckedChange={() => toggleDestination(d.type)}
-                      />
-                      <Label htmlFor={`dest-${d.id}`} className="text-sm cursor-pointer">
+                <div className="mt-1.5 flex flex-wrap gap-2">
+                  {destinations.map((d) => {
+                    const st = storageOf(d.type);
+                    const Icon = st.icon;
+                    const on = form.storageDestinations.includes(d.type);
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        role="checkbox"
+                        aria-checked={on}
+                        onClick={() => toggleDestination(d.type)}
+                        className={cn(
+                          'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+                          on ? 'border-primary bg-primary/5 text-foreground' : 'border-border text-muted-foreground hover:bg-accent'
+                        )}
+                      >
+                        <Icon className="size-4" />
                         {d.name}
-                      </Label>
-                    </div>
-                  ))}
+                        {on && <Check className="size-3.5 text-primary" />}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
-            </div>
+            </fieldset>
 
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
-              <Button size="sm" onClick={handleCreate} disabled={submitting}>
-                {submitting ? 'Creating...' : 'Create Schedule'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            <label htmlFor="schedule-active" className="flex cursor-pointer items-center gap-2.5 text-sm">
+              <Checkbox
+                id="schedule-active"
+                checked={form.isActive}
+                onCheckedChange={(c) => setForm({ ...form, isActive: !!c })}
+              />
+              Start running now
+            </label>
+          </form>
 
-      {loading ? (
-        <p>Loading schedules...</p>
-      ) : schedules.length === 0 ? (
-        <p className="text-gray-500 text-sm">No schedules configured.</p>
-      ) : (
-        <div className="space-y-2">
-          {schedules.map(s => (
-            <div key={s.id} className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2">
-                <span className="font-medium">{s.name}</span>
-                <span className="text-sm text-gray-500">
-                  Every {s.intervalValue} {s.intervalUnit}
-                </span>
-                <span className="text-sm">
-                  {s.isActive ? (
-                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Active</Badge>
-                  ) : (
-                    <Badge variant="secondary">Inactive</Badge>
-                  )}
-                </span>
-                <span className="text-sm text-gray-500">
-                  Next: {s.nextRunAt ? format(parseISO(s.nextRunAt), 'MMM dd, HH:mm') : '—'}
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => { setDeleteId(s.id); setDeleteDialogOpen(true); }}
-                className="text-red-500 hover:text-red-700"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
+          <DialogFooter className="flex-row justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setFormOpen(false)} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="submit" form="schedule-form" disabled={submitting}>
+              {submitting && <Loader2 className="size-4 animate-spin" />}
+              Create schedule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
-        open={deleteDialogOpen}
-        onCancel={() => setDeleteDialogOpen(false)}
+        open={!!deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Delete Schedule"
+        title="Delete schedule"
         variant="destructive"
         confirmLabel="Delete"
+        loading={deleting}
       >
-        <p>Are you sure you want to delete this schedule?</p>
+        <p>
+          Delete <span className="font-medium text-foreground">{deleteTarget?.name}</span>? Automatic backups on this schedule will stop.
+        </p>
       </ConfirmDialog>
     </GlassCard>
   );
