@@ -127,6 +127,18 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   category and the page asks before switching with unsaved edits, so one
   category's edits are never sent to another's endpoint. `useSettings`
   already shows the save/reset toasts; don't add a second one.
+- Saved App Settings colours and dark mode apply app-wide through
+  `UserThemeSync` (mounted in `AdminLayout`). `lib/themeColors.ts` turns the
+  picked hex into `--primary` / `--primary-text` / `--ring` / sidebar and
+  `.nav-active` overrides (and a quiet `--secondary` tint), in an injected
+  `<style id="user-theme-colors">`. The hex only sets hue and chroma:
+  lightness is searched until white button text measures at least 4.5:1, so
+  any colour stays readable. The server defaults (#3B82F6 / #10B981) add no
+  CSS, so the designed palette stays. `lib/userTheme.ts` caches the CSS and
+  the dark default in localStorage (`theme-colors-css`, `theme-default`) for
+  `index.html` to paint before the app loads; logout clears them. A header
+  sun/moon choice (`theme`) wins over the saved default; saving dark mode in
+  App Settings sets that choice.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.
