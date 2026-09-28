@@ -1,4 +1,4 @@
-// app/(dashboard)/admin/roles/Roles.tsx
+// src/modules/settings/roles-permissions/components/Roles.tsx
 import { useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import {
   flexRender,
@@ -8,7 +8,6 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table'
-import { motion } from 'framer-motion'
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
 
 import { useTable } from '@/hooks/useTable'
@@ -37,6 +36,7 @@ import { useSelector } from 'react-redux'
 import type { RootState } from '@/redux/store'
 
 import RoleDetail from './RoleDetail'
+import RoleCards, { RoleCardsSkeleton } from './RoleCards'
 import type { IRole } from '@/types/role-permission'
 import RoleFilterForm from './RoleFilterForm'
 import { can } from '@/lib/authCheck'
@@ -46,7 +46,7 @@ import EditRole from './EditRole'
 import { useEditSheet } from '@/hooks/useEditSheet'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
 import { deleteRole, restoreRole, getRoleDeleteInfo, getRoles, bulkDeleteRoles, bulkRestoreRoles } from '../api'
-import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle } from 'lucide-react'
+import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle, LayoutGrid, List } from 'lucide-react'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { cn } from '@/lib/utils'
 
@@ -54,6 +54,16 @@ interface DeleteInfoResponse {
   canBePermanent: boolean
   message: string
   hasRelatedRecords?: boolean
+}
+
+type RoleView = 'cards' | 'table'
+const VIEW_KEY = 'roles-view'
+const readView = (): RoleView => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'table' ? 'table' : 'cards'
+  } catch {
+    return 'cards'
+  }
 }
 
 // Helper function to validate ID (roles use string IDs, not GUIDs)
@@ -190,7 +200,7 @@ const getDataColumns = ({
       const perms = getValue() as string[] | undefined;
       return perms?.length ? (
         <ExpandableText text={perms.join(', ')} wordLimit={5} className="max-w-[300px] whitespace-pre-wrap break-all" />
-      ) : <span className="text-gray-400">-</span>
+      ) : <span className="text-muted-foreground">-</span>
     },
     meta: { customClassName: 'text-left min-w-[300px]' },
     enableSorting: false,
@@ -198,13 +208,13 @@ const getDataColumns = ({
   {
     header: 'Active',
     accessorKey: 'isActive',
-    cell: ({ getValue }) => getValue() ? <span className="text-green-600">Yes</span> : <span className="text-red-500">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-success">Yes</span> : <span className="text-destructive">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
     header: 'Deleted',
     accessorKey: 'isDeleted',
-    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-muted-foreground">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="font-semibold text-destructive">Yes</span> : <span className="text-muted-foreground">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
@@ -236,7 +246,6 @@ export default function Roles() {
   const fetchDetailRef = useRef(fetchDetail)
   fetchDetailRef.current = fetchDetail
 
-  const hasFetchedRef = useRef(false)
   const prevFiltersRef = useRef<Record<string, any>>({})
 
   const [visible, setVisible] = useState<ColumnDef<IRole>[]>([])
@@ -246,6 +255,7 @@ export default function Roles() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showAddButton, setShowAddButton] = useState(false)
   const [showTrashButton, setShowTrashButton] = useState(false)
+  const [view, setView] = useState<RoleView>(readView)
 
   // Selection state
   const [selectedRowIds, setSelectedRowIds] = useState<Record<string, boolean>>({})
@@ -370,7 +380,7 @@ export default function Roles() {
     fetcher: stableFetcher,
     defaultSort: 'createdAt',
     enableTrashView: true,
-    minLoadingTime: 1000
+    minLoadingTime: 300
   })
 
   /* ---------------- Delete Eligibility Check ---------------- */
@@ -651,18 +661,9 @@ export default function Roles() {
     }
   }, [userId])
 
-  /* ---------------- Initial Fetch ---------------- */
-  useEffect(() => {
-    if (!hasFetchedRef.current) {
-      fetchData()
-      hasFetchedRef.current = true
-    }
-  }, [fetchData])
-
   /* ---------------- Filters Fetch ---------------- */
+  // useTable loads the first page itself; this only reacts to filter changes.
   useEffect(() => {
-    if (!hasFetchedRef.current) return
-    
     if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
       return
     }
@@ -689,7 +690,8 @@ export default function Roles() {
   /* ---------------- Table Instance ---------------- */
   const table = useReactTable<IRole>({
     data,
-    columns: visible,
+    // Until the saved column choice arrives, show every column instead of an empty header.
+    columns: visible.length ? visible : allColumns,
     getRowId: (row) => row.id,
     enableSorting: true,
     state: {
@@ -740,20 +742,36 @@ export default function Roles() {
     setSorting([])
   }, [setSorting])
 
+  const changeView = (next: RoleView) => {
+    setView(next)
+    try {
+      localStorage.setItem(VIEW_KEY, next)
+    } catch {
+      /* private mode: kept for this visit only */
+    }
+  }
+
+  const toggleRow = useCallback((id: string) => {
+    setSelectedRowIds(prev => {
+      const next = { ...prev }
+      if (next[id]) delete next[id]
+      else if (isValidId(id)) next[id] = true
+      return next
+    })
+  }, [])
+
   /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0
   const showErrorState = !loading && error
 
   /* ---------------- UI ---------------- */
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="flex justify-start mb-2">
-        {viewIndicator && <TrashViewIndicator type={viewIndicator.type} />}
-      </div>
+    <div className="space-y-3">
+      {viewIndicator && (
+        <div className="flex justify-start">
+          <TrashViewIndicator type={viewIndicator.type} />
+        </div>
+      )}
       <TableHeaderActions
         searchValue={globalFilter}
         onSearchChange={setGlobalFilter}
@@ -794,9 +812,75 @@ export default function Roles() {
         onFilter={() => setFilterModalOpen(true)}
         isFilterActive={isFilterActive}
       />
-      
-      {/* TABLE */}
-      <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
+
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          {totalCount > 0 && (
+            <>
+              <span className="font-medium tabular-nums text-foreground">{totalCount}</span> {showTrash ? 'deleted ' : ''}role{totalCount === 1 ? '' : 's'}
+            </>
+          )}
+        </p>
+        <div role="radiogroup" aria-label="View" className="flex rounded-lg border border-border bg-muted/50 p-0.5">
+          {([
+            ['cards', LayoutGrid, 'Cards'],
+            ['table', List, 'Table'],
+          ] as const).map(([mode, Icon, label]) => (
+            <button
+              key={mode}
+              type="button"
+              role="radio"
+              aria-checked={view === mode}
+              onClick={() => changeView(mode)}
+              className={cn(
+                'flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+                view === mode ? 'bg-card font-medium text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className="size-3.5" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* CARDS */}
+      {view === 'cards' && (
+        showErrorState ? (
+          <div className="rounded-xl border border-border bg-card">
+            <ErrorState
+              message="Couldn't load roles"
+              suggestion="The server didn't respond as expected. Check your connection and try again."
+              onRetry={() => fetchData()}
+            />
+          </div>
+        ) : showEmptyState ? (
+          <div className="rounded-xl border border-border bg-card">
+            <EmptyState
+              message={showTrash ? 'No deleted roles found' : 'No roles found'}
+              suggestion={showTrash ? 'Deleted roles will appear here once you move them to trash.' : 'Try adjusting your search or filter criteria to see more results.'}
+            />
+          </div>
+        ) : data.length === 0 ? (
+          <RoleCardsSkeleton />
+        ) : (
+          <div className={cn('transition-opacity duration-200', loading && 'opacity-60')} aria-busy={loading}>
+            <RoleCards
+              roles={data}
+              selected={selectedRowIds}
+              onToggle={toggleRow}
+              onDetail={fetchDetail}
+              onEdit={showEdit ? handleEditClick : undefined}
+              onDelete={showSoftDelete ? confirmSoftDelete : undefined}
+              onRestore={showRestore ? confirmRestore : undefined}
+              onPermanentDelete={showPermanentDelete ? confirmPermanentDelete : undefined}
+            />
+          </div>
+        )
+      )}
+
+      {/* TABLE: stays in the page in cards view, hidden, so Print still has it. */}
+      <div className={cn('relative rounded-xl overflow-hidden border border-border bg-card shadow-xs', view !== 'table' && 'hidden')}>
         <TableWithLoader loading={loading} id="printable-role-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showErrorState ? (
             <ErrorState
@@ -991,7 +1075,7 @@ export default function Roles() {
         loading={deleteLoading}
       >
         <div className="space-y-3">
-          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+          <p className="font-medium text-foreground">
             This role will be moved to trash. You can restore it later.
           </p>
           {deleteInfo?.message && deleteInfo.canBePermanent === false && (
@@ -1014,9 +1098,9 @@ export default function Roles() {
         loading={deleteLoading}
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+            <AlertTriangle className="size-5 text-destructive" />
+            <p className="text-sm font-semibold text-destructive">
               Warning: This action cannot be undone!
             </p>
           </div>
@@ -1027,11 +1111,11 @@ export default function Roles() {
           
           <ul className="space-y-2 ml-4">
             <li className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              <div className="size-1.5 rounded-full bg-destructive" />
               Role-permission assignments
             </li>
             <li className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              <div className="size-1.5 rounded-full bg-destructive" />
               User-role assignments
             </li>
           </ul>
@@ -1057,7 +1141,7 @@ export default function Roles() {
           loading={restoreLoading}
         >
           <div className="space-y-3">
-            <p className="text-green-600 dark:text-green-400 font-medium">
+            <p className="font-medium text-foreground">
               Are you sure you want to restore this role?
             </p>
             <p className="text-sm text-muted-foreground">
@@ -1079,9 +1163,9 @@ export default function Roles() {
         showCancelButton={false}
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <Database className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-red-700 dark:text-red-300 text-sm">
+          <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+            <Database className="mt-0.5 size-5 shrink-0 text-destructive" />
+            <p className="text-sm text-destructive">
               {errorDetails?.message || "This role has existing related records"}
             </p>
           </div>
@@ -1124,7 +1208,7 @@ export default function Roles() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+          <p className="font-medium text-foreground">
             Are you sure you want to move {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected role(s) to trash?
           </p>
           <p className="text-sm text-muted-foreground">
@@ -1145,7 +1229,7 @@ export default function Roles() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <p className="text-green-600 dark:text-green-400 font-medium">
+          <p className="font-medium text-foreground">
             Are you sure you want to restore {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected role(s)?
           </p>
           <p className="text-sm text-muted-foreground">
@@ -1166,9 +1250,9 @@ export default function Roles() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+            <AlertTriangle className="size-5 text-destructive" />
+            <p className="text-sm font-semibold text-destructive">
               Warning: This action cannot be undone!
             </p>
           </div>
@@ -1180,6 +1264,6 @@ export default function Roles() {
           </p>
         </div>
       </ConfirmDialog>
-    </motion.div>
+    </div>
   )
 }
