@@ -8,7 +8,6 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { motion } from 'framer-motion';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
 import { useTable } from '@/hooks/useTable';
@@ -20,6 +19,7 @@ import {
   RowActions,
   IndexCell,
   TrashViewIndicator,
+  EmptyState,
   ErrorState,
   TableWithLoader,
   SelectAllCheckbox
@@ -47,6 +47,9 @@ import { deleteOption, restoreOption, getOptions, bulkDeleteOptions, bulkRestore
 import { AlertTriangle, Archive, FileWarning, Info, RotateCcw, Database, XCircle, List, AlertCircle } from 'lucide-react';
 import { dispatchShowToast } from '@/lib/dispatch';
 import { cn } from '@/lib/utils';
+import OptionCards from './OptionCards'
+import { CardGridSkeleton, CardsState, ListBar } from '@/components/custom/CardView'
+import { LIST_VIEWS, useStoredView } from '@/hooks/useStoredView'
 
 interface DeleteInfoResponse {
   canBePermanent: boolean;
@@ -207,9 +210,9 @@ const getDataColumns = ({
     header: 'Has Child',
     accessorKey: 'hasChild',
     cell: ({ getValue }) => getValue() ? (
-      <span className="text-green-600 font-medium">Yes</span>
+      <span className="text-success font-medium">Yes</span>
     ) : (
-      <span className="text-gray-500">No</span>
+      <span className="text-muted-foreground">No</span>
     ),
     meta: { customClassName: 'text-center', tdClassName: 'text-center' },
     enableSorting: false,
@@ -217,13 +220,13 @@ const getDataColumns = ({
   {
     header: 'Active',
     accessorKey: 'isActive',
-    cell: ({ getValue }) => getValue() ? <span className="text-green-600">Yes</span> : <span className="text-red-500">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-success">Yes</span> : <span className="text-destructive">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
     header: 'Deleted',
     accessorKey: 'isDeleted',
-    cell: ({ getValue }) => getValue() ? <span className="text-red-500 font-semibold">Yes</span> : <span className="text-muted-foreground">No</span>,
+    cell: ({ getValue }) => getValue() ? <span className="text-destructive font-semibold">Yes</span> : <span className="text-muted-foreground">No</span>,
     meta: { customClassName: 'text-center', tdClassName: 'text-center' }
   },
   {
@@ -241,7 +244,7 @@ const getDataColumns = ({
     accessorKey: 'createdByName',
     cell: ({ getValue }) => {
       const value = getValue() as string;
-      return value || <span className="text-gray-400">-</span>;
+      return value || <span className="text-muted-foreground">-</span>;
     }
   },
 ];
@@ -263,7 +266,6 @@ export default function Options() {
   const fetchDetailRef = useRef(fetchDetail);
   fetchDetailRef.current = fetchDetail;
 
-  const hasFetchedRef = useRef(false);
   const prevFiltersRef = useRef<Record<string, any>>({});
 
   const [visible, setVisible] = useState<ColumnDef<IOption>[]>([]);
@@ -408,7 +410,7 @@ export default function Options() {
     fetcher: stableFetcher,
     defaultSort: 'createdAt',
     enableTrashView: true,
-    minLoadingTime: 1000
+    minLoadingTime: 300
   });
 
   /* ---------------- Delete Eligibility Check ---------------- */
@@ -763,17 +765,9 @@ export default function Options() {
     };
   }, [userId]);
 
-  /* ---------------- Initial Fetch ---------------- */
-  useEffect(() => {
-    if (!hasFetchedRef.current) {
-      fetchData();
-      hasFetchedRef.current = true;
-    }
-  }, [fetchData]);
-
   /* ---------------- Filters Fetch ---------------- */
+  // useTable loads the first page itself; this only reacts to filter changes.
   useEffect(() => {
-    if (!hasFetchedRef.current) return;
     
     if (JSON.stringify(prevFiltersRef.current) === JSON.stringify(filters)) {
       return;
@@ -801,7 +795,8 @@ export default function Options() {
   /* ---------------- Table Instance ---------------- */
   const table = useReactTable<IOption>({
     data,
-    columns: visible,
+    // Until the saved column choice arrives, show every column instead of an empty header.
+    columns: visible.length ? visible : allColumns,
     getRowId: (row) => row.id,
     enableSorting: true,
     state: {
@@ -852,20 +847,29 @@ export default function Options() {
     setSorting([]);
   }, [setSorting]);
 
+  const [view, setView] = useStoredView('options-view', LIST_VIEWS)
+
+  const toggleRow = useCallback((id: string) => {
+    setSelectedRowIds(prev => {
+      const next = { ...prev }
+      if (next[id]) delete next[id]
+      else if (isValidId(id)) next[id] = true
+      return next
+    })
+  }, [])
+
   /* ---------------- Empty State ---------------- */
   const showEmptyState = !loading && !error && data.length === 0;
   const showErrorState = !loading && error;
 
   /* ---------------- UI ---------------- */
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="flex justify-start mb-2">
-        {viewIndicator && <TrashViewIndicator type={viewIndicator.type} />}
-      </div>
+    <div className="space-y-3">
+      {viewIndicator && (
+        <div className="flex justify-start">
+          <TrashViewIndicator type={viewIndicator.type} />
+        </div>
+      )}
       <TableHeaderActions
         searchValue={globalFilter}
         onSearchChange={setGlobalFilter}
@@ -907,8 +911,45 @@ export default function Options() {
         isFilterActive={isFilterActive}
       />
       
-      {/* TABLE */}
-      <div className="relative rounded-xl overflow-hidden border border-border bg-card shadow-xs">
+      <ListBar count={totalCount} noun="option" trash={showTrash} view={view} onView={setView} />
+
+      {/* CARDS */}
+      {view === 'cards' && (
+        <CardsState
+          error={!!showErrorState}
+          empty={showEmptyState}
+          firstLoad={data.length === 0}
+          loading={loading}
+          errorNode={
+            <ErrorState
+              message="Couldn't load options"
+              suggestion="The server didn't respond as expected. Check your connection and try again."
+              onRetry={() => fetchData()}
+            />
+          }
+          emptyNode={
+            <EmptyState
+              message={showTrash ? 'No deleted options found' : 'No options found'}
+              suggestion={showTrash ? 'Deleted options will appear here once you move them to trash.' : 'Try adjusting your search or filter criteria to see more results.'}
+            />
+          }
+          skeleton={<CardGridSkeleton />}
+        >
+          <OptionCards
+            options={data}
+            selected={selectedRowIds}
+            onToggle={toggleRow}
+            onDetail={fetchDetail}
+            onEdit={showEdit ? handleEditClick : undefined}
+            onDelete={showSoftDelete ? confirmSoftDelete : undefined}
+            onRestore={showRestore ? confirmRestore : undefined}
+            onPermanentDelete={showPermanentDelete ? confirmPermanentDelete : undefined}
+          />
+        </CardsState>
+      )}
+
+      {/* TABLE: stays in the page in cards view, hidden, so Print still has it. */}
+      <div className={cn('relative rounded-xl overflow-hidden border border-border bg-card shadow-xs', view !== 'table' && 'hidden')}>
         <TableWithLoader loading={loading} id="printable-option-table" containerClassName="max-h-[600px] min-h-[200px] overflow-auto relative">
           {showErrorState ? (
             <ErrorState
@@ -1113,7 +1154,7 @@ export default function Options() {
         loading={deleteLoading}
       >
         <div className="space-y-3">
-          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+          <p className="text-foreground font-medium">
             This option will be moved to trash. You can restore it later.
           </p>
           {deleteInfo?.message && deleteInfo.canBePermanent === false && (
@@ -1136,9 +1177,9 @@ export default function Options() {
         loading={deleteLoading}
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+            <AlertTriangle className="w-5 h-5 text-destructive" />
+            <p className="text-destructive font-semibold text-sm">
               Warning: This action cannot be undone!
             </p>
           </div>
@@ -1148,8 +1189,8 @@ export default function Options() {
           </p>
           
           {deleteInfo?.hasChildren && (
-            <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+            <div className="mt-2 p-2 bg-warning/10 rounded-lg border border-warning/30">
+              <p className="text-sm text-warning">
                 Note: This option has {deleteInfo.childrenCount} child option(s). They will be updated to remove parent reference.
               </p>
             </div>
@@ -1170,7 +1211,7 @@ export default function Options() {
           loading={restoreLoading}
         >
           <div className="space-y-3">
-            <p className="text-green-600 dark:text-green-400 font-medium">
+            <p className="text-success font-medium">
               Are you sure you want to restore this option?
             </p>
             <p className="text-sm text-muted-foreground">
@@ -1192,9 +1233,9 @@ export default function Options() {
         showCancelButton={false}
       >
         <div className="space-y-4">
-          <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
-            <Info className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-            <p className="text-yellow-700 dark:text-yellow-300 text-sm">
+          <div className="flex items-center gap-2 p-3 bg-warning/10 rounded-lg border border-warning/30">
+            <Info className="w-5 h-5 text-foreground" />
+            <p className="text-warning text-sm">
               {bulkErrors.length} operation(s) failed during this bulk operation.
             </p>
           </div>
@@ -1204,15 +1245,15 @@ export default function Options() {
               {bulkErrors.map((error, index) => (
                 <div 
                   key={index} 
-                  className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800"
+                  className="p-3 bg-destructive/10 rounded-lg border border-destructive/30"
                 >
                   <div className="flex items-start gap-2">
-                    <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                    <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-sm font-mono text-foreground/80 break-all">
                         ID: {error.id}
                       </p>
-                      <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                      <p className="text-sm text-destructive mt-1">
                         {error.error}
                       </p>
                     </div>
@@ -1242,16 +1283,16 @@ export default function Options() {
         showCancelButton={false}
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <Database className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-red-700 dark:text-red-300 text-sm">
+          <div className="flex items-start gap-3 p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+            <Database className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-destructive text-sm">
               {errorDetails?.message || "This option has child options and cannot be permanently deleted"}
             </p>
           </div>
           
           {errorDetails?.childrenCount && errorDetails.childrenCount > 0 && (
-            <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg">
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+            <div className="mt-2 p-2 bg-warning/10 rounded-lg">
+              <p className="text-sm text-warning">
                 This option has {errorDetails.childrenCount} child option(s). Please soft delete it instead.
               </p>
             </div>
@@ -1295,7 +1336,7 @@ export default function Options() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <p className="text-yellow-600 dark:text-yellow-400 font-medium">
+          <p className="text-foreground font-medium">
             Are you sure you want to move {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected option(s) to trash?
           </p>
           <p className="text-sm text-muted-foreground">
@@ -1316,7 +1357,7 @@ export default function Options() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <p className="text-green-600 dark:text-green-400 font-medium">
+          <p className="text-success font-medium">
             Are you sure you want to restore {Object.keys(selectedRowIds).filter(id => selectedRowIds[id]).length} selected option(s)?
           </p>
           <p className="text-sm text-muted-foreground">
@@ -1337,9 +1378,9 @@ export default function Options() {
         loading={bulkLoading}
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
-            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            <p className="text-red-600 dark:text-red-400 font-semibold text-sm">
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+            <AlertTriangle className="w-5 h-5 text-destructive" />
+            <p className="text-destructive font-semibold text-sm">
               Warning: This action cannot be undone!
             </p>
           </div>
@@ -1351,6 +1392,6 @@ export default function Options() {
           </p>
         </div>
       </ConfirmDialog>
-    </motion.div>
-  );
+    </div>
+  )
 }
