@@ -694,6 +694,7 @@ export const PasswordInput = ({
     <div className="space-y-1 w-full">
       <div className="flex justify-between items-center">
       <label
+        htmlFor={rest.id}
         className="block text-sm font-medium text-foreground/80"
       >
         {t(label, labelFallback)}{" "}
@@ -724,6 +725,8 @@ export const PasswordInput = ({
         <button
           type="button"
           onClick={() => setHidden(!hidden)}
+          aria-label={hidden ? t("Show password") : t("Hide password")}
+          aria-pressed={!hidden}
           className="absolute inset-y-0 right-2 flex items-center text-muted-foreground"
         >
           {hidden ? (

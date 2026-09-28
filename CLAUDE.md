@@ -155,6 +155,12 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   photo changed; Discard restores the last loaded or saved values. Reusing
   `.dash-hero`? Give it `relative`: its `::after` overlay is absolutely
   positioned.
+- Change Password (`settings/users/components/ChangePassword.tsx`): a step
+  indicator (enter → confirm by email → changed), a strength meter and a live
+  rule checklist read from `PASSWORD_RULES` (keep it matching the zod schema),
+  and a guidance column. The change only happens through the emailed link;
+  `VerifyPasswordChange` sends each token once (a ref guard, since a second
+  call would report a used link as invalid) and counts down to sign in.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.

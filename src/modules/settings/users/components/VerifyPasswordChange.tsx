@@ -1,108 +1,127 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { motion } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
+import { CircleCheck, CircleX, KeyRound, Loader2, LogIn, RotateCcw } from "lucide-react"
 import { verifyPasswordChange } from "../api"
 import { dispatchShowToast } from "@/lib/dispatch"
 import { Button } from "@/components/ui/button"
 import { useTranslations } from "@/hooks/useTranslations"
+import { cn } from "@/lib/utils"
+
+const REDIRECT_SECONDS = 5
+
+type Status = "verifying" | "success" | "failed"
 
 export default function VerifyPasswordChange() {
   const { token } = useParams<{ token: string }>()
   const navigate = useNavigate()
   const { t } = useTranslations()
-  const [verifying, setVerifying] = useState(true)
-  const [success, setSuccess] = useState(false)
+  const [status, setStatus] = useState<Status>(token ? "verifying" : "failed")
+  const [seconds, setSeconds] = useState(REDIRECT_SECONDS)
+  // A token works once. StrictMode (and a changing `t`) would run the effect
+  // again and turn a success into "invalid link", so each token is sent once.
+  const sentFor = useRef<string | null>(null)
+  const tRef = useRef(t)
+  tRef.current = t
 
   useEffect(() => {
-    const verifyToken = async () => {
-      if (!token) {
-        setVerifying(false)
-        return
-      }
-
-      try {
-        await verifyPasswordChange(token)
-        setSuccess(true)
-        dispatchShowToast({
-          type: "success",
-          message: t("Password changed successfully")
-        })
-        
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          navigate('/login')
-        }, 3000)
-      } catch (err: any) {
+    if (!token || sentFor.current === token) return
+    sentFor.current = token
+    setStatus("verifying")
+    verifyPasswordChange(token)
+      .then(() => {
+        setStatus("success")
+        dispatchShowToast({ type: "success", message: tRef.current("Password changed successfully") })
+      })
+      .catch((err: any) => {
+        setStatus("failed")
         dispatchShowToast({
           type: "danger",
-          message: err.response?.data?.message || t("Invalid or expired verification link")
+          message: err.response?.data?.message || tRef.current("Invalid or expired verification link"),
         })
-      } finally {
-        setVerifying(false)
-      }
-    }
+      })
+  }, [token])
 
-    verifyToken()
-  }, [token, navigate, t])
+  // After a success, count down and go to sign in.
+  useEffect(() => {
+    if (status !== "success") return
+    if (seconds <= 0) {
+      navigate("/login")
+      return
+    }
+    const id = setTimeout(() => setSeconds((s) => s - 1), 1000)
+    return () => clearTimeout(id)
+  }, [status, seconds, navigate])
+
+  const view = {
+    verifying: {
+      icon: <Loader2 className="size-7 animate-spin" />,
+      tone: "bg-primary/10 text-primary",
+      title: t("Verifying your password change"),
+      message: t("Please wait while we process your request..."),
+    },
+    success: {
+      icon: <CircleCheck className="size-7" />,
+      tone: "bg-success/10 text-success",
+      title: t("Password Changed Successfully!"),
+      message: t("Your password has been updated. You'll be redirected to login page."),
+    },
+    failed: {
+      icon: <CircleX className="size-7" />,
+      tone: "bg-destructive/10 text-destructive",
+      title: t("Verification Failed"),
+      message: t("The verification link is invalid or has expired."),
+    },
+  }[status]
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen flex items-center justify-center p-4"
-    >
-      <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
-        {verifying ? (
-          <div className="text-center">
-            <div className="mx-auto h-12 w-12 mb-4">
-              <svg className="animate-spin h-12 w-12 text-amber-600" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
-              {t("Verifying your password change")}
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {t("Please wait while we process your request...")}
-            </p>
-          </div>
-        ) : success ? (
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
-              <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
-              {t("Password Changed Successfully!")}
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              {t("Your password has been updated. You'll be redirected to login page.")}
-            </p>
-            <Button onClick={() => navigate('/login')} className="mt-4">
-              {t("Go to Login")}
-            </Button>
-          </div>
-        ) : (
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
-              <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
-              {t("Verification Failed")}
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              {t("The verification link is invalid or has expired.")}
-            </p>
-            <Button onClick={() => navigate('/change-password')} className="mt-4">
-              {t("Request New Link")}
-            </Button>
-          </div>
-        )}
+    <div className="mx-auto w-full max-w-md py-4 sm:py-8">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+        <div className="flex items-center gap-2 border-b border-border px-5 py-3 text-sm font-medium text-muted-foreground">
+          <KeyRound className="size-4" />
+          {t("Change Password")}
+        </div>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={status}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="px-5 py-8 text-center sm:px-8"
+            role="status"
+            aria-live="polite"
+          >
+            <span className={cn("mx-auto flex size-14 items-center justify-center rounded-2xl", view.tone)}>{view.icon}</span>
+            <h3 className="mt-4 text-lg font-semibold text-foreground">{view.title}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{view.message}</p>
+
+            {status === "success" && (
+              <>
+                <div className="mx-auto mt-5 h-1 w-40 overflow-hidden rounded-full bg-muted" aria-hidden>
+                  <div
+                    className="h-full rounded-full bg-success transition-[width] duration-1000 ease-linear"
+                    style={{ width: `${((REDIRECT_SECONDS - seconds) / REDIRECT_SECONDS) * 100}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground tabular-nums">
+                  {t("Redirecting in")} {seconds}s
+                </p>
+                <Button onClick={() => navigate("/login")} className="mt-5">
+                  <LogIn className="size-4" />
+                  {t("Go to Login")}
+                </Button>
+              </>
+            )}
+            {status === "failed" && (
+              <Button onClick={() => navigate("/settings/change-password")} className="mt-6">
+                <RotateCcw className="size-4" />
+                {t("Request New Link")}
+              </Button>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
-    </motion.div>
+    </div>
   )
 }
