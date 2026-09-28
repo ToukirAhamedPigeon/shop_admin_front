@@ -1,6 +1,5 @@
 // src/modules/documentation/pages/ChangelogPage.tsx
-import { useCallback, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb';
 import GlassCard from '@/components/custom/GlassCard';
@@ -22,6 +21,10 @@ export default function ChangelogPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Read through a ref so a translation update doesn't reload the list.
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const loadChangelog = useCallback(async (targetPage: number) => {
     setLoading(true);
     try {
@@ -32,26 +35,19 @@ export default function ChangelogPage() {
     } catch (error) {
       dispatchShowToast({
         type: 'danger',
-        message: getErrorMessage(error, t('documentation.changelog.error', 'Failed to load changelog')),
+        message: getErrorMessage(error, tRef.current('documentation.changelog.error', 'Failed to load changelog')),
       });
-      setEntries([]);
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     loadChangelog(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, loadChangelog]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="flex flex-col gap-4 h-full"
-    >
+    <div className="flex flex-col gap-4 h-full">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Breadcrumb
           title="documentation.changelog.title"
@@ -76,7 +72,9 @@ export default function ChangelogPage() {
       </div>
 
       <GlassCard variant="default" padding="sm" hoverEffect={false}>
-        <ChangelogList entries={entries} loading={loading} />
+        <div className={loading && entries.length > 0 ? 'opacity-60 transition-opacity duration-200' : 'transition-opacity duration-200'}>
+          <ChangelogList entries={entries} loading={loading && entries.length === 0} />
+        </div>
 
         {totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 text-sm">
@@ -109,6 +107,6 @@ export default function ChangelogPage() {
           </div>
         )}
       </GlassCard>
-    </motion.div>
+    </div>
   );
 }

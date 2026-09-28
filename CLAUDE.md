@@ -85,6 +85,17 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   filter, done in the browser). Each card previews the email; "Use" opens
   `ComposeMail` with its `template` prop. Turn HTML bodies into preview text
   with `htmlToText` (`mail/components/mailFormat.ts`).
+- Theme before first paint: `index.html` applies the saved theme class,
+  `color-scheme` and page background in an inline script, so reloading in
+  dark mode doesn't flash white. `themeSlice` (`applyTheme`) keeps them in
+  sync afterwards; keep the colors there matching `--background`.
+- Docs pages (`src/modules/documentation`) never blank what's on screen.
+  First load shows skeletons, and switching pages keeps the old one (dimmed,
+  with a top loading bar) until the next is ready. Mermaid is imported
+  lazily and diagrams are cached (`mermaid.ts`). Pages call
+  `prepareDiagrams` before showing content, so diagrams don't pop in and
+  push the text down. Loaders read `t` and the theme through refs, so a
+  translation update doesn't refetch.
 - The font is Inter, bundled through `@fontsource-variable/inter` (imported in `src/main.tsx`).
 
 ## Security notes

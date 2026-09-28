@@ -7,6 +7,25 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="/favicon.ico" />
     <title>AIMS</title>
+    <!-- Apply the saved theme before the first paint. Without this the page is
+         painted white until the app's JavaScript runs, so dark mode flashed
+         white on every reload. Keep the colors in sync with --background in
+         src/index.css. -->
+    <script>
+      (function () {
+        var theme = 'light';
+        try {
+          if (localStorage.getItem('theme') === 'dark') theme = 'dark';
+        } catch (e) {}
+        var root = document.documentElement;
+        root.classList.add(theme);
+        root.style.colorScheme = theme;
+      })();
+    </script>
+    <style>
+      html { background: oklch(0.985 0.002 260); }
+      html.dark { background: oklch(0.155 0.008 265); }
+    </style>
   </head>
   <body>
     <div id="datepicker-portal"></div>

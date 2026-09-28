@@ -1,51 +1,52 @@
 // src/modules/documentation/pages/UserGuidePage.tsx
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import Breadcrumb from '@/components/module/admin/layout/Breadcrumb';
 import GlassCard from '@/components/custom/GlassCard';
-import Loader from '@/components/custom/Loader';
+import { ErrorState } from '@/components/custom/Table';
+import { useAppSelector } from '@/hooks/useRedux';
 import { useTranslations } from '@/hooks/useTranslations';
-import { dispatchShowToast } from '@/lib/dispatch';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import { DocPageSkeleton } from '../components/DocSkeleton';
 import { getUserGuide } from '../api';
+import { prepareDiagrams } from '../mermaid';
 import { getErrorMessage } from '../utils';
 import type { UserGuide } from '../types';
 
 export default function UserGuidePage() {
   const { t } = useTranslations();
+  const isDark = useAppSelector((s) => s.theme.current) === 'dark';
   const [guide, setGuide] = useState<UserGuide | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Read through refs so a translation or theme update doesn't refetch the guide.
+  const tRef = useRef(t);
+  const darkRef = useRef(isDark);
+  tRef.current = t;
+  darkRef.current = isDark;
 
   const loadGuide = useCallback(async () => {
     setLoading(true);
-    setError(false);
+    setError(null);
     try {
       const data = await getUserGuide();
+      await prepareDiagrams(data.markdown ?? '', darkRef.current);
       setGuide(data);
     } catch (err) {
-      setError(true);
-      dispatchShowToast({
-        type: 'danger',
-        message: getErrorMessage(err, t('documentation.guide.error', 'Failed to load the user guide')),
-      });
+      setError(getErrorMessage(err, tRef.current('documentation.guide.error', 'Failed to load the user guide')));
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     loadGuide();
   }, [loadGuide]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="flex flex-col gap-4 h-full"
-    >
+    <div className="flex flex-col gap-4 h-full">
       <Breadcrumb
         title="documentation.guide.title"
         defaultTitle="User Guide"
@@ -58,17 +59,14 @@ export default function UserGuidePage() {
       />
 
       <GlassCard variant="primary" padding="md" hoverEffect={false} className="max-w-4xl mx-auto w-full">
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader type="circular" size={36} />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center gap-2 py-16 text-sm text-muted-foreground">
-            <AlertTriangle className="w-8 h-8 text-amber-500" />
-            {t('documentation.guide.error', 'Failed to load the user guide')}
-          </div>
+        {error && !guide ? (
+          <ErrorState message={error} onRetry={loadGuide} />
         ) : guide ? (
-          <div className="space-y-3">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: loading ? 0.6 : 1, transition: { duration: 0.18, ease: 'easeOut', delay: loading ? 0.15 : 0 } }}
+            className="space-y-3"
+          >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-lg font-semibold text-foreground">{guide.title}</h2>
               {guide.updatedAt && (
@@ -79,9 +77,11 @@ export default function UserGuidePage() {
               )}
             </div>
             <MarkdownRenderer markdown={guide.markdown} />
-          </div>
-        ) : null}
+          </motion.div>
+        ) : (
+          <DocPageSkeleton />
+        )}
       </GlassCard>
-    </motion.div>
+    </div>
   );
 }
