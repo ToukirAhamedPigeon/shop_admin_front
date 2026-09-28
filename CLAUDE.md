@@ -90,7 +90,12 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
 - Mail Templates is a card gallery (search plus All / Global / Personal
   filter, done in the browser). Each card previews the email; "Use" opens
   `ComposeMail` with its `template` prop. Turn HTML bodies into preview text
-  with `htmlToText` (`mail/components/mailFormat.ts`).
+  with `htmlToText` (`mail/components/mailFormat.ts`). Add/Edit is
+  `TemplateFormDialog`: name and description, an "Only me / Everyone" choice,
+  the email framed like Compose (subject with a 70-character hint, bare
+  editor) and a live preview (inbox row and opened message) beside it from
+  `lg`, a Write/Preview toggle below. Edit's Save stays disabled until
+  something changes; closing with changes asks first; Ctrl/⌘+Enter saves.
 - Compose (`mail/components/ComposeMail.tsx`) is a dialog: title bar with the
   template picker, Gmail-style envelope rows (To with Cc/Bcc toggles,
   Subject), the editor (`RichTextEditor` with `bare`), attachment chips and a
