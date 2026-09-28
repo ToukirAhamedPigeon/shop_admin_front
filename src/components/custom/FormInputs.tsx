@@ -573,8 +573,10 @@ export function CustomSelect<T extends Record<string, any>>({
         <PopoverTrigger asChild>
           <div className="relative w-full">
             <Input
+              id={id}
               readOnly
               ref={inputRef}
+              aria-invalid={!!error}
               className="text-left cursor-pointer hover:bg-accent/50 pr-10"
               value={displayValue}
               placeholder={t(placeholder, placeholder)}

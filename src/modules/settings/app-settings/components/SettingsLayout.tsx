@@ -62,25 +62,5 @@ export function SettingRow({
 }
 
 /** On/off switch. */
-export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
-        checked ? 'bg-primary' : 'bg-muted-foreground/30'
-      )}
-    >
-      <span
-        className={cn(
-          'inline-block size-5 rounded-full bg-white shadow-sm transition-transform duration-200',
-          checked ? 'translate-x-[22px]' : 'translate-x-0.5'
-        )}
-      />
-    </button>
-  );
-}
+// Moved to FormKit so other forms can use it; kept here for existing imports.
+export { Toggle } from '@/components/custom/FormKit';

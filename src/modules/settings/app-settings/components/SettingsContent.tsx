@@ -1,15 +1,15 @@
 // src/modules/settings/app-settings/components/SettingsContent.tsx
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import ConfirmDialog from '@/components/custom/ConfirmDialog';
+import { UnsavedBar } from '@/components/custom/FormKit';
 import { ThemeSettings } from './ThemeSettings';
 import { BrandingSettings } from './BrandingSettings';
 import { GeneralSettings } from './GeneralSettings';
 import { useTranslations } from '@/hooks/useTranslations';
 import { CATEGORY_CONFIG } from '../config/categories';
 import type { SettingsResponse } from '@/types/settings';
-import { Loader2, Save, RotateCcw, Globe2 } from 'lucide-react';
+import { RotateCcw, Globe2 } from 'lucide-react';
 
 interface SettingsContentProps {
   category: string;
@@ -185,34 +185,14 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
         </div>
       </div>
 
-      {/* Unsaved changes bar */}
-      <AnimatePresence>
-        {hasPendingChanges && canEdit && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-            // Phones: pinned to the screen (the page scrolls). md+: to the bottom of the settings card.
-            className="pointer-events-none fixed inset-x-0 bottom-0 z-40 p-3 sm:p-4 md:absolute md:z-10"
-          >
-            <div
-              role="status"
-              className="pointer-events-auto mx-auto flex max-w-4xl flex-wrap items-center gap-3 rounded-xl border border-border bg-card/95 px-4 py-3 shadow-lg backdrop-blur-sm"
-            >
-              <span className="size-2 shrink-0 rounded-full bg-warning" />
-              <p className="mr-auto text-sm font-medium text-foreground">{t('You have unsaved changes')}</p>
-              <Button variant="ghost" size="sm" onClick={discard} disabled={saving}>
-                {t('Discard')}
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-                {saving ? t('Saving...') : t('Save changes')}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Unsaved changes bar. Phones: pinned to the screen (the page scrolls). md+: to the bottom of the settings card. */}
+      <UnsavedBar
+        show={hasPendingChanges && canEdit}
+        saving={saving}
+        onDiscard={discard}
+        onSave={handleSave}
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 p-3 sm:p-4 md:absolute md:z-10"
+      />
 
       <ConfirmDialog
         open={confirmReset}

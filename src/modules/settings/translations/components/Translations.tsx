@@ -989,6 +989,7 @@ export default function Translations() {
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
           title="Add New Translation"
+          icon={Languages}
           titleDivClassName="success-gradient"
         >
           <AddTranslation fetchData={fetchData} onClose={() => setIsSheetOpen(false)} />
@@ -1051,6 +1052,7 @@ export default function Translations() {
           open={isEditSheetOpen}
           onOpenChange={closeEditSheet}
           title="Edit Translation"
+          icon={Languages}
           titleDivClassName="warning-gradient"
         >
           {translationToEdit && (

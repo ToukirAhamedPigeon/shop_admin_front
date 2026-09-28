@@ -44,7 +44,7 @@ import EditPermission from './EditPermission'
 import { useEditSheet } from '@/hooks/useEditSheet'
 import ConfirmDialog from '@/components/custom/ConfirmDialog'
 import { deletePermission, restorePermission, getPermissionDeleteInfo, getPermissions, bulkDeletePermissions, bulkRestorePermissions } from '../api'
-import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle } from 'lucide-react'
+import { AlertTriangle, Archive, FileWarning, RotateCcw, Database, XCircle, KeyRound } from 'lucide-react'
 import { dispatchShowToast } from '@/lib/dispatch'
 import { cn } from '@/lib/utils'
 import PermissionCards from './PermissionCards'
@@ -1039,6 +1039,7 @@ export default function Permissions() {
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
           title="Add New Permission"
+          icon={KeyRound}
           titleDivClassName="success-gradient"
         >
           <AddPermission fetchData={fetchData} onClose={() => setIsSheetOpen(false)} />
@@ -1147,6 +1148,7 @@ export default function Permissions() {
           open={isEditSheetOpen}
           onOpenChange={closeEditSheet}
           title="Edit Permission"
+          icon={KeyRound}
           titleDivClassName="warning-gradient"
         >
           {permissionToEdit && (

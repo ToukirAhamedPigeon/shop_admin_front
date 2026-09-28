@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button"
 import { PasswordInput } from "@/components/custom/FormInputs"
 import { useTranslations } from "@/hooks/useTranslations"
 import { cn } from "@/lib/utils"
+import { passwordSchema } from "@/lib/passwordRules"
+import PasswordStrength from "@/components/custom/PasswordStrength"
 import { can } from "@/lib/authCheck"
 import {
   ArrowRight,
@@ -28,27 +30,10 @@ import {
   X,
 } from "lucide-react"
 
-/** The rules a new password must meet. The schema and the live checklist both read this list. */
-const PASSWORD_RULES = [
-  { key: "length", label: "At least 6 characters", test: (v: string) => v.length >= 6 },
-  { key: "upper", label: "An uppercase letter", test: (v: string) => /[A-Z]/.test(v) },
-  { key: "lower", label: "A lowercase letter", test: (v: string) => /[a-z]/.test(v) },
-  { key: "number", label: "A number", test: (v: string) => /[0-9]/.test(v) },
-  { key: "special", label: "A special character (!@#$…)", test: (v: string) => /[!@#$%^&*(),.?":{}|<>]/.test(v) },
-] as const
-
 const changePasswordSchema = z
   .object({
     current_password: z.string().min(1, "Current password is required"),
-    new_password: z
-      .string()
-      .min(6, "Password must be at least 6 characters")
-      .refine((val) => /[A-Z]/.test(val), { message: "Password must contain at least one uppercase letter" })
-      .refine((val) => /[a-z]/.test(val), { message: "Password must contain at least one lowercase letter" })
-      .refine((val) => /[0-9]/.test(val), { message: "Password must contain at least one number" })
-      .refine((val) => /[!@#$%^&*(),.?":{}|<>]/.test(val), {
-        message: "Password must contain at least one special character",
-      }),
+    new_password: passwordSchema,
     confirm_new_password: z.string().min(1, "Please confirm the new password"),
   })
   .refine((data) => data.new_password === data.confirm_new_password, {
@@ -61,22 +46,6 @@ const changePasswordSchema = z
   })
 
 export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>
-
-const STRENGTH = [
-  { label: "Too weak", bar: "bg-destructive", text: "text-destructive" },
-  { label: "Weak", bar: "bg-destructive", text: "text-destructive" },
-  { label: "Fair", bar: "bg-warning", text: "text-warning" },
-  { label: "Good", bar: "bg-info", text: "text-info" },
-  { label: "Strong", bar: "bg-success", text: "text-success" },
-] as const
-
-/** 0 (empty) to 4: the rules met, with a bonus for length. */
-function strengthOf(value: string) {
-  if (!value) return 0
-  const met = PASSWORD_RULES.filter((r) => r.test(value)).length
-  if (met < PASSWORD_RULES.length) return met <= 2 ? 1 : 2
-  return value.length >= 12 ? 4 : 3
-}
 
 const PROFILE_PATH = "/settings/profile"
 
@@ -110,45 +79,6 @@ function Steps({ current }: { current: 1 | 2 }) {
         )
       })}
     </ol>
-  )
-}
-
-function StrengthMeter({ value }: { value: string }) {
-  const { t } = useTranslations()
-  const score = strengthOf(value)
-  const level = STRENGTH[score]
-  return (
-    <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3">
-      <div className="flex items-center gap-3">
-        <div className="grid flex-1 grid-cols-4 gap-1" aria-hidden>
-          {[1, 2, 3, 4].map((i) => (
-            <span key={i} className={cn("h-1.5 rounded-full transition-colors duration-200", i <= score ? level.bar : "bg-border")} />
-          ))}
-        </div>
-        <span className={cn("w-16 text-right text-xs font-medium", value ? level.text : "text-muted-foreground")} aria-live="polite">
-          {value ? t(level.label) : "—"}
-        </span>
-      </div>
-      <ul className="grid gap-1.5 sm:grid-cols-2">
-        {PASSWORD_RULES.map((rule) => {
-          const ok = rule.test(value)
-          return (
-            <li key={rule.key} className={cn("flex items-center gap-2 text-xs transition-colors duration-200", ok ? "text-success" : "text-muted-foreground")}>
-              <span
-                className={cn(
-                  "flex size-4 shrink-0 items-center justify-center rounded-full transition-colors duration-200",
-                  ok ? "bg-success/15" : "bg-muted"
-                )}
-              >
-                {ok ? <Check className="size-3" /> : <span className="size-1 rounded-full bg-muted-foreground/60" />}
-              </span>
-              {t(rule.label)}
-              <span className="sr-only">{ok ? t("met") : t("not met")}</span>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
   )
 }
 
@@ -253,7 +183,7 @@ export default function ChangePassword() {
                   error={errors.new_password?.message && t(errors.new_password.message)}
                 />
                 <div id="new-password-rules">
-                  <StrengthMeter value={newPassword} />
+                  <PasswordStrength value={newPassword} />
                 </div>
               </div>
 
