@@ -1,29 +1,26 @@
-// src/modules/profile/ProfileEdit.tsx
-import { useState, useEffect, useRef } from "react"
+// src/modules/settings/users/components/ProfileEdit.tsx
+import { useState, useEffect, useRef, useMemo } from "react"
+import { Link } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { motion } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { useAppSelector } from "@/hooks/useRedux"
 import { getUserProfile, regenerateQr, updateProfile } from "../api"
 import { dispatchShowToast } from "@/lib/dispatch"
 import { Button } from "@/components/ui/button"
-import DateTimeInput, {
-  BasicInput,
-  BasicTextarea,
-  SingleImageInput,
-  CustomSelect,
-  UniqueInput
-} from "@/components/custom/FormInputs"
+import DateTimeInput, { BasicInput, BasicTextarea, CustomSelect, UniqueInput } from "@/components/custom/FormInputs"
 import { GENDER_OPTIONS } from "@/constants"
 import { useProfilePicture } from "@/hooks/useProfilePicture"
 import { useTranslations } from "@/hooks/useTranslations"
 import Fancybox from "@/components/custom/FancyBox"
 import { generateQRImage } from "@/lib/generateQRImage"
-import { Loader2, QrCode, UserCircle, MapPin, Shield, Key, Save } from "lucide-react"
+import { Loader2, QrCode, Save, Camera, Trash2, Mail, AtSign, ShieldCheck, KeyRound, ChevronRight, UserRound, NotebookPen, Info } from "lucide-react"
 import { capitalize } from "@/lib/helpers"
-import Loader from "@/components/custom/Loader"
-import { useRefreshAuth } from '@/hooks/useRefreshAuth';
+import { can } from "@/lib/authCheck"
+import { cn } from "@/lib/utils"
+import { useRefreshAuth } from "@/hooks/useRefreshAuth"
+import { groupPermissions, moduleLabel } from "@/modules/settings/roles-permissions/components/permissionMeta"
 
 // Schema for Profile Edit - only personal fields
 export const profileEditSchema = z.object({
@@ -60,6 +57,56 @@ interface UserProfileData {
   qrCode?: string | null;
 }
 
+const EMPTY: ProfileEditFormValues = {
+  name: "",
+  mobile_no: "",
+  email: "",
+  nid: "",
+  address: "",
+  bio: "",
+  gender: "",
+  date_of_birth: undefined,
+  profile_image: undefined,
+}
+
+// Fields that count towards "profile complete".
+const COMPLETENESS: (keyof ProfileEditFormValues)[] = ["name", "email", "mobile_no", "profile_image", "gender", "date_of_birth", "address", "bio"]
+
+const initials = (name: string) =>
+  name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?"
+
+function Section({ icon: Icon, title, description, children }: { icon: typeof UserRound; title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl border border-border bg-card shadow-xs">
+      <header className="flex items-start gap-3 border-b border-border px-4 py-3.5 sm:px-5">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="size-4" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-[15px] font-semibold text-foreground">{title}</h3>
+          {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
+        </div>
+      </header>
+      <div className="p-4 sm:p-5">{children}</div>
+    </section>
+  )
+}
+
+function ProfileSkeleton() {
+  return (
+    <div className="grid animate-pulse gap-5 lg:grid-cols-[320px_minmax(0,1fr)]" aria-hidden>
+      <div className="space-y-4">
+        <div className="h-80 rounded-xl bg-muted/70" />
+        <div className="h-40 rounded-xl bg-muted/70" />
+      </div>
+      <div className="space-y-4">
+        <div className="h-72 rounded-xl bg-muted/70" />
+        <div className="h-64 rounded-xl bg-muted/70" />
+      </div>
+    </div>
+  )
+}
+
 export default function ProfileEdit() {
   const { t } = useTranslations()
   const { refreshUser } = useRefreshAuth()
@@ -68,10 +115,14 @@ export default function ProfileEdit() {
   const [qrLoading, setQrLoading] = useState(false)
   const [qrImg, setQrImg] = useState<string | null>(null)
   const [userData, setUserData] = useState<UserProfileData | null>(null)
+  const [showAllAccess, setShowAllAccess] = useState(false)
   const userId = useAppSelector((state) => state.auth.user?.id)
   const model = "User"
-  
+
   const hasLoadedRef = useRef(false)
+  // The values as last loaded or saved: what "Discard" goes back to.
+  const savedRef = useRef<ProfileEditFormValues>(EMPTY)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
@@ -80,20 +131,11 @@ export default function ProfileEdit() {
     setError,
     reset,
     watch,
-    formState: { errors }
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<ProfileEditFormValues>({
     resolver: zodResolver(profileEditSchema),
-    defaultValues: {
-      name: "",
-      mobile_no: "",
-      email: "",
-      nid: "",
-      address: "",
-      bio: "",
-      gender: "",
-      date_of_birth: undefined,
-      profile_image: undefined
-    }
+    defaultValues: EMPTY,
   })
 
   const { preview, clearImage, onDrop } = useProfilePicture(
@@ -113,25 +155,22 @@ export default function ProfileEdit() {
 
   useEffect(() => {
     let isMounted = true
-    
+
     const loadProfile = async () => {
       if (hasLoadedRef.current || !userId) {
         setLoading(false)
         return
       }
-      
+
       try {
         setLoading(true)
         const res = await getUserProfile()
-        
         if (!isMounted) return
-        
+
         const user = res.data
         setUserData(user)
-        
-        const dateOfBirth = user.dateOfBirth ? new Date(user.dateOfBirth) : undefined
-        
-        reset({
+
+        const values: ProfileEditFormValues = {
           name: user.name ?? "",
           email: user.email ?? "",
           mobile_no: user.mobileNo ?? "",
@@ -139,30 +178,24 @@ export default function ProfileEdit() {
           address: user.address ?? "",
           bio: user.bio ?? "",
           gender: user.gender ?? "",
-          date_of_birth: dateOfBirth,
-          profile_image: user.profileImage ?? undefined
-        })
-
-        if (user.profileImage && isMounted) {
-          setValue("profile_image", import.meta.env.VITE_API_ASSET_URL + user.profileImage, { shouldValidate: false })
+          date_of_birth: user.dateOfBirth ? new Date(user.dateOfBirth) : undefined,
+          profile_image: user.profileImage ? import.meta.env.VITE_API_ASSET_URL + user.profileImage : undefined,
         }
-        
+        savedRef.current = values
+        reset(values)
         hasLoadedRef.current = true
-        
       } catch (e) {
         console.log(e)
         if (isMounted) {
           dispatchShowToast({ type: "danger", message: t("Failed to load profile") })
         }
       } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
+        if (isMounted) setLoading(false)
       }
     }
 
     loadProfile()
-    
+
     return () => {
       isMounted = false
     }
@@ -180,24 +213,28 @@ export default function ProfileEdit() {
     }
   }, [profileImg, loading, clearImage])
 
+  // The photo is set without marking the form dirty, so compare it directly.
+  const imageChanged = profileImg !== savedRef.current.profile_image
+  const hasChanges = isDirty || imageChanged
+
   const onSubmit = async (data: ProfileEditFormValues) => {
     setSubmitLoading(true)
     try {
       const formData = new FormData()
-      
+
       Object.entries(data).forEach(([key, value]) => {
         if (value === undefined || value === null) return
         if (key === 'profile_image') return
-        
+
         if (value instanceof Date) {
           formData.append(key, value.toISOString())
         } else {
           formData.append(key, String(value))
         }
       })
-      
+
       const currentProfileImage = watch("profile_image")
-      
+
       if (currentProfileImage instanceof File) {
         formData.append("profile_image", currentProfileImage)
         formData.append("remove_profile_image", "false")
@@ -206,16 +243,17 @@ export default function ProfileEdit() {
       } else {
         formData.append("remove_profile_image", "false")
       }
-      
+
       await updateProfile(formData)
       await refreshUser()
-      dispatchShowToast({ 
-        type: "success", 
-        message: t("Profile updated successfully") 
+      dispatchShowToast({
+        type: "success",
+        message: t("Profile updated successfully")
       })
-      
-      hasLoadedRef.current = false
-      
+
+      // What was just saved is the new baseline for Discard and the save bar.
+      savedRef.current = getValues()
+      reset(getValues())
     } catch (err: any) {
       dispatchShowToast({
         type: "danger",
@@ -226,13 +264,17 @@ export default function ProfileEdit() {
     }
   }
 
+  const discard = () => {
+    reset(savedRef.current)
+  }
+
   const handleRegenerateQr = async () => {
     if (!userData?.id) return
-    
+
     setQrLoading(true)
     try {
       const res = await regenerateQr(userData.id)
-      
+
       setUserData(prev => prev ? { ...prev, qrCode: res.data.qrCode } : null)
       generateQRImage(res.data.qrCode).then(setQrImg)
 
@@ -251,312 +293,292 @@ export default function ProfileEdit() {
   }
 
   const handleDateChange = (field: string, value: Date | null) => {
-    setValue(field as any, value || undefined)
+    setValue(field as any, value || undefined, { shouldDirty: true })
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[500px]">
-        <Loader type="circular" size={48} />
-      </div>
-    )
-  }
+  const values = watch()
+  const completeness = useMemo(() => {
+    const filled = COMPLETENESS.filter((k) => {
+      const v = values[k]
+      return v instanceof Date || v instanceof File || (typeof v === "string" && v.trim() !== "")
+    }).length
+    return Math.round((filled / COMPLETENESS.length) * 100)
+  }, [values])
+
+  const access = useMemo(() => groupPermissions(userData?.permissions ?? []), [userData?.permissions])
+  const visibleAccess = showAllAccess ? access : access.slice(0, 6)
+  const canChangePassword = can(["change-admin-password"])
+
+  if (loading) return <ProfileSkeleton />
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="relative rounded-2xl bg-card border border-border shadow-sm transition-all duration-300 p-6">
-        <div className="relative z-10">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Header Section */}
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <UserCircle className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-foreground">
-                  {t('Edit Profile')}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {t('Update your personal information and profile picture')}
-                </p>
-              </div>
-            </div>
-
-            {/* User Info Card */}
-            {userData && (
-              <div className="relative rounded-xl bg-muted/50 border border-border p-4 mb-4 overflow-hidden">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  {/* Left Section - User Info */}
-                  <div className="flex-1 min-w-[200px]">
-                    {/* Username & Roles Row */}
-                    <div className="flex flex-row flex-wrap items-start gap-6 mb-3">
-                      <div>
-                        <div className="flex items-center gap-1 mb-1">
-                          <Key className="w-3 h-3 text-gray-500" />
-                          <span className="text-xs text-muted-foreground">
-                            {t("Username")}
-                          </span>
-                        </div>
-                        <span className="text-sm font-semibold text-foreground">
-                          @{userData.username}
-                        </span>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center gap-1 mb-1">
-                          <Shield className="w-3 h-3 text-gray-500" />
-                          <span className="text-xs text-muted-foreground">
-                            {t("Roles")}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {userData.roles?.map((role) => (
-                            <span
-                              key={role}
-                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
-                            >
-                              {capitalize(role)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Permissions Row */}
-                    <div>
-                      <div className="flex items-center gap-1 mb-1">
-                        <Shield className="w-3 h-3 text-gray-500" />
-                        <span className="text-xs text-muted-foreground">
-                          {t("Permissions")}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {userData.permissions?.slice(0, 8).map((permission) => (
-                          <span
-                            key={permission}
-                            className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                          >
-                            {permission}
-                          </span>
-                        ))}
-                        {userData.permissions && userData.permissions.length > 8 && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                            +{userData.permissions.length - 8} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Section - QR Code */}
-                  <div className="flex flex-col items-center space-y-2">
-                    <div className="w-full flex items-center justify-center">
-                      {userData.qrCode && qrImg ? (
-                        <Fancybox
-                          src={qrImg}
-                          alt="QR Code"
-                          title={userData.username}
-                          description={`${userData.email}`}
-                          isQRCode
-                          className="w-20 h-20 rounded-xl shadow-lg"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 bg-muted rounded-xl flex items-center justify-center">
-                          <QrCode className="w-8 h-8 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={qrLoading}
-                      onClick={handleRegenerateQr}
-                      className="text-xs h-auto py-1.5"
-                    >
-                      {qrLoading ? (
-                        <>
-                          <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                          <span>{t("Generating...")}</span>
-                        </>
-                      ) : (
-                        <>
-                          <QrCode className="w-3 h-3 mr-1.5" />
-                          <span>{userData.qrCode ? t("Regenerate QR") : t("Generate QR")}</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Note about editing restrictions */}
-                <div className="mt-3 pt-3 border-t border-border">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                    <span className="text-base">ℹ️</span>
-                    {t("Username, roles and permissions cannot be changed here. Contact administrator for changes.")}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Form Fields - Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column */}
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <UserCircle className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {t('Personal Information')}
-                  </h3>
-                </div>
-
-                <BasicInput
-                  id="name"
-                  label={t("Full Name")}
-                  isRequired
-                  placeholder={t("Your full name")}
-                  register={register("name")}
-                  error={errors.name}
-                  model={model}
-                />
-                
-                <UniqueInput
-                  id="email"
-                  label={t("Email Address")}
-                  placeholder="your@email.com"
-                  model={model}
-                  register={register("email")}
-                  error={errors.email}
-                  uniqueErrorMessage={t("Email already exists")}
-                  field="Email"
-                  isRequired
-                  exceptFieldName="Id"
-                  exceptFieldValue={userId}
-                  watchValue={watch("email") || ""}
-                />
-
-                <UniqueInput
-                  id="mobile_no"
-                  label={t("Mobile Number")}
-                  field="MobileNo"
-                  isRequired={false}
-                  placeholder="+8801XXXXXXXXX"
-                  register={register("mobile_no")}
-                  uniqueErrorMessage={t("Mobile Number already exists")}
-                  error={errors.mobile_no}
-                  model={model}
-                  exceptFieldName="Id"
-                  exceptFieldValue={userId}
-                  watchValue={watch("mobile_no") || ""}
-                />
-
-                <UniqueInput
-                  id="nid"
-                  label={t("NID Number")}
-                  placeholder="National ID Number"
-                  model={model}
-                  isRequired={false}
-                  register={register("nid")}
-                  error={errors.nid}
-                  uniqueErrorMessage={t("NID already exists")}
-                  field="NID"
-                  exceptFieldName="Id"
-                  exceptFieldValue={userId}
-                  watchValue={watch("nid") || ""}
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <CustomSelect
-                    id="gender"
-                    label={t("Gender")}
-                    name="gender"
-                    placeholder={t("Select Gender")}
-                    options={GENDER_OPTIONS}
-                    error={errors.gender}
-                    setValue={setValue}
-                    value={watch("gender")}
-                    model={model}
-                  />
-
-                  <DateTimeInput
-                    id="date_of_birth"
-                    label={t("Date of Birth")}
-                    name="date_of_birth"
-                    value={watch('date_of_birth') ?? null}
-                    setValue={handleDateChange}
-                    error={errors.date_of_birth}
-                    placeholder={t("Select date of birth")}
-                    showTime={false}
-                    showResetButton={true}
-                    model={model}
-                  />
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {t('Additional Information')}
-                  </h3>
-                </div>
-
-                <SingleImageInput
-                  label={t("Profile Picture")}
-                  preview={preview}
-                  onDrop={onDrop}
-                  clearImage={clearImage}
-                  error={errors.profile_image}
-                  className='text-center'
-                  isRequired={false}
-                  minHeightClass='h-[200px]'
-                />
-
-                <BasicTextarea
-                  id="address"
-                  label={t("Address")}
-                  placeholder={t("Your complete address")}
-                  register={register("address")}
-                  error={errors.address}
-                />
-
-                <BasicTextarea
-                  id="bio"
-                  label={t("Bio")}
-                  placeholder={t("Tell us something about yourself")}
-                  register={register("bio")}
-                  error={errors.bio}
-                />
-              </div>
-            </div>
-
-            {/* Submit Actions */}
-            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-border">
-              <Button
-                type="submit"
-                disabled={submitLoading}
+    <form onSubmit={handleSubmit(onSubmit)} className="grid items-start gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
+      {/* Left: who you are */}
+      <aside className="space-y-4 lg:sticky lg:top-20">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+          <div className="dash-hero relative h-24" aria-hidden />
+          <div className="-mt-12 flex flex-col items-center px-5 pb-5 text-center">
+            <div className="relative">
+              {preview ? (
+                <img src={preview} alt="" className="size-24 rounded-full object-cover ring-4 ring-card" />
+              ) : (
+                <span className="flex size-24 items-center justify-center rounded-full bg-primary text-2xl font-semibold text-primary-foreground ring-4 ring-card">
+                  {initials(values.name || userData?.username || "")}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label={t("Change photo")}
+                title={t("Change photo")}
+                className="absolute bottom-0 right-0 flex size-8 cursor-pointer items-center justify-center rounded-full border-2 border-card bg-primary text-primary-foreground shadow-sm outline-none transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring"
               >
-                {submitLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {t("Saving...")}
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    {t("Save Changes")}
-                  </>
-                )}
+                <Camera className="size-4" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) onDrop([file], [])
+                  e.target.value = ""
+                }}
+              />
+            </div>
+            {preview && (
+              <button
+                type="button"
+                onClick={clearImage}
+                className="mt-2 inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground outline-none transition-colors hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Trash2 className="size-3" />
+                {t("Remove photo")}
+              </button>
+            )}
+            {errors.profile_image?.message && <p className="mt-1 text-xs text-destructive">{errors.profile_image.message}</p>}
+
+            <p className="mt-3 max-w-full truncate text-lg font-semibold text-foreground">{values.name || t("Your name")}</p>
+            {userData && (
+              <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
+                <AtSign className="size-3.5" />
+                {userData.username}
+              </p>
+            )}
+            {values.email && (
+              <p className="mt-0.5 flex max-w-full items-center gap-1 truncate text-sm text-muted-foreground">
+                <Mail className="size-3.5 shrink-0" />
+                <span className="truncate">{values.email}</span>
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+              {userData?.roles?.map((role) => (
+                <span key={role} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  {capitalize(role)}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-5 w-full text-left">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">{t("Profile complete")}</span>
+                <span className="font-semibold tabular-nums text-foreground">{completeness}%</span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={completeness} aria-valuemin={0} aria-valuemax={100}>
+                <div className={cn("h-full rounded-full transition-[width] duration-300", completeness === 100 ? "bg-success" : "bg-primary")} style={{ width: `${completeness}%` }} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* QR */}
+        {userData && (
+          <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-xs">
+            {userData.qrCode && qrImg ? (
+              <Fancybox src={qrImg} alt="QR Code" title={userData.username} description={`${userData.email}`} isQRCode className="size-20 shrink-0 rounded-lg bg-white p-1" />
+            ) : (
+              <span className="flex size-20 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <QrCode className="size-8" />
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">{t("Your QR code")}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{userData.qrCode ? t("Click it to view larger.") : t("No QR code yet.")}</p>
+              <Button type="button" variant="outline" size="sm" disabled={qrLoading} onClick={handleRegenerateQr} className="mt-2 h-8">
+                {qrLoading ? <Loader2 className="size-3.5 animate-spin" /> : <QrCode className="size-3.5" />}
+                {qrLoading ? t("Generating...") : userData.qrCode ? t("Regenerate") : t("Generate")}
               </Button>
             </div>
-          </form>
-        </div>
+          </div>
+        )}
+
+        {/* Access */}
+        {userData && (
+          <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <ShieldCheck className="size-4 text-primary" />
+              {t("Your access")}
+              <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+                {userData.permissions?.length ?? 0}
+              </span>
+            </p>
+            {access.length === 0 ? (
+              <p className="mt-2 text-xs text-muted-foreground">{t("No permissions assigned.")}</p>
+            ) : (
+              <ul className="mt-3 flex flex-wrap gap-1.5">
+                {visibleAccess.map((g) => (
+                  <li key={g.module} title={`${moduleLabel(g.module)}: ${g.actions.join(", ")}`} className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[11px] text-foreground/85">
+                    {moduleLabel(g.module)}
+                    <span className="rounded bg-primary/10 px-1 text-[10px] font-semibold tabular-nums text-primary">{g.actions.length}</span>
+                  </li>
+                ))}
+                {access.length > 6 && (
+                  <li>
+                    <button type="button" onClick={() => setShowAllAccess((v) => !v)} className="cursor-pointer rounded-md px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/10">
+                      {showAllAccess ? t("Show less") : `+${access.length - 6} ${t("more")}`}
+                    </button>
+                  </li>
+                )}
+              </ul>
+            )}
+            <p className="mt-3 flex items-start gap-1.5 border-t border-border pt-3 text-xs text-muted-foreground">
+              <Info className="mt-px size-3.5 shrink-0" />
+              {t("Username, roles and permissions are managed by an administrator.")}
+            </p>
+          </div>
+        )}
+
+        {canChangePassword && (
+          <Link
+            to="/settings/change-password"
+            className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-xs outline-none transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span className="flex size-9 items-center justify-center rounded-lg bg-warning/10 text-warning">
+              <KeyRound className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-foreground">{t("Change password")}</span>
+              <span className="block text-xs text-muted-foreground">{t("Keep your account secure")}</span>
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        )}
+      </aside>
+
+      {/* Right: the form */}
+      <div className="min-w-0 space-y-5">
+        <Section icon={UserRound} title={t("Personal details")} description={t("How people see and reach you.")}>
+          <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <BasicInput id="name" label={t("Full Name")} isRequired placeholder={t("Your full name")} register={register("name")} error={errors.name} model={model} />
+            </div>
+            <UniqueInput
+              id="email"
+              label={t("Email Address")}
+              placeholder="your@email.com"
+              model={model}
+              register={register("email")}
+              error={errors.email}
+              uniqueErrorMessage={t("Email already exists")}
+              field="Email"
+              isRequired
+              exceptFieldName="Id"
+              exceptFieldValue={userId}
+              watchValue={watch("email") || ""}
+            />
+            <UniqueInput
+              id="mobile_no"
+              label={t("Mobile Number")}
+              field="MobileNo"
+              isRequired={false}
+              placeholder="+8801XXXXXXXXX"
+              register={register("mobile_no")}
+              uniqueErrorMessage={t("Mobile Number already exists")}
+              error={errors.mobile_no}
+              model={model}
+              exceptFieldName="Id"
+              exceptFieldValue={userId}
+              watchValue={watch("mobile_no") || ""}
+            />
+            <UniqueInput
+              id="nid"
+              label={t("NID Number")}
+              placeholder="National ID Number"
+              model={model}
+              isRequired={false}
+              register={register("nid")}
+              error={errors.nid}
+              uniqueErrorMessage={t("NID already exists")}
+              field="NID"
+              exceptFieldName="Id"
+              exceptFieldValue={userId}
+              watchValue={watch("nid") || ""}
+            />
+            <CustomSelect
+              id="gender"
+              label={t("Gender")}
+              name="gender"
+              placeholder={t("Select Gender")}
+              options={GENDER_OPTIONS}
+              error={errors.gender}
+              setValue={(name: string, v: unknown) => setValue(name as keyof ProfileEditFormValues, v as never, { shouldDirty: true })}
+              value={watch("gender")}
+              model={model}
+            />
+            <div className="md:col-span-2 md:max-w-[calc(50%-10px)]">
+              <DateTimeInput
+                id="date_of_birth"
+                label={t("Date of Birth")}
+                name="date_of_birth"
+                value={watch('date_of_birth') ?? null}
+                setValue={handleDateChange}
+                error={errors.date_of_birth}
+                placeholder={t("Select date of birth")}
+                showTime={false}
+                showResetButton={true}
+                model={model}
+              />
+            </div>
+          </div>
+        </Section>
+
+        <Section icon={NotebookPen} title={t("About you")} description={t("Optional details shown on your profile.")}>
+          <div className="grid gap-4">
+            <BasicTextarea id="bio" label={t("Bio")} placeholder={t("Tell us something about yourself")} register={register("bio")} error={errors.bio} />
+            <BasicTextarea id="address" label={t("Address")} placeholder={t("Your complete address")} register={register("address")} error={errors.address} />
+          </div>
+        </Section>
       </div>
-    </motion.div>
+
+      {/* Unsaved changes */}
+      <AnimatePresence>
+        {hasChanges && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            // Sticky within the page, so it never covers the sidebar.
+            className="sticky bottom-3 z-30 lg:col-start-2"
+          >
+            <div
+              role="status"
+              className="mx-auto flex max-w-3xl flex-wrap items-center gap-3 rounded-xl border border-border bg-card/95 px-4 py-3 shadow-lg backdrop-blur-sm"
+            >
+              <span className="size-2 shrink-0 rounded-full bg-warning" />
+              <p className="mr-auto text-sm font-medium text-foreground">{t("You have unsaved changes")}</p>
+              <Button type="button" variant="ghost" size="sm" onClick={discard} disabled={submitLoading}>
+                {t("Discard")}
+              </Button>
+              <Button type="submit" size="sm" disabled={submitLoading}>
+                {submitLoading ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                {submitLoading ? t("Saving...") : t("Save changes")}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </form>
   )
 }
