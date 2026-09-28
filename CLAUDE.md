@@ -148,6 +148,13 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   which logout deliberately keeps, since the sign-in page is only seen
   signed out; AuthShell draws it under the scene with a navy overlay.
   Removing an image sends `remove_sidebar_bg` / `remove_login_bg`.
+- Profile (`settings/users/components/ProfileEdit.tsx`): a sticky profile card
+  (photo with a camera button, roles, completeness meter), QR, access grouped
+  by module and a change-password link on the left, and the form in section
+  cards on the right. A sticky Save/Discard bar appears when the form or the
+  photo changed; Discard restores the last loaded or saved values. Reusing
+  `.dash-hero`? Give it `relative`: its `::after` overlay is absolutely
+  positioned.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.
