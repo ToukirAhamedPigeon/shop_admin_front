@@ -12,6 +12,9 @@ import { AvatarPicker, FieldGrid, FormSection, FormSkeleton, SheetFooter, Switch
 import PasswordStrength from "@/components/custom/PasswordStrength"
 import ChipSelect from "@/components/custom/ChipSelect"
 import PermissionPicker from "@/modules/settings/roles-permissions/components/PermissionPicker"
+import GroupSelect from "@/modules/settings/roles-permissions/components/GroupSelect"
+import { inheritedFromGroups } from "@/modules/settings/roles-permissions/components/permissionMeta"
+import { usePermissionGroups } from "@/hooks/usePermissionGroups"
 import { GENDER_OPTIONS } from "@/constants"
 import { useProfilePicture } from "@/hooks/useProfilePicture"
 import { useTranslations } from "@/hooks/useTranslations"
@@ -38,6 +41,7 @@ const common = {
   is_active: z.string().optional(),
   roles: z.array(z.string()).min(1, "At least one role must be selected"),
   permissions: z.array(z.string()).optional(),
+  groups: z.array(z.string()).optional(),
 }
 
 const addSchema = z
@@ -83,6 +87,7 @@ export type UserFormValues = {
   is_active?: string
   roles: string[]
   permissions?: string[]
+  groups?: string[]
 }
 
 const EMPTY: UserFormValues = {
@@ -101,6 +106,7 @@ const EMPTY: UserFormValues = {
   is_active: "true",
   roles: [],
   permissions: [],
+  groups: [],
 }
 
 type Props =
@@ -127,6 +133,8 @@ export default function UserForm(props: Props) {
   const { register, handleSubmit, setValue, setError, reset, control, formState } = form
   const { errors, isDirty } = formState
   const values = useWatch({ control }) as UserFormValues
+  const { groups: allGroups } = usePermissionGroups()
+  const inherited = useMemo(() => inheritedFromGroups(allGroups, values.groups ?? []), [allGroups, values.groups])
 
   const { preview, clearImage, onDrop } = useProfilePicture(setValue, setError, "profile_image", values.profile_image ?? undefined)
 
@@ -150,6 +158,7 @@ export default function UserForm(props: Props) {
           is_active: u.isActive ? "true" : "false",
           roles: u.roles || [],
           permissions: u.permissions || [],
+          groups: u.groups || [],
           profile_image: u.profileImage ? assetUrl(u.profileImage) ?? undefined : undefined,
         }
         loadedRef.current = loaded
@@ -196,6 +205,7 @@ export default function UserForm(props: Props) {
     if (data.dob) payload.append("DateOfBirth", data.dob.toISOString())
     data.roles.forEach((role) => payload.append("Roles", role))
     data.permissions?.forEach((permission) => payload.append("Permissions", permission))
+    data.groups?.forEach((group) => payload.append("Groups", group))
 
     const res = await createUsers(payload)
     if (res.status !== 200 && res.status !== 201) throw new Error(res.data?.message || "Registration failed")
@@ -216,6 +226,9 @@ export default function UserForm(props: Props) {
       if (Array.isArray(value)) value.forEach((v) => payload.append(key, v))
       else payload.append(key, String(value))
     }
+    // groups_set tells the API the list is complete, so an empty list clears it.
+    data.groups?.forEach((g) => payload.append("groups", g))
+    payload.append("groups_set", "true")
     if (data.profile_image instanceof File) {
       payload.append("profile_image", data.profile_image)
       payload.append("remove_profile_image", "false")
@@ -340,7 +353,7 @@ export default function UserForm(props: Props) {
       )}
 
       {/* Access */}
-      <FormSection icon={ShieldCheck} title={t("Access")} description={t("Roles grant permissions; add extra permissions only when a role doesn't cover it.")}>
+      <FormSection icon={ShieldCheck} title={t("Access")} description={t("Roles and groups grant permissions; add extra permissions only for what they don't cover.")}>
         <div className="space-y-4">
           <ChipSelect
             id="roles"
@@ -351,11 +364,18 @@ export default function UserForm(props: Props) {
             onChange={(v) => setField("roles", v)}
             error={errors.roles?.message}
           />
+          <GroupSelect
+            id="groups"
+            value={values.groups ?? []}
+            onChange={(v) => setField("groups", v)}
+            hint="Given to this user directly, on top of their roles."
+          />
           <PermissionPicker
             id="permissions"
             label="Extra permissions"
             value={values.permissions ?? []}
             onChange={(v) => setField("permissions", v)}
+            inherited={inherited}
             hint="Only for what the roles above don't already give."
           />
           <SwitchField

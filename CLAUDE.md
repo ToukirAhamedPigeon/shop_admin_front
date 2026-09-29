@@ -207,6 +207,17 @@ React 19 + Vite 7 + TypeScript admin panel (Tailwind v4, shadcn/ui, Redux Toolki
   `useOptionNames` (cached per Options URL; `invalidateOptionNames` after a
   create or update). A form whose last child is a `SheetFooter` fills the
   sheet, so the footer sits at the bottom even when the form is short.
+- Permission groups (`/settings/permission-groups`, `PermissionGroups.tsx`,
+  `GroupForm.tsx`; shop_back `PermissionGroupController`) are live bundles of
+  permissions given to roles and users: whoever has a group has its
+  permissions, so editing one changes everyone with it. Managing them needs
+  the `*-admin-permissions` permissions. Role and User forms pick groups with
+  `GroupSelect`; the PermissionPicker below takes `inherited`
+  (`inheritedFromGroups`) and shows those permissions as covered, not
+  toggleable. `usePermissionGroups` shares one cached list
+  (`invalidatePermissionGroups` after saves). The user update sends `groups`
+  plus `groups_set=true` (without the flag the API leaves groups alone);
+  create sends `Groups`; roles send `groups` in JSON.
 - `components/custom/Modal` renders through a portal into `<body>`. Inside
   `<main>` it shared main's stacking context and the sidebar covered it. It
   closes on Esc and on a backdrop click.

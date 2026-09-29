@@ -7,6 +7,30 @@ export interface IRole {
   createdAt: string;
   updatedAt: string;
   permissions: string[];
+  /** Permission groups given to the role; their permissions apply too. */
+  groups?: string[];
+}
+
+/** A named bundle of permissions, given to roles or users (shop_back PermissionGroup). */
+export interface IPermissionGroup {
+  id: string;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+  permissions: string[];
+  /** Roles that have the group. */
+  roles: string[];
+  /** Users given the group directly. */
+  userCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SavePermissionGroupRequest {
+  name: string;
+  description?: string;
+  isActive: string;
+  permissions: string[];
 }
 
 export interface IPermission {
@@ -47,6 +71,7 @@ export interface CreateRoleRequest {
   guardName: string;
   permissions: string[];
   isActive?: string;
+  groups?: string[];
 }
 
 export interface UpdateRoleRequest {
@@ -54,6 +79,7 @@ export interface UpdateRoleRequest {
   guardName: string;
   permissions: string[];
   isActive?: string;
+  groups?: string[];
 }
 
 export interface CreatePermissionRequest {
